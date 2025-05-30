@@ -1,0 +1,41 @@
+# Diretórios de dependências
+/node_modules
+/vendor
+
+# Pastas de build e cache
+/public/hot
+/public/storage
+/storage/*.key
+/storage/logs
+/storage/framework
+
+# Arquivos de ambiente e sensíveis
+.env
+.env.*
+.env.backup
+*.pem
+
+# Caches e logs
+.phpunit.result.cache
+.php-cs-fixer.cache
+*.log
+
+# Configs locais e IDEs
+.idea/
+.vscode/
+*.sublime-workspace
+*.sublime-project
+
+# Arquivos de frontend gerados
+/public/dist
+/public/mix-manifest.json
+/public/css/theme
+/public/libs
+/public/sitemap.xml
+
+# Outros
+Homestead.yaml
+Homestead.json
+npm-debug.log
+yarn-error.log
+	
