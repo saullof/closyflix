@@ -1,10 +1,26 @@
 # ---------- Fase 1: build dos assets ----------
-FROM node:18-alpine AS assets
+# Node 16 é mais compatível com Laravel Mix v4
+FROM node:16-bullseye AS assets
 WORKDIR /app
+
+# Copia apenas manifests primeiro p/ cache
 COPY package*.json ./
-RUN npm ci || npm install
+
+# Ajustes de npm para não travar por peer deps
+RUN npm config set legacy-peer-deps true \
+ && npm config set fund false \
+ && npm config set audit false
+
+# Instala (sem mexer no seu package.json)
+RUN npm install
+
+# Copia o restante do projeto
 COPY . .
-# Ajuste conforme seu projeto: Mix usa "prod", Vite usa "build"
+
+# Webpack 4 + OpenSSL 3 (necessário em Node >=17)
+ENV NODE_OPTIONS=--openssl-legacy-provider
+
+# Compile seus assets (Mix usa "prod"; se for Vite, trocar para "build")
 RUN npm run prod || npm run build
 
 # ---------- Fase 2: runtime PHP ----------
@@ -21,7 +37,7 @@ COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
 WORKDIR /var/www/html
 
-# Código
+# Copia o código
 COPY . .
 
 # Dependências PHP e preparo do app
@@ -30,10 +46,10 @@ RUN composer install --no-interaction --prefer-dist --optimize-autoloader \
  && php artisan key:generate --force \
  && php artisan storage:link || true
 
-# Copia os assets compilados
+# Copia os assets compilados da fase Node
 COPY --from=assets /app/public /var/www/html/public
 
-# Porta e start
+# Porta e comando de start
 ENV PORT=8080
 EXPOSE 8080
 CMD php artisan migrate --force || true && php artisan serve --host=0.0.0.0 --port=${PORT}
