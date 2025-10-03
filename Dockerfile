@@ -10,7 +10,27 @@ RUN npm config set legacy-peer-deps true \
  && npm config set audit false \
  && npm install --legacy-peer-deps --ignore-scripts
 
+# agora copiamos o código-fonte
 COPY . .
+
+# Fallbacks no TOPO do _variables-dark.scss (precisam existir antes de serem usados)
+RUN if [ -f resources/sass/_variables-dark.scss ]; then \
+      (printf '%s\n' \
+      '// Fallbacks para cinzas *-alt' \
+      '$gray-100-alt: $gray-100 !default;' \
+      '$gray-200-alt: $gray-200 !default;' \
+      '$gray-300-alt: $gray-300 !default;' \
+      '$gray-400-alt: $gray-400 !default;' \
+      '$gray-500-alt: $gray-500 !default;' \
+      '$gray-600-alt: $gray-600 !default;' \
+      '$gray-700-alt: $gray-700 !default;' \
+      '$gray-800-alt: $gray-800 !default;' \
+      '$gray-900-alt: $gray-900 !default;' \
+      '' \
+      ; cat resources/sass/_variables-dark.scss) \
+      > /tmp/_vars-dark.scss && mv /tmp/_vars-dark.scss resources/sass/_variables-dark.scss; \
+    fi
+
 # Compila tentando os scripts mais comuns
 RUN npm run prod || npm run production || npm run build
 
@@ -33,6 +53,7 @@ RUN composer install --no-interaction --prefer-dist --optimize-autoloader \
  && php artisan storage:link || true \
  && php artisan npm:publish || true
 
+# sobrescreve a pasta public com os assets gerados no estágio de build
 COPY --from=assets /app/public /var/www/html/public
 
 ENV PORT=8080
