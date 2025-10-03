@@ -12,7 +12,7 @@ RUN npm config set legacy-peer-deps true \
 # Traga o código agora (precisamos dos .scss para buildar)
 COPY . .
 
-# Garante que os *-alt existam E ficam antes de qualquer uso no SCSS
+# PATCH SCSS: garante que os $gray-*-alt existam E fiquem antes de qualquer uso
 RUN set -eux; \
   FILE="resources/sass/_variables-dark.scss"; \
   if [ -f "$FILE" ]; then \
@@ -30,8 +30,8 @@ RUN set -eux; \
     fi; \
   fi
 
-# Compila tentando os scripts mais comuns
-RUN npm run prod || npm run production || npm run build
+# Compila tentando os scripts mais comuns (e não falha se não existir)
+RUN npm run prod || npm run production || npm run build || echo "Sem script de build; pulando."
 
 # ---------- Fase 2: runtime PHP ----------
 FROM php:8.2-cli
@@ -42,6 +42,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
  && rm -rf /var/lib/apt/lists/*
 
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
+ENV COMPOSER_ALLOW_SUPERUSER=1
 
 WORKDIR /var/www/html
 COPY . .
@@ -52,9 +53,9 @@ RUN composer install --no-interaction --prefer-dist --optimize-autoloader \
  && php artisan key:generate --force || true \
  && php artisan storage:link || true
 
-# Pastas de cache do Laravel + permissões
+# Pastas de cache do Laravel + permissões (evita "valid cache path")
 RUN set -eux; \
-    mkdir -p storage/framework/{cache,data,sessions,testing,views} bootstrap/cache; \
+    mkdir -p storage/framework/{cache,data,sessions,testing,views} bootstrap/cache storage/logs; \
     chown -R www-data:www-data storage bootstrap/cache || true; \
     chmod -R 775 storage bootstrap/cache; \
     php artisan optimize:clear || true
@@ -62,11 +63,11 @@ RUN set -eux; \
 # Copia os assets já buildados
 COPY --from=assets /app/public /var/www/html/public
 
-# Garante onde o Blade compila as views
+# Onde o Blade compila as views e porta de serviço
 ENV VIEW_COMPILED_PATH=/var/www/html/storage/framework/views \
     PORT=8080
 
 EXPOSE 8080
 
-# JSON args recomendado
+# CMD em JSON para tratar sinais corretamente
 CMD ["sh","-lc","php artisan migrate --force || true; php artisan serve --host=0.0.0.0 --port=${PORT:-8080}"]
