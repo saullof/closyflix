@@ -3,33 +3,23 @@ FROM node:16-bullseye AS assets
 WORKDIR /app
 
 COPY package*.json ./
-
 # não travar por peer deps e não rodar scripts (tem postinstall com "php artisan")
 RUN npm config set legacy-peer-deps true \
  && npm config set fund false \
  && npm config set audit false \
  && npm install --legacy-peer-deps --ignore-scripts
 
-# agora copiamos o código-fonte
+# Traga o código agora (precisamos dos .scss para buildar)
 COPY . .
 
-# Fallbacks no TOPO do _variables-dark.scss (precisam existir antes de serem usados)
-RUN if [ -f resources/sass/_variables-dark.scss ]; then \
-      (printf '%s\n' \
-      '// Fallbacks para cinzas *-alt' \
-      '$gray-100-alt: $gray-100 !default;' \
-      '$gray-200-alt: $gray-200 !default;' \
-      '$gray-300-alt: $gray-300 !default;' \
-      '$gray-400-alt: $gray-400 !default;' \
-      '$gray-500-alt: $gray-500 !default;' \
-      '$gray-600-alt: $gray-600 !default;' \
-      '$gray-700-alt: $gray-700 !default;' \
-      '$gray-800-alt: $gray-800 !default;' \
-      '$gray-900-alt: $gray-900 !default;' \
-      '' \
-      ; cat resources/sass/_variables-dark.scss) \
-      > /tmp/_vars-dark.scss && mv /tmp/_vars-dark.scss resources/sass/_variables-dark.scss; \
-    fi
+# Garante que os *-alt existam (clona valores dos cinzas padrão) — segura se o arquivo não existir
+RUN set -eux; \
+  if [ -f resources/sass/_variables-dark.scss ]; then \
+    for n in 100 200 300 400 500 600 700 800 900; do \
+      grep -q "\$gray-$n-alt" resources/sass/_variables-dark.scss || \
+      echo "\$gray-$n-alt: \$gray-$n !default;" >> resources/sass/_variables-dark.scss; \
+    done; \
+  fi
 
 # Compila tentando os scripts mais comuns
 RUN npm run prod || npm run production || npm run build
@@ -47,15 +37,27 @@ COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 WORKDIR /var/www/html
 COPY . .
 
+# Dependências PHP (ok se .env.example não existir)
 RUN composer install --no-interaction --prefer-dist --optimize-autoloader \
  && (cp -n .env.example .env || true) \
- && php artisan key:generate --force \
- && php artisan storage:link || true \
- && php artisan npm:publish || true
+ && php artisan key:generate --force || true \
+ && php artisan storage:link || true
 
-# sobrescreve a pasta public com os assets gerados no estágio de build
+# Pastas de cache do Laravel + permissões
+RUN set -eux; \
+    mkdir -p storage/framework/{cache,data,sessions,testing,views} bootstrap/cache; \
+    chown -R www-data:www-data storage bootstrap/cache || true; \
+    chmod -R 775 storage bootstrap/cache; \
+    php artisan optimize:clear || true
+
+# Copia os assets já buildados
 COPY --from=assets /app/public /var/www/html/public
 
-ENV PORT=8080
+# Garante onde o Blade compila as views
+ENV VIEW_COMPILED_PATH=/var/www/html/storage/framework/views \
+    PORT=8080
+
 EXPOSE 8080
-CMD php artisan migrate --force || true && php artisan serve --host=0.0.0.0 --port=${PORT}
+
+# JSON args recomendado
+CMD ["sh","-lc","php artisan migrate --force || true; php artisan serve --host=0.0.0.0 --port=${PORT:-8080}"]
