@@ -69,5 +69,17 @@ ENV VIEW_COMPILED_PATH=/var/www/html/storage/framework/views \
 
 EXPOSE 8080
 
+# CMD em JSON – cria pastas, corrige permissão e limpa caches em runtime
+CMD ["sh","-lc", "\
+  mkdir -p storage/framework/{cache,views,sessions,testing} bootstrap/cache storage/logs && \
+  chmod -R 775 storage bootstrap/cache && \
+  rm -f bootstrap/cache/*.php || true && \
+  php artisan config:clear || true && \
+  php artisan route:clear || true && \
+  php artisan view:clear  || true && \
+  php artisan migrate --force || true && \
+  php artisan serve --host=0.0.0.0 --port=${PORT:-8080} \
+"]
+
 # CMD em JSON para tratar sinais corretamente
 CMD ["sh","-lc","php artisan migrate --force || true; php artisan serve --host=0.0.0.0 --port=${PORT:-8080}"]
