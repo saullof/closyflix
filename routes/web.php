@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Admin\SuitpayCashoutController;
 use App\Http\Controllers\MessengerController;
 use App\Http\Controllers\SubscriptionsController;
 use App\Http\Controllers\CheckoutController;
@@ -36,7 +37,10 @@ Route::group(['prefix' => 'admin', 'middleware' => 'jsVars'], function () {
 
     Route::get('/users/{id}/impersonate', 'UserController@impersonate')->name('admin.impersonate');
     Route::get('/leave-impersonation', 'UserController@leaveImpersonation')->name('admin.leaveImpersonation');
-Route::get('/clear-app-cache', 'GenericController@clearAppCache')->name('admin.clear.cache');
+    Route::get('/suitpay/cashouts', [SuitpayCashoutController::class, 'index'])->name('admin.suitpay.cashouts');
+    Route::post('/suitpay/cashouts/{withdrawal}', [SuitpayCashoutController::class, 'execute'])->name('admin.suitpay.cashouts.execute');
+    Route::get('/suitpay/cashouts/{withdrawal}/receipt', [SuitpayCashoutController::class, 'receipt'])->name('admin.suitpay.cashouts.receipt');
+    Route::get('/clear-app-cache', 'GenericController@clearAppCache')->name('admin.clear.cache');
 
 });
 
