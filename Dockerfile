@@ -11,8 +11,8 @@ RUN npm config set legacy-peer-deps true \
  && npm install --legacy-peer-deps --ignore-scripts
 
 COPY . .
-ENV NODE_OPTIONS=--openssl-legacy-provider
-RUN npm run prod || npm run build
+# Compila tentando os scripts mais comuns
+RUN npm run prod || npm run production || npm run build
 
 # ---------- Fase 2: runtime PHP ----------
 FROM php:8.2-cli
