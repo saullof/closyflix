@@ -12,13 +12,22 @@ RUN npm config set legacy-peer-deps true \
 # Traga o código agora (precisamos dos .scss para buildar)
 COPY . .
 
-# Garante que os *-alt existam (clona valores dos cinzas padrão) — segura se o arquivo não existir
+# Garante que os *-alt existam E ficam antes de qualquer uso no SCSS
 RUN set -eux; \
-  if [ -f resources/sass/_variables-dark.scss ]; then \
+  FILE="resources/sass/_variables-dark.scss"; \
+  if [ -f "$FILE" ]; then \
+    NEED=0; \
     for n in 100 200 300 400 500 600 700 800 900; do \
-      grep -q "\$gray-$n-alt" resources/sass/_variables-dark.scss || \
-      echo "\$gray-$n-alt: \$gray-$n !default;" >> resources/sass/_variables-dark.scss; \
+      grep -q "\$gray-$n-alt" "$FILE" || NEED=1; \
     done; \
+    if [ "$NEED" = "1" ]; then \
+      TMP="$(mktemp)"; \
+      for n in 100 200 300 400 500 600 700 800 900; do \
+        echo "\$gray-$n-alt: \$gray-$n !default;" >> "$TMP"; \
+      done; \
+      cat "$FILE" >> "$TMP"; \
+      mv "$TMP" "$FILE"; \
+    fi; \
   fi
 
 # Compila tentando os scripts mais comuns
