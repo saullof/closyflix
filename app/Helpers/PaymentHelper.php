@@ -35,6 +35,7 @@ use App\Model\Transaction;
 use App\Model\UserMessage;
 use App\Model\Subscription;
 use App\Model\WalletRetainedBalance;
+use App\Model\Withdrawal;
 use MercadoPago\Preference;
 use PayPal\Api\ChargeModel;
 use PayPal\Rest\ApiContext;
@@ -1797,7 +1798,7 @@ class PaymentHelper
         return $transaction;
     }
  
-    public function generatePixPaymentTransaction($transaction, $user) 
+    public function generatePixPaymentTransaction($transaction, $user)
     {
         $reference = self::generateSuitPayUniqueTransactionToken($transaction);
 
@@ -1829,6 +1830,125 @@ class PaymentHelper
             $transaction->suitpay_payment_code = $data['paymentCode'];
             $transaction->save();
         }
+    }
+
+
+    /**
+     * Process a PIX cash-out through SuitPay for the given withdrawal.
+     *
+     * @param Withdrawal $withdrawal
+     * @param array $pixData
+     * @return array{success:bool,status:?string,message:?string,payload:array,response:?array}
+     */
+    public function processSuitpayPixCashout(Withdrawal $withdrawal, array $pixData = []): array
+    {
+        $result = [
+            'success' => false,
+            'status' => null,
+            'message' => null,
+            'payload' => [],
+            'response' => null,
+        ];
+
+        if (!config('services.suitpay.enabled')) {
+            $result['message'] = __('SuitPay integration is disabled.');
+
+            return $result;
+        }
+
+        $pixKey = trim($pixData['key'] ?? $withdrawal->pix_key ?? '');
+        $pixType = $pixData['typeKey'] ?? $withdrawal->pix_key_type;
+
+        if ($pixKey === '' || $pixType === null) {
+            $result['message'] = __('PIX key information is missing.');
+
+            return $result;
+        }
+
+        $withdrawal->pix_key = $pixKey;
+        $withdrawal->pix_key_type = $pixType;
+
+        $value = array_key_exists('value', $pixData)
+            ? floatval($pixData['value'])
+            : floatval($withdrawal->suitpay_cashout_value ?? ($withdrawal->amount - ($withdrawal->fee ?? 0)));
+
+        if ($value <= 0) {
+            $result['message'] = __('The cash-out amount must be greater than zero.');
+
+            return $result;
+        }
+
+        $externalId = $this->ensureSuitpayCashoutExternalId($withdrawal);
+
+        $payload = [
+            'key' => $pixKey,
+            'typeKey' => $pixType,
+            'value' => (float) number_format($value, 2, '.', ''),
+            'externalId' => $externalId,
+        ];
+
+        $document = $pixData['documentValidation'] ?? $withdrawal->pix_document;
+        if (!empty($document)) {
+            $withdrawal->pix_document = $document;
+            $payload['documentValidation'] = $document;
+        }
+
+        $response = SuitPay::requestPixCashout($payload);
+        $body = $response['body'] ?? [];
+
+        $withdrawal->suitpay_cashout_value = $payload['value'];
+        $withdrawal->suitpay_cashout_payload = !empty($body) ? json_encode($body) : null;
+        $withdrawal->suitpay_cashout_status = $body['response'] ?? null;
+        $withdrawal->suitpay_cashout_message = $body['message'] ?? ($response['error'] ?? null);
+
+        if (!empty($body['idTransaction'])) {
+            $withdrawal->suitpay_cashout_transaction_id = $body['idTransaction'];
+        }
+
+        if ($response['success']) {
+            $withdrawal->suitpay_cashout_requested_at = now();
+            if (($body['response'] ?? null) === 'OK') {
+                $withdrawal->suitpay_cashout_confirmed_at = now();
+                if (empty($withdrawal->suitpay_cashout_message)) {
+                    $withdrawal->suitpay_cashout_message = __('SuitPay confirmed the cash-out request.');
+                }
+            }
+        }
+
+        $result['success'] = $response['success'] && (($body['response'] ?? null) === 'OK');
+        $result['status'] = $withdrawal->suitpay_cashout_status;
+        $result['message'] = $withdrawal->suitpay_cashout_message;
+        $result['payload'] = $payload;
+        $result['response'] = $body;
+
+        if (!$result['success']) {
+            if (empty($result['message'])) {
+                $result['message'] = __('SuitPay returned status :status.', ['status' => $result['status'] ?? 'UNKNOWN']);
+            }
+            Log::warning('SuitPay cash-out request failed', [
+                'withdrawal_id' => $withdrawal->id,
+                'status' => $result['status'],
+                'http_status' => $response['status'] ?? null,
+                'message' => $result['message'],
+            ]);
+        }
+
+        return $result;
+    }
+
+    private function ensureSuitpayCashoutExternalId(Withdrawal $withdrawal): string
+    {
+        if ($withdrawal->suitpay_cashout_external_id) {
+            return $withdrawal->suitpay_cashout_external_id;
+        }
+
+        do {
+            $candidate = Uuid::uuid4()->toString();
+        } while (Withdrawal::query()->where('suitpay_cashout_external_id', $candidate)->exists());
+
+        $withdrawal->suitpay_cashout_external_id = $candidate;
+
+        return $candidate;
     }
 
 

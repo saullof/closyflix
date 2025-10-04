@@ -154,6 +154,12 @@ class PaymentsServiceProvider extends ServiceProvider
                 $data['type'] = Transaction::WITHDRAWAL_TYPE;
                 $data['amount'] = $withdrawal->amount - $withdrawal->fee;
                 $data['payment_provider'] = Transaction::MANUAL_PROVIDER;
+                $data['suitpay_payment_transaction_id'] = null;
+
+                if ($withdrawal->suitpay_cashout_transaction_id) {
+                    $data['payment_provider'] = Transaction::SUITPAY_PROVIDER;
+                    $data['suitpay_payment_transaction_id'] = $withdrawal->suitpay_cashout_transaction_id;
+                }
                 $data['currency'] = SettingsServiceProvider::getAppCurrencyCode();
                 $data['status'] = Transaction::APPROVED_STATUS;
 

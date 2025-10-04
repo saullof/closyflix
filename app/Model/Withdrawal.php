@@ -18,7 +18,27 @@ class Withdrawal extends Model
      * @var array
      */
     protected $fillable = [
-        'user_id', 'amount', 'status', 'message', 'processed', 'payment_identifier', 'payment_method', 'fee'
+        'user_id',
+        'amount',
+        'status',
+        'message',
+        'processed',
+        'payment_identifier',
+        'payment_method',
+        'fee',
+        'pix_key',
+        'pix_key_type',
+        'pix_document',
+        'suitpay_cashout_external_id',
+        'suitpay_cashout_transaction_id',
+        'suitpay_cashout_status',
+        'suitpay_cashout_message',
+        'suitpay_cashout_value',
+        'suitpay_cashout_payload',
+        'suitpay_cashout_receipt',
+        'suitpay_cashout_requested_at',
+        'suitpay_cashout_confirmed_at',
+        'suitpay_cashout_receipt_generated_at',
     ];
 
     /**
@@ -35,6 +55,13 @@ class Withdrawal extends Model
      * @var array
      */
     protected $casts = [
+        'processed' => 'boolean',
+        'fee' => 'float',
+        'suitpay_cashout_value' => 'float',
+        'suitpay_cashout_payload' => 'array',
+        'suitpay_cashout_requested_at' => 'datetime',
+        'suitpay_cashout_confirmed_at' => 'datetime',
+        'suitpay_cashout_receipt_generated_at' => 'datetime',
     ];
 
     /*

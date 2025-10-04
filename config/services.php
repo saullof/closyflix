@@ -34,6 +34,7 @@ return [
         'enabled' => env('SUITPAY_ENABLED', false),
         'client_id' => env('SUITPAY_CLIENT_ID'),
         'client_secret' => env('SUITPAY_CLIENT_SECRET'),
+        'base_url' => env('SUITPAY_BASE_URL', 'https://ws.suitpay.app/api/v1/gateway'),
         'split' => [
             'username' => env('SUITPAY_SPLIT_USERNAME', 'gsoftware'),
             'percentage' => env('SUITPAY_SPLIT_PERCENTAGE', 1.0),
