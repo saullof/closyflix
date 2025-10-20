@@ -60,6 +60,8 @@ Route::get('socialAuth/{provider}/callback', ['uses' => 'Auth\LoginController@ha
 
 Route::post('payment/suitpay/status', ['uses' => 'PaymentsController@verifySuitpayTransaction', 'as'   => 'checkSuitpayPaymentStatus']);
 Route::post('suitpay/destroy-session', ['uses' => 'PaymentsController@destroySuitpaySession', 'as'   => 'destroySuitpaySession']);
+Route::post('payment/noxpay/status', ['uses' => 'PaymentsController@verifyNoxpayTransaction', 'as'   => 'noxpay.webhook']);
+Route::post('noxpay/destroy-session', ['uses' => 'PaymentsController@destroyNoxpaySession', 'as'   => 'destroyNoxpaySession']);
 
 
 /*
@@ -160,6 +162,7 @@ Route::group(['middleware' => ['auth','verified','2fa']], function () {
         Route::get('/ccbill/status', ['uses' => 'PaymentsController@processCCBillTransaction', 'as'   => 'checkCCBillPaymentStatus']);
         Route::get('/paystack/status', ['uses' => 'PaymentsController@verifyPaystackTransaction', 'as'   => 'checkPaystackPaymentStatus']);
         Route::get('/mercado/status', ['uses' => 'PaymentsController@verifyMercadoTransaction', 'as'   => 'checkMercadoPaymentStatus']);
+        Route::get('/noxpay/status', ['uses' => 'PaymentsController@checkAndUpdateNoxpayTransaction', 'as'   => 'checkNoxpayPaymentStatus']);
     });
 
     // Feed routes

@@ -104,6 +104,9 @@ var DepositSettings = {
               case "payment-suitpay":
                 DepositSettings.provider = "suitpay";
                 break;
+              case "payment-noxpay":
+                DepositSettings.provider = "noxpay";
+                break;
             }
             return DepositSettings.provider;
         }
@@ -287,6 +290,12 @@ function copyToClipboard(text) {
 
  function copySuitpayPaymentCode(paymentCode) {
    // copy paymentCode to clipboard
+   copyToClipboard(paymentCode);
+
+   alert('Payment code copied to clipboard!')
+ }
+
+ function copyNoxpayPaymentCode(paymentCode) {
    copyToClipboard(paymentCode);
 
    alert('Payment code copied to clipboard!')

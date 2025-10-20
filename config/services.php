@@ -40,4 +40,10 @@ return [
         ],
     ],
 
+    'noxpay' => [
+        'enabled' => env('NOXPAY_ENABLED', false),
+        'api_key' => env('NOXPAY_API_KEY'),
+        'webhook_secret' => env('NOXPAY_WEBHOOK_SECRET'),
+    ],
+
 ];

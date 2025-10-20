@@ -63,6 +63,7 @@ use PayPal\Exception\PayPalConnectionException;
 use PayPal\Api\Transaction as PaypalTransaction;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use App\Model\Coupon;
+use Illuminate\Support\Str;
 
 
 class PaymentHelper
@@ -1192,8 +1193,8 @@ class PaymentHelper
                 $successMessage = __('Your payment have been successfully initiated but needs to await for approval. Please scan the QR code below to complete the payment.');
 
                 // check if suitpay payment code is set and transaction type is deposit
-                if ($transaction->suitpay_payment_code != null 
-                        && $transaction->type === Transaction::DEPOSIT_TYPE 
+                if ($transaction->suitpay_payment_code != null
+                        && $transaction->type === Transaction::DEPOSIT_TYPE
                         || $transaction->type === Transaction::TIP_TYPE 
                         || $transaction->type === Transaction::CHAT_TIP_TYPE
                         || $transaction->type === Transaction::POST_UNLOCK
@@ -1212,11 +1213,34 @@ class PaymentHelper
                 }
 
                 return $this->handleRedirectByTransaction($transaction, $recipient, $errorMessage, $success = false);
-            
+
             }
-            
+
+            if ($transaction->status === Transaction::INITIATED_STATUS && $transaction->payment_provider === Transaction::NOXPAY_PROVIDER) {
+                $successMessage = __('Your payment have been successfully initiated but needs to await for approval. Please scan the QR code below to complete the payment.');
+
+                if ($transaction->noxpay_payment_code != null
+                        && ($transaction->type === Transaction::DEPOSIT_TYPE
+                        || $transaction->type === Transaction::TIP_TYPE
+                        || $transaction->type === Transaction::CHAT_TIP_TYPE
+                        || $transaction->type === Transaction::POST_UNLOCK
+                        || $transaction->type === Transaction::STREAM_ACCESS
+                        || $transaction->type === Transaction::MESSAGE_UNLOCK
+                        || $transaction->type === Transaction::ONE_MONTH_SUBSCRIPTION
+                        || $transaction->type === Transaction::THREE_MONTHS_SUBSCRIPTION
+                        || $transaction->type === Transaction::SIX_MONTHS_SUBSCRIPTION
+                        || $transaction->type === Transaction::YEARLY_SUBSCRIPTION)) {
+
+                    $this->setNoxpayPaymentDataToSession($transaction);
+
+                    return $this->handleRedirectByTransaction($transaction, $recipient, $successMessage, $success = true);
+                }
+
+                return $this->handleRedirectByTransaction($transaction, $recipient, $errorMessage, $success = false);
+            }
+
             return $this->handleRedirectByTransaction($transaction, $recipient, $errorMessage, $success = false);
-            
+
         } else {
             return Redirect::route('feed')
                 ->with('error', $errorMessage);
@@ -1797,7 +1821,7 @@ class PaymentHelper
         return $transaction;
     }
  
-    public function generatePixPaymentTransaction($transaction, $user) 
+    public function generatePixPaymentTransaction($transaction, $user)
     {
         $reference = self::generateSuitPayUniqueTransactionToken($transaction);
 
@@ -1829,6 +1853,54 @@ class PaymentHelper
             $transaction->suitpay_payment_code = $data['paymentCode'];
             $transaction->save();
         }
+    }
+
+    public function generateNoxpayPaymentTransaction($transaction, $user)
+    {
+        $apiKey = $this->getNoxpayApiKey();
+        if (!$apiKey) {
+            throw new \Exception(__('NoxPay is not configured.'));
+        }
+
+        $code = $this->generateNoxpayUniqueTransactionCode($transaction);
+
+        $payload = [
+            'method' => 'PIX',
+            'code' => $code,
+            'amount' => round((float) $transaction->amount, 2),
+            'webhookUrl' => route('noxpay.webhook'),
+            'clientName' => $user->name,
+            'clientDocument' => $user->document ?? null,
+            'clientEmail' => $user->email,
+        ];
+
+        $payload = array_filter($payload, function ($value) {
+            return !is_null($value) && $value !== '';
+        });
+
+        $response = Http::withHeaders([
+            'api-key' => $apiKey,
+            'Accept' => 'application/json',
+        ])->post('https://api2.noxpay.io/payment', $payload);
+
+        if (!$response->successful()) {
+            Log::error('Failed generating NoxPay payment', [
+                'payload' => $payload,
+                'response' => $response->body(),
+            ]);
+            throw new \Exception(__('Failed generating NoxPay payment.'));
+        }
+
+        $data = $response->json();
+
+        $transaction->noxpay_payment_code = data_get($data, 'code', $code);
+        $transaction->noxpay_payment_txid = data_get($data, 'txid', data_get($data, 'transaction.txid'));
+        $transaction->noxpay_qr_code = data_get($data, 'qrCode');
+        $transaction->noxpay_qr_code_text = data_get($data, 'qrCodeText');
+        $transaction->noxpay_payment_url = data_get($data, 'url');
+        $transaction->save();
+
+        $this->setNoxpayPaymentDataToSession($transaction);
     }
 
 
@@ -2040,6 +2112,17 @@ class PaymentHelper
         return $id;
     }
 
+    private function generateNoxpayUniqueTransactionCode($transaction)
+    {
+        do {
+            $code = 'NOX' . Str::upper(Str::random(12));
+        } while (Transaction::query()->where('noxpay_payment_code', $code)->exists());
+
+        $transaction->noxpay_payment_code = $code;
+
+        return $code;
+    }
+
     private function setSuitpayPaymentDataToSession($transaction)
     {
         // collect suitpay payment data
@@ -2055,6 +2138,23 @@ class PaymentHelper
 
         // store suitpay payment data in session
         return Session::put('suitpay_payment_data', $sessionData);
+    }
+
+    private function setNoxpayPaymentDataToSession($transaction)
+    {
+        $sessionData = [
+            'user_id' => Auth::id(),
+            'amount' => $transaction->amount,
+            'currency' => $transaction->currency,
+            'transaction_id' => $transaction->id,
+            'noxpay_payment_code' => $transaction->noxpay_payment_code,
+            'noxpay_payment_txid' => $transaction->noxpay_payment_txid,
+            'noxpay_qr_code' => $transaction->noxpay_qr_code,
+            'noxpay_qr_code_text' => $transaction->noxpay_qr_code_text,
+            'noxpay_payment_url' => $transaction->noxpay_payment_url,
+        ];
+
+        Session::put('noxpay_payment_data', $sessionData);
     }
 
 
@@ -2088,6 +2188,142 @@ class PaymentHelper
         $transaction['subscription_id'] = $subscription['id'];
 
         return $subscription;
+    }
+
+    public function generateNoxpayPaymentSubscriptionByTransaction($transaction)
+    {
+        $existingSubscription = $this->getSubscriptionBySenderAndReceiverAndProvider(
+            $transaction['sender_user_id'],
+            $transaction['recipient_user_id'],
+            Transaction::NOXPAY_PROVIDER
+        );
+
+        if ($existingSubscription != null) {
+            $subscription = $existingSubscription;
+        } else {
+            $subscription = $this->createSubscriptionFromTransaction($transaction);
+        }
+
+        $subscription['amount'] = $transaction['amount'];
+        $subscription['expires_at'] = new \DateTime('+' . PaymentsServiceProvider::getSubscriptionMonthlyIntervalByTransactionType($transaction->type) . ' months', new \DateTimeZone('UTC'));
+        $subscription['status'] = Subscription::ACTIVE_STATUS;
+        $transaction['status'] = Transaction::APPROVED_STATUS;
+
+        $subscription->save();
+
+        if ($existingSubscription === null) {
+            NotificationServiceProvider::createNewSubscriptionNotification($subscription);
+        }
+        $transaction['subscription_id'] = $subscription['id'];
+
+        return $subscription;
+    }
+
+    private function getNoxpayApiKey(): ?string
+    {
+        $apiKey = getSetting('payments.noxpay_api_key');
+
+        if (!$apiKey) {
+            $apiKey = config('services.noxpay.api_key');
+        }
+
+        return $apiKey;
+    }
+
+    public function updateTransactionFromNoxpayPayload(array $payload)
+    {
+        $transaction = null;
+
+        if (isset($payload['code'])) {
+            $transaction = Transaction::query()->where('noxpay_payment_code', $payload['code'])->first();
+        }
+
+        if ($transaction === null && isset($payload['txid'])) {
+            $transaction = Transaction::query()->where('noxpay_payment_txid', $payload['txid'])->first();
+        }
+
+        if ($transaction === null && isset($payload['transaction']['txid'])) {
+            $transaction = Transaction::query()->where('noxpay_payment_txid', $payload['transaction']['txid'])->first();
+        }
+
+        if ($transaction === null) {
+            Log::warning('NoxPay transaction not found', ['payload' => $payload]);
+            return null;
+        }
+
+        $transaction->noxpay_payment_txid = data_get($payload, 'txid', data_get($payload, 'transaction.txid', $transaction->noxpay_payment_txid));
+        $transaction->noxpay_payment_code = data_get($payload, 'code', $transaction->noxpay_payment_code);
+        $transaction->noxpay_qr_code = data_get($payload, 'qrCode', $transaction->noxpay_qr_code);
+        $transaction->noxpay_qr_code_text = data_get($payload, 'qrCodeText', $transaction->noxpay_qr_code_text);
+        $transaction->noxpay_payment_url = data_get($payload, 'url', $transaction->noxpay_payment_url);
+
+        $status = strtoupper((string) data_get($payload, 'status', data_get($payload, 'transaction.status', '')));
+
+        if (in_array($status, ['PAID', 'PAID_OUT', 'APPROVED', 'COMPLETED', 'CONFIRMED'])) {
+            if ($transaction->status !== Transaction::APPROVED_STATUS) {
+                $transaction->status = Transaction::APPROVED_STATUS;
+                $transaction->save();
+
+                Session::forget('noxpay_payment_data');
+
+                $this->creditReceiverForTransaction($transaction);
+                NotificationServiceProvider::createTipNotificationByTransaction($transaction);
+                NotificationServiceProvider::createPPVNotificationByTransaction($transaction);
+
+                if ($this->isSubscriptionPayment($transaction->type)) {
+                    $this->generateNoxpayPaymentSubscriptionByTransaction($transaction);
+                }
+            } else {
+                $transaction->save();
+            }
+        } elseif (in_array($status, ['CANCELED', 'CANCELLED', 'FAILED', 'EXPIRED'])) {
+            $transaction->status = Transaction::CANCELED_STATUS;
+            $transaction->save();
+            Session::forget('noxpay_payment_data');
+        } elseif (!empty($status)) {
+            $transaction->status = Transaction::PENDING_STATUS;
+            $transaction->save();
+            $this->setNoxpayPaymentDataToSession($transaction);
+        } else {
+            $transaction->save();
+        }
+
+        return $transaction;
+    }
+
+    public function checkAndUpdateNoxpayTransaction($identifier)
+    {
+        $apiKey = $this->getNoxpayApiKey();
+
+        if (!$apiKey || empty($identifier)) {
+            return null;
+        }
+
+        $response = Http::withHeaders([
+            'api-key' => $apiKey,
+            'Accept' => 'application/json',
+        ])->get('https://api2.noxpay.io/payment/' . urlencode($identifier));
+
+        if (!$response->successful()) {
+            Log::error('Failed to fetch NoxPay payment status', [
+                'identifier' => $identifier,
+                'response' => $response->body(),
+            ]);
+
+            return null;
+        }
+
+        $data = $response->json();
+
+        if (isset($data['payment']) && is_array($data['payment'])) {
+            $data = $data['payment'];
+        }
+
+        if (isset($data['data']) && is_array($data['data']) && isset($data['data']['code'])) {
+            $data = $data['data'];
+        }
+
+        return $this->updateTransactionFromNoxpayPayload($data);
     }
     public function getCouponDetails($couponCode)
     {

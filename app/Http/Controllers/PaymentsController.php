@@ -183,6 +183,8 @@ class PaymentsController extends Controller
                         $redirectLink = $this->paymentHandler->generateMercadoTransaction($transaction);
                     } elseif($transaction['payment_provider'] == Transaction::SUITPAY_PROVIDER) {
                         $this->paymentHandler->generatePixPaymentTransaction($transaction, Auth::user());
+                    } elseif($transaction['payment_provider'] == Transaction::NOXPAY_PROVIDER) {
+                        $this->paymentHandler->generateNoxpayPaymentTransaction($transaction, Auth::user());
                     }
                     break;
                 case Transaction::DEPOSIT_TYPE:
@@ -201,6 +203,8 @@ class PaymentsController extends Controller
                         $redirectLink = $this->paymentHandler->generateMercadoTransaction($transaction);
                     }elseif($transaction['payment_provider'] == Transaction::SUITPAY_PROVIDER) {
                         $this->paymentHandler->generatePixPaymentTransaction($transaction, Auth::user());
+                    }elseif($transaction['payment_provider'] == Transaction::NOXPAY_PROVIDER) {
+                        $this->paymentHandler->generateNoxpayPaymentTransaction($transaction, Auth::user());
                     }
                     break;
                 case Transaction::ONE_MONTH_SUBSCRIPTION:
@@ -230,6 +234,8 @@ class PaymentsController extends Controller
                         $redirectLink = $this->paymentHandler->generateCCBillSubscriptionPayment($transaction);
                     } elseif ($transaction['payment_provider'] == Transaction::SUITPAY_PROVIDER) {
                         $this->paymentHandler->generatePixPaymentTransaction($transaction, Auth::user());
+                    } elseif ($transaction['payment_provider'] == Transaction::NOXPAY_PROVIDER) {
+                        $this->paymentHandler->generateNoxpayPaymentTransaction($transaction, Auth::user());
                     }
                     break;
                 default:
@@ -968,7 +974,7 @@ class PaymentsController extends Controller
     /**
      * Handles Pix payment execution
      */
-    public function verifySuitpayTransaction(Request $request) 
+    public function verifySuitpayTransaction(Request $request)
     {
         // get the response from the request
         $response = file_get_contents('php://input');
@@ -1011,6 +1017,38 @@ class PaymentsController extends Controller
         if (session()->has('suitpay_payment_data')) {
             session()->forget('suitpay_payment_data');
         }
+    }
+
+    public function verifyNoxpayTransaction(Request $request)
+    {
+        $payload = $request->all();
+        Log::info('NoxPay payload received.', ['payload' => $payload]);
+
+        $transaction = $this->paymentHandler->updateTransactionFromNoxpayPayload($payload);
+
+        return response()->json(['status' => 'ok']);
+    }
+
+    public function checkAndUpdateNoxpayTransaction(Request $request)
+    {
+        $identifier = $request->get('code', $request->get('txid'));
+
+        $transaction = $this->paymentHandler->checkAndUpdateNoxpayTransaction($identifier);
+
+        if ($transaction) {
+            return $this->paymentHandler->redirectByTransaction($transaction);
+        }
+
+        return Redirect::route('feed')->with('error', __('Payment not found.'));
+    }
+
+    public function destroyNoxpaySession(Request $request)
+    {
+        if (session()->has('noxpay_payment_data')) {
+            session()->forget('noxpay_payment_data');
+        }
+
+        return response()->json(['status' => 'cleared']);
     }
 }
 

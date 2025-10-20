@@ -257,6 +257,18 @@
                                                     <li>IPN Callback URL: <code>{{route('nowPayments.payment.update')}}</code></li>
                                                 </ul>
                                             </div>
+
+                                            <div class="alert alert-info alert-dismissible mb-1 payments-info-noxpay d-none">
+                                                <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                                                <div class="info-label"><div class="icon voyager-info-circled"></div> Configure your NoxPay integration using the following endpoints:</div>
+                                                <ul>
+                                                    <li>Webhook URL: <code>{{route('noxpay.webhook')}}</code></li>
+                                                    <li>Status check URL: <code>{{route('checkNoxpayPaymentStatus')}}</code></li>
+                                                </ul>
+                                                <div class="mt-05">
+                                                    {{__('Remember to add your API key in the fields below before enabling this gateway.')}}
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
 
@@ -306,6 +318,7 @@
                                                 <option value="offline">Offline payments</option>
                                                 <option value="paystack">Paystack</option>
                                                 <option value="mercado">MercadoPago</option>
+                                                <option value="noxpay">NoxPay</option>
                                             </select>
 
                                         </div>

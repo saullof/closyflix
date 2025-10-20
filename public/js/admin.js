@@ -345,6 +345,9 @@ var Admin = {
         case 'mercado':
             Admin.togglePaymentsSubCategory('mercado');
             break;
+        case 'noxpay':
+            Admin.togglePaymentsSubCategory('noxpay');
+            break;
         }
         $('#payments.driver').val(type);
     },
@@ -394,6 +397,7 @@ var Admin = {
             'payments-info-paystack',
             'payments-info-mercado',
             'payments-info-nowpayments',
+            'payments-info-noxpay',
         ];
         for(let i = 0; i < tabs.length; i++){
             $('.'+tabs[i]).addClass('d-none');

@@ -283,6 +283,14 @@ $(function(){
                                     </div>
                                 @endif
 
+                                @if((getSetting('payments.noxpay_api_key') || config('services.noxpay.api_key')) && !getSetting('payments.noxpay_checkout_disabled'))
+                                    <div class="p-1 col-6 col-md-3 d-none noxpay-payment-method">
+                                        <div class="radio mx-auto noxpay-payment-provider checkout-payment-provider d-flex align-items-center justify-content-center" data-value="noxpay">
+                                            <img src="{{asset('/img/logos/noxpay.svg')}}" alt="NoxPay">
+                                        </div>
+                                    </div>
+                                @endif
+
                                 <div class="credit-payment-method p-1 col-6 col-md-3 col-lg-3 col-md-3" {!! !Auth::check() || Auth::user()->wallet->total <= 0 ? 'data-toggle="tooltip" data-placement="right"' : '' !!} title="{{__('You can use the wallet deposit page to add credit.')}}">
                                     <div class="radio mx-auto credit-payment-provider checkout-payment-provider d-flex align-items-center justify-content-center" data-value="credit">
                                         <div class="credit-provider-text">
@@ -336,6 +344,48 @@ $(function(){
 
                             if ($transaction->created_at->diffInMinutes(now()) > 2) {
                                 Session::forget('suitpay_payment_data');
+                            }
+                        }
+                    @endphp
+                @endif
+            </div>
+        </div>
+    </div>
+</div>
+
+
+{{--  noxpay qrcode  --}}
+<div class="modal fade" tabindex="-1" role="dialog" id="noxpayQrcodeModal">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">{{ __('Verify Payment') }}</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="{{__('Close')}}">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                @if (Session::has('noxpay_payment_data') && Session::get('noxpay_payment_data')['user_id'] == Auth::user()->id)
+                    @php
+                        $noxpayData = Session::get('noxpay_payment_data');
+                    @endphp
+                    <div class="mt-4 text-center">
+                        @if (!empty($noxpayData['noxpay_qr_code']))
+                            <img src="data:image/png;base64,{{$noxpayData['noxpay_qr_code']}}" alt="NoxPay QR" style="max-width: 140px;">
+                        @elseif (!empty($noxpayData['noxpay_qr_code_text']))
+                            {!! QrCode::size(140)->generate($noxpayData['noxpay_qr_code_text']) !!}
+                        @endif
+                        <p>
+                            <a href="javascript:void(0)" onclick="copyNoxpayPaymentCode('{{ $noxpayData['noxpay_qr_code_text'] ?? $noxpayData['noxpay_payment_code'] }}')" data-noxpay-payment-code="{{ $noxpayData['noxpay_qr_code_text'] ?? $noxpayData['noxpay_payment_code'] }}" class="btn btn-link  mr-0 mt-4">{{__('Scan the QR Code Or Click to copy code & Verify Payment')}}</a>
+                        </p>
+                    </div>
+
+                    @php
+                        if (Session::has('noxpay_payment_data')) {
+                            $transaction = \App\Model\Transaction::where('id', $noxpayData['transaction_id'])->first();
+
+                            if ($transaction && $transaction->created_at->diffInMinutes(now()) > 2) {
+                                Session::forget('noxpay_payment_data');
                             }
                         }
                     @endphp

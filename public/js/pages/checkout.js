@@ -91,6 +91,7 @@ function openCheckoutInline(button) {
         let showPaypalProvider = !app.paypalRecurringDisabled;
         let showCCBillProvider = !app.ccBillRecurringDisabled;
         let showCreditProvider = !app.localWalletRecurringDisabled;
+        let showNoxpayProvider = !app.noxpayRecurringDisabled;
 
         // Ajusta para assinaturas com duração diferente
         if (showCCBillProvider) {
@@ -110,6 +111,7 @@ function openCheckoutInline(button) {
         checkout.togglePaymentProvider(showStripeProvider, '.stripe-payment-method');
         checkout.togglePaymentProvider(showPaypalProvider, '.paypal-payment-method');
         checkout.togglePaymentProvider(showPaypalProvider, '.suitpay-payment-method');
+        checkout.togglePaymentProvider(showNoxpayProvider, '.noxpay-payment-method');
         checkout.togglePaymentProvider(showCreditProvider, '.credit-payment-method');
 
         $('.payment-body .checkout-amount-input').addClass('d-none');
@@ -249,6 +251,7 @@ $(function () {
             let showPaypalProvider = !app.paypalRecurringDisabled;
             let showCCBillProvider = !app.ccBillRecurringDisabled;
             let showCreditProvider = !app.localWalletRecurringDisabled;
+            let showNoxpayProvider = !app.noxpayRecurringDisabled;
 
             // handles ccbill provider as they only allow 30 or 90 days subscriptions
             if(showCCBillProvider){
@@ -268,6 +271,7 @@ $(function () {
             checkout.togglePaymentProvider(showStripeProvider, '.stripe-payment-method');
             checkout.togglePaymentProvider(showPaypalProvider, '.paypal-payment-method');
             checkout.togglePaymentProvider(showPaypalProvider, '.suitpay-payment-method');
+            checkout.togglePaymentProvider(showNoxpayProvider, '.noxpay-payment-method');
             checkout.togglePaymentProvider(showCreditProvider, '.credit-payment-method');
 
             $('.payment-body .checkout-amount-input').addClass('d-none');
@@ -412,6 +416,7 @@ $(function () {
             checkout.togglePaymentProvider(showStripeProvider, '.stripe-payment-method');
             checkout.togglePaymentProvider(showPaypalProvider, '.paypal-payment-method');
             checkout.togglePaymentProvider(showPaypalProvider, '.suitpay-payment-method');
+            checkout.togglePaymentProvider(showNoxpayProvider, '.noxpay-payment-method');
             checkout.togglePaymentProvider(showCreditProvider, '.credit-payment-method');
 
             $('.payment-body .checkout-amount-input').addClass('d-none');
@@ -491,7 +496,7 @@ $(function () {
  * Checkout class
  */
 var checkout = {
-    allowedPaymentProcessors: ['stripe', 'paypal', 'credit', 'coinbase', 'nowpayments', 'ccbill', 'paystack', 'oxxo', 'mercado', 'suitpay'],
+    allowedPaymentProcessors: ['stripe', 'paypal', 'credit', 'coinbase', 'nowpayments', 'ccbill', 'paystack', 'oxxo', 'mercado', 'suitpay', 'noxpay'],
     paymentData: {},
     oneTimePaymentProcessorClasses: [
         '.nowpayments-payment-method',
@@ -503,6 +508,7 @@ var checkout = {
         '.oxxo-payment-method',
         '.mercado-payment-method',
         '.suitpay-payment-method',
+        '.noxpay-payment-method',
         '.credit-payment-method'
     ],
 
@@ -670,6 +676,7 @@ var checkout = {
         const oxxoProvider = $('.oxxo-payment-provider').hasClass('selected');
         const mercadoProvider = $('.mercado-payment-provider').hasClass('selected');
         const suitpayProvider = $('.suitpay-payment-provider').hasClass('selected');
+        const noxpayProvider = $('.noxpay-payment-provider').hasClass('selected');
         let val = null;
         if (paypalProvider) {
             val = 'paypal';
@@ -691,6 +698,8 @@ var checkout = {
             val = 'mercado';
         } else if(suitpayProvider){
             val = 'suitpay';
+        } else if(noxpayProvider){
+            val = 'noxpay';
         }
         if (val) {
             checkout.paymentData.provider = val;
@@ -1072,6 +1081,12 @@ function copyToClipboard(text) {
 
  function copySuitpayPaymentCode(paymentCode) {
    // copy paymentCode to clipboard
+   copyToClipboard(paymentCode);
+
+   alert('Payment code copied to clipboard!')
+ }
+
+ function copyNoxpayPaymentCode(paymentCode) {
    copyToClipboard(paymentCode);
 
    alert('Payment code copied to clipboard!')

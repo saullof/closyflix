@@ -92,6 +92,56 @@
             console.log('Session suitpay_payment_data não existe.');
         @endif
     </script>
+    <script>
+        console.log('Verificando dados da sessão para NoxPay...');
+        @if (Session::has('noxpay_payment_data'))
+            console.log('Session noxpay_payment_data:', {!! json_encode(Session::get('noxpay_payment_data')) !!});
+            @if (Session::get('noxpay_payment_data')['user_id'] == Auth::user()->id)
+                $(document).ready(function() {
+                    function closeAndReloadNoxpay() {
+                        $('#noxpayQrcodeModal').modal('hide');
+                        location.reload(true);
+                    }
+
+                    if (localStorage.getItem('noxpayModalDisplayed') !== 'true') {
+                        $('#noxpayQrcodeModal').modal('show');
+
+                        $('#noxpayQrcodeModal').on('hidden.bs.modal', function () {
+                            $.ajax({
+                                url: '/noxpay/destroy-session',
+                                type: 'POST',
+                                data: { _token: '{{ csrf_token() }}' },
+                                complete: function() {
+                                    closeAndReloadNoxpay();
+                                }
+                            });
+                        });
+
+                        setTimeout(function() {
+                            $.ajax({
+                                url: '/noxpay/destroy-session',
+                                type: 'POST',
+                                data: { _token: '{{ csrf_token() }}' },
+                                success: function(response) {
+                                    if (response && response.status === 'PAID_OUT') {
+                                        localStorage.setItem('noxpayModalDisplayed', 'true');
+                                    }
+                                    closeAndReloadNoxpay();
+                                },
+                                error: function() {
+                                    closeAndReloadNoxpay();
+                                }
+                            });
+                        }, 30000);
+                    }
+                });
+            @else
+                console.log('User ID incompatível para NoxPay.');
+            @endif
+        @else
+            console.log('Session noxpay_payment_data não existe.');
+        @endif
+    </script>
 <style>
 .instagram-link-container {
     display: flex;

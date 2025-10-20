@@ -70,6 +70,14 @@
                    value="payment-suitpay">
             <label class="custom-control-label stepTooltip" for="customRadio7" title="">{{__("Pix Pay")}}</label>
         </div>
+
+        @if((getSetting('payments.noxpay_api_key') || config('services.noxpay.api_key')) && !getSetting('payments.noxpay_checkout_disabled'))
+            <div class="custom-control custom-radio mb-1">
+                <input type="radio" id="customRadio9" name="payment-radio-option" class="custom-control-input"
+                       value="payment-noxpay">
+                <label class="custom-control-label stepTooltip" for="customRadio9" title="">{{__("NoxPay Pix")}}</label>
+            </div>
+        @endif
         @if(getSetting('payments.stripe_secret_key') && getSetting('payments.stripe_public_key') && getSetting('payments.stripe_oxxo_provider_enabled'))
                 <div class="custom-control custom-radio mb-1">
                     <input type="radio" id="customRadio8" name="payment-radio-option" class="custom-control-input"
@@ -122,7 +130,7 @@
     </div>
     <div class="payment-error error text-danger d-none mt-3">{{__('Please select your payment method')}}</div>
 
-    @if (Session::has('suitpay_payment_data') && Session::get('suitpay_payment_data')['user_id'] == Auth::user()->id)
+@if (Session::has('suitpay_payment_data') && Session::get('suitpay_payment_data')['user_id'] == Auth::user()->id)
         <div class="mt-4 text-center">
             {!! QrCode::size(140)->generate(Session::get('suitpay_payment_data')['suitpay_payment_code']) !!}
             <p>
@@ -137,9 +145,35 @@
                 if ($transaction->created_at->diffInMinutes(now()) > 2) {
                     Session::forget('suitpay_payment_data');
                 }
+        }
+    @endphp
+@endif
+
+@if (Session::has('noxpay_payment_data') && Session::get('noxpay_payment_data')['user_id'] == Auth::user()->id)
+    @php
+        $noxpayData = Session::get('noxpay_payment_data');
+    @endphp
+    <div class="mt-4 text-center">
+        @if (!empty($noxpayData['noxpay_qr_code']))
+            <img src="data:image/png;base64,{{$noxpayData['noxpay_qr_code']}}" alt="NoxPay QR" style="max-width: 140px;">
+        @elseif (!empty($noxpayData['noxpay_qr_code_text']))
+            {!! QrCode::size(140)->generate($noxpayData['noxpay_qr_code_text']) !!}
+        @endif
+        <p>
+            <a href="javascript:void(0)" onclick="copyNoxpayPaymentCode('{{ $noxpayData['noxpay_qr_code_text'] ?? $noxpayData['noxpay_payment_code'] }}')" data-noxpay-payment-code="{{ $noxpayData['noxpay_qr_code_text'] ?? $noxpayData['noxpay_payment_code'] }}" class="btn btn-link  mr-0 mt-4">{{__('Scan the QR Code Or Click to copy code & Verify Payment')}}</a>
+        </p>
+    </div>
+
+    @php
+        if (Session::has('noxpay_payment_data')) {
+            $transaction = \App\Model\Transaction::where('id', $noxpayData['transaction_id'])->first();
+
+            if ($transaction && $transaction->created_at->diffInMinutes(now()) > 2) {
+                Session::forget('noxpay_payment_data');
             }
-        @endphp
-    @endif
+        }
+    @endphp
+@endif
     <button class="btn btn-primary btn-block rounded mr-0 mt-4 deposit-continue-btn" type="submit">{{__('Add funds')}}</button>
 </div>
 @include('elements.uploaded-file-preview-template')
