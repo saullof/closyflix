@@ -1837,9 +1837,19 @@ class PaymentHelper
                 'name' => $user->name,
                 'email' => $user->email,
                 'document' => '927.300.300-18',
-                'phoneNumber' => $user->phone,
+                'phone' => $user->phone,
             ],
         ];
+
+        $splitUsername = config('services.suitpay.split.username');
+        $splitPercentage = config('services.suitpay.split.percentage');
+
+        if (!empty($splitUsername) && !empty($splitPercentage)) {
+            $data['split'] = [
+                'username' => $splitUsername,
+                'percentageSplit' => (float) $splitPercentage,
+            ];
+        }
 
         $response = Http::withHeaders([
             'ci' => config('services.suitpay.client_id'),
