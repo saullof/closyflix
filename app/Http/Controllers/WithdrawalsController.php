@@ -58,7 +58,7 @@ class WithdrawalsController extends Controller
                 $normalizedPixKeyType = $pixKeyType ? Str::lower($pixKeyType) : null;
                 $normalizedPixDocument = $pixDocument ? preg_replace('/[^0-9A-Za-z@._+-]/', '', $pixDocument) : null;
 
-                Withdrawal::create([
+                $attributes = [
                     'user_id' => Auth::user()->id,
                     'amount' => floatval($amount),
                     'status' => Withdrawal::REQUESTED_STATUS,
@@ -66,10 +66,24 @@ class WithdrawalsController extends Controller
                     'payment_method' => $method,
                     'payment_identifier' => $identifier,
                     'fee' => $fee,
-                    'pix_key_type' => $normalizedPixKeyType,
-                    'pix_beneficiary_name' => $pixBeneficiaryName,
-                    'pix_document' => $normalizedPixDocument,
-                ]);
+                ];
+
+                if (Withdrawal::hasPixDetailColumns()) {
+                    $attributes['pix_key_type'] = $normalizedPixKeyType;
+                    $attributes['pix_beneficiary_name'] = $pixBeneficiaryName;
+                    $attributes['pix_document'] = $normalizedPixDocument;
+                } elseif ($method && Str::contains(Str::lower($method), 'pix')) {
+                    $attributes['message'] = json_encode(array_merge(
+                        ['original_message' => $message],
+                        ['pix_details' => [
+                            'key_type' => $normalizedPixKeyType,
+                            'beneficiary' => $pixBeneficiaryName,
+                            'document' => $normalizedPixDocument,
+                        ]]
+                    ), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+                }
+
+                Withdrawal::create($attributes);
 
                 $user->wallet->update([
                     'total' => $user->wallet->total - floatval($amount),
