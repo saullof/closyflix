@@ -17,6 +17,7 @@ class SuitpayCashoutController extends Controller
     public function index()
     {
         $hasPixColumns = $this->hasSuitpayPixColumns();
+        $hasTrackingColumns = $this->hasSuitpayTrackingColumns();
 
         $withdrawalsQuery = Withdrawal::query()
             ->with('user')
@@ -36,18 +37,16 @@ class SuitpayCashoutController extends Controller
         return Voyager::view('vendor.voyager.suitpay.cashouts.index', [
             'withdrawals' => $withdrawals,
             'missingPixColumns' => ! $hasPixColumns,
+            'missingTrackingColumns' => ! $hasTrackingColumns,
         ]);
     }
 
     public function store(Request $request, Withdrawal $withdrawal)
     {
-        if (! $this->hasSuitpayPixColumns()) {
-            return back()->withErrors([
-                'cashout' => __('Execute as migrações pendentes antes de processar cash-outs pela SuitPay.'),
-            ]);
-        }
-
         $this->ensureSuitpayConfigured();
+
+        $hasPixColumns = $this->hasSuitpayPixColumns();
+        $hasTrackingColumns = $this->hasSuitpayTrackingColumns();
 
         $validated = $request->validate([
             'payment_identifier' => 'required|string',
@@ -67,9 +66,12 @@ class SuitpayCashoutController extends Controller
 
         $sanitizedDocument = $this->sanitizePixDocument($validated['pix_document'] ?? null);
         $withdrawal->payment_identifier = $validated['payment_identifier'];
-        $withdrawal->pix_key_type = $normalizedType;
-        $withdrawal->pix_beneficiary_name = $validated['pix_beneficiary_name'];
-        $withdrawal->pix_document = $sanitizedDocument;
+
+        if ($hasPixColumns) {
+            $withdrawal->pix_key_type = $normalizedType;
+            $withdrawal->pix_beneficiary_name = $validated['pix_beneficiary_name'];
+            $withdrawal->pix_document = $sanitizedDocument;
+        }
 
         $payload = [
             'value' => round((float) $withdrawal->amount, 2),
@@ -83,15 +85,13 @@ class SuitpayCashoutController extends Controller
             $payload['documentValidation'] = $sanitizedDocument;
         }
 
-        $withdrawal->suitpay_cashout_payload = $payload;
-        $withdrawal->suitpay_cashout_requested_at = Carbon::now();
-        $withdrawal->suitpay_cashout_error = null;
-
-        if (! $this->hasSuitpayTrackingColumns()) {
-            return back()->withErrors([
-                'cashout' => __('Execute as migrações pendentes antes de processar cash-outs pela SuitPay.'),
-            ])->withInput();
+        if ($hasTrackingColumns) {
+            $withdrawal->suitpay_cashout_payload = $payload;
+            $withdrawal->suitpay_cashout_requested_at = Carbon::now();
+            $withdrawal->suitpay_cashout_error = null;
         }
+
+        $withdrawal->save();
 
         $response = Http::withHeaders([
             'ci' => config('services.suitpay.client_id'),
@@ -99,13 +99,21 @@ class SuitpayCashoutController extends Controller
         ])->post('https://ws.suitpay.app/api/v1/gateway/pix-payment', $payload);
 
         if ($response->failed()) {
-            $withdrawal->suitpay_cashout_status = 'ERROR';
-            $withdrawal->suitpay_cashout_response = ['body' => $response->body(), 'status' => $response->status()];
-            $withdrawal->suitpay_cashout_error = $response->json('message', $response->body());
-            $withdrawal->save();
+            if ($hasTrackingColumns) {
+                $withdrawal->suitpay_cashout_status = 'ERROR';
+                $withdrawal->suitpay_cashout_response = ['body' => $response->body(), 'status' => $response->status()];
+                $withdrawal->suitpay_cashout_error = $response->json('message', $response->body());
+                $withdrawal->save();
+            } else {
+                Log::warning('SuitPay cash-out response could not be persisted because tracking columns are missing.', [
+                    'withdrawal_id' => $withdrawal->id,
+                    'status' => $response->status(),
+                    'body' => $response->body(),
+                ]);
+            }
 
             return back()->withErrors([
-                'cashout' => __('Falha ao solicitar cash-out na SuitPay: :error', ['error' => $withdrawal->suitpay_cashout_error]),
+                'cashout' => __('Falha ao solicitar cash-out na SuitPay: :error', ['error' => $withdrawal->suitpay_cashout_error ?? $response->body()]),
             ])->withInput();
         }
 
@@ -113,16 +121,29 @@ class SuitpayCashoutController extends Controller
         $cashoutId = Arr::get($data, 'idTransaction');
         $cashoutStatus = Arr::get($data, 'response');
 
-        $withdrawal->suitpay_cashout_id = $cashoutId;
-        $withdrawal->suitpay_cashout_status = $cashoutStatus;
-        $withdrawal->suitpay_cashout_response = $data;
-        $withdrawal->save();
+        if ($hasTrackingColumns) {
+            $withdrawal->suitpay_cashout_id = $cashoutId;
+            $withdrawal->suitpay_cashout_status = $cashoutStatus;
+            $withdrawal->suitpay_cashout_response = $data;
+            $withdrawal->save();
+        } else {
+            Log::info('SuitPay cash-out processed without persistence columns', [
+                'withdrawal_id' => $withdrawal->id,
+                'response' => $data,
+            ]);
+        }
 
-        return back()->with([
+        $flashData = [
             'suitpay_cashout_success' => __('Cash-out enviado para a SuitPay com sucesso. ID da transação: :id', [
                 'id' => $cashoutId ?? $withdrawal->suitpay_cashout_id ?? __('não informado'),
             ]),
-        ]);
+        ];
+
+        if (! $hasPixColumns || ! $hasTrackingColumns) {
+            $flashData['suitpay_cashout_warning'] = __('Cash-out enviado, mas ainda existem migrações pendentes para armazenar todos os dados da SuitPay. Execute as migrações assim que possível.');
+        }
+
+        return back()->with($flashData);
     }
 
     public function webhook(Request $request)
@@ -150,21 +171,38 @@ class SuitpayCashoutController extends Controller
         $status = $payload['statusTransaction'] ?? $payload['response'] ?? null;
         $normalizedStatus = $status ? Str::upper($status) : null;
 
-        $withdrawal->suitpay_cashout_status = $status;
-        $withdrawal->suitpay_cashout_response = $payload;
+        $hasTrackingColumns = $this->hasSuitpayTrackingColumns();
+
+        if ($hasTrackingColumns) {
+            $withdrawal->suitpay_cashout_status = $status;
+            $withdrawal->suitpay_cashout_response = $payload;
+        } else {
+            Log::info('SuitPay cash-out webhook received without tracking columns', [
+                'withdrawal_id' => $withdrawal->id,
+                'status' => $status,
+            ]);
+        }
 
         if ($normalizedStatus && in_array($normalizedStatus, ['PAID_OUT', 'PAID', 'OK'], true)) {
             if ($withdrawal->status !== Withdrawal::APPROVED_STATUS) {
                 $withdrawal->status = Withdrawal::APPROVED_STATUS;
             }
 
-            if (! $withdrawal->suitpay_cashout_processed_at) {
+            if ($hasTrackingColumns && ! $withdrawal->suitpay_cashout_processed_at) {
                 $withdrawal->suitpay_cashout_processed_at = Carbon::now();
             }
         }
 
         if ($normalizedStatus && in_array($normalizedStatus, ['NO_FUNDS', 'ACCOUNT_DOCUMENTS_NOT_VALIDATED', 'PIX_KEY_NOT_FOUND', 'DOCUMENT_VALIDATE', 'ERROR'], true)) {
-            $withdrawal->suitpay_cashout_error = $payload['message'] ?? $normalizedStatus;
+            if ($hasTrackingColumns) {
+                $withdrawal->suitpay_cashout_error = $payload['message'] ?? $normalizedStatus;
+            } else {
+                Log::warning('SuitPay cash-out error received but could not be persisted without tracking columns.', [
+                    'withdrawal_id' => $withdrawal->id,
+                    'status' => $normalizedStatus,
+                    'message' => $payload['message'] ?? null,
+                ]);
+            }
         }
 
         $withdrawal->save();

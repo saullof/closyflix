@@ -16,6 +16,12 @@
             </div>
         @endif
 
+        @if(session('suitpay_cashout_warning'))
+            <div class="alert alert-warning">
+                {{ session('suitpay_cashout_warning') }}
+            </div>
+        @endif
+
         @if($errors->any())
             <div class="alert alert-danger">
                 <ul class="mb-0">
@@ -29,6 +35,12 @@
         @if(!empty($missingPixColumns))
             <div class="alert alert-warning">
                 {{ __('A tabela de saques ainda não possui as colunas necessárias para os dados de PIX. Execute as migrações pendentes antes de utilizar este painel.') }}
+            </div>
+        @endif
+
+        @if(!empty($missingTrackingColumns))
+            <div class="alert alert-info">
+                {{ __('Os campos de rastreamento da SuitPay não estão disponíveis neste banco de dados. Os retornos e logs de cash-out serão limitados até que as migrações sejam executadas.') }}
             </div>
         @endif
 
