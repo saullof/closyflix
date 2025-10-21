@@ -252,7 +252,7 @@
 
                                             <div class="alert alert-info alert-dismissible mb-1 payments-info-nowpayments d-none">
                                                 <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-                                                <div class="info-label"><div class="icon voyager-info-circled"></div> In order to use NowPayments as payment provider you'll need the following endpoint:</div>
+                                                <div class="info-label"><div class="icon voyager-info-circled"></div> In order to use Suitpay as payment provider you'll need the following endpoint:</div>
                                                 <ul>
                                                     <li>IPN Callback URL: <code>{{route('nowPayments.payment.update')}}</code></li>
                                                 </ul>
@@ -313,7 +313,7 @@
                                                 <option value="stripe">Stripe</option>
                                                 <option value="paypal">Paypal</option>
                                                 <option value="coinbase">Coinbase</option>
-                                                <option value="nowpayments">NowPayments</option>
+                                                <option value="nowpayments">Suitpay</option>
                                                 <option value="ccbill">CCBill</option>
                                                 <option value="offline">Offline payments</option>
                                                 <option value="paystack">Paystack</option>
