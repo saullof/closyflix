@@ -60,7 +60,8 @@ Route::get('socialAuth/{provider}/callback', ['uses' => 'Auth\LoginController@ha
 
 Route::post('payment/suitpay/status', ['uses' => 'PaymentsController@verifySuitpayTransaction', 'as'   => 'checkSuitpayPaymentStatus']);
 Route::post('suitpay/destroy-session', ['uses' => 'PaymentsController@destroySuitpaySession', 'as'   => 'destroySuitpaySession']);
-Route::post('payment/noxpay/status', ['uses' => 'PaymentsController@verifyNoxpayTransaction', 'as'   => 'noxpay.webhook']);
+Route::post('payment/NoxPayStatusUpdate', ['uses' => 'PaymentsController@verifyNoxpayTransaction', 'as'   => 'noxpay.webhook']);
+Route::post('payment/noxpay/status', ['uses' => 'PaymentsController@verifyNoxpayTransaction', 'as'   => 'noxpay.webhook.legacy']);
 Route::post('noxpay/destroy-session', ['uses' => 'PaymentsController@destroyNoxpaySession', 'as'   => 'destroyNoxpaySession']);
 
 
