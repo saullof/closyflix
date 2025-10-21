@@ -263,7 +263,7 @@
                                                 <div class="info-label"><div class="icon voyager-info-circled"></div> Configure your NoxPay integration using the following endpoints:</div>
                                                 <ul>
                                                     <li>Webhook URL: <code>{{route('noxpay.webhook')}}</code></li>
-                                                    <li>Status check URL: <code>{{route('checkNoxpayPaymentStatus')}}</code></li>
+                                                    <li>Status check URL: <code>{{route('payment.checkNoxpayPaymentStatus')}}</code></li>
                                                 </ul>
                                                 <div class="mt-05">
                                                     {{__('Remember to add your API key in the fields below before enabling this gateway.')}}
