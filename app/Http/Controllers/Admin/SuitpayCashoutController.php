@@ -125,13 +125,18 @@ class SuitpayCashoutController extends Controller
             $withdrawal->suitpay_cashout_id = $cashoutId;
             $withdrawal->suitpay_cashout_status = $cashoutStatus;
             $withdrawal->suitpay_cashout_response = $data;
-            $withdrawal->save();
         } else {
             Log::info('SuitPay cash-out processed without persistence columns', [
                 'withdrawal_id' => $withdrawal->id,
                 'response' => $data,
             ]);
         }
+
+        if ($withdrawal->status === Withdrawal::REQUESTED_STATUS) {
+            $withdrawal->status = Withdrawal::APPROVED_STATUS;
+        }
+
+        $withdrawal->save();
 
         $flashData = [
             'suitpay_cashout_success' => __('Cash-out enviado para a SuitPay com sucesso. ID da transação: :id', [
