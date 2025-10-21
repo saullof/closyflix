@@ -10,6 +10,7 @@ use App\Providers\PaymentsServiceProvider;
 use App\Providers\SettingsServiceProvider;
 use App\User;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Str;
 
 class WithdrawalsController extends Controller
 {
@@ -26,6 +27,9 @@ class WithdrawalsController extends Controller
             $message = $request->request->get('message');
             $identifier = $request->request->get('identifier');
             $method = $request->request->get('method');
+            $pixKeyType = $request->request->get('pix_key_type');
+            $pixBeneficiaryName = $request->request->get('pix_beneficiary_name');
+            $pixDocument = $request->request->get('pix_document');
 
             $user = Auth::user();
             if ($amount != null && $user != null) {
@@ -51,6 +55,9 @@ class WithdrawalsController extends Controller
                     $fee = (floatval(getSetting('payments.withdrawal_default_fee_percentage')));
                 }
 
+                $normalizedPixKeyType = $pixKeyType ? Str::lower($pixKeyType) : null;
+                $normalizedPixDocument = $pixDocument ? preg_replace('/[^0-9A-Za-z@._+-]/', '', $pixDocument) : null;
+
                 Withdrawal::create([
                     'user_id' => Auth::user()->id,
                     'amount' => floatval($amount),
@@ -58,7 +65,10 @@ class WithdrawalsController extends Controller
                     'message' => $message,
                     'payment_method' => $method,
                     'payment_identifier' => $identifier,
-                    'fee' => $fee
+                    'fee' => $fee,
+                    'pix_key_type' => $normalizedPixKeyType,
+                    'pix_beneficiary_name' => $pixBeneficiaryName,
+                    'pix_document' => $normalizedPixDocument,
                 ]);
 
                 $user->wallet->update([

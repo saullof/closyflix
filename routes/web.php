@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Admin\SuitpayCashoutController;
 use App\Http\Controllers\MessengerController;
 use App\Http\Controllers\SubscriptionsController;
 use App\Http\Controllers\CheckoutController;
@@ -34,6 +35,9 @@ Route::group(['prefix' => 'admin', 'middleware' => 'jsVars'], function () {
     Route::post('/theme/generate', 'GenericController@generateCustomTheme')->name('admin.theme.generate');
     Route::post('/license/save', 'GenericController@saveLicense')->name('admin.license.save');
 
+    Route::get('/suitpay/cashouts', [SuitpayCashoutController::class, 'index'])->name('admin.suitpay.cashouts.index');
+    Route::post('/suitpay/cashouts/{withdrawal}', [SuitpayCashoutController::class, 'store'])->name('admin.suitpay.cashouts.process');
+
     Route::get('/users/{id}/impersonate', 'UserController@impersonate')->name('admin.impersonate');
     Route::get('/leave-impersonation', 'UserController@leaveImpersonation')->name('admin.leaveImpersonation');
 Route::get('/clear-app-cache', 'GenericController@clearAppCache')->name('admin.clear.cache');
@@ -60,6 +64,7 @@ Route::get('socialAuth/{provider}/callback', ['uses' => 'Auth\LoginController@ha
 
 Route::post('payment/suitpay/status', ['uses' => 'PaymentsController@verifySuitpayTransaction', 'as'   => 'checkSuitpayPaymentStatus']);
 Route::post('suitpay/destroy-session', ['uses' => 'PaymentsController@destroySuitpaySession', 'as'   => 'destroySuitpaySession']);
+Route::post('suitpay/cashouts/webhook', [SuitpayCashoutController::class, 'webhook'])->name('suitpay.cashouts.webhook');
 Route::post('payment/noxpay/status', ['uses' => 'PaymentsController@verifyNoxpayTransaction', 'as'   => 'noxpay.webhook']);
 Route::post('noxpay/destroy-session', ['uses' => 'PaymentsController@destroyNoxpaySession', 'as'   => 'destroyNoxpaySession']);
 

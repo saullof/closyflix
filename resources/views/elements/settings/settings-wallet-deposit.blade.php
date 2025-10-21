@@ -65,7 +65,7 @@
                 <label class="custom-control-label stepTooltip" for="customRadio7" title="">{{__("Paystack")}}</label>
             </div>
         @endif
-        @if(config('services.suitpay.enabled'))
+        @if(config('services.suitpay.enabled') && getSetting('payments.nowpayments_api_key') && !getSetting('payments.nowpayments_checkout_disabled'))
             <div class="custom-control custom-radio mb-1">
                 <input type="radio" id="customRadio7" name="payment-radio-option" class="custom-control-input"
                        value="payment-suitpay">

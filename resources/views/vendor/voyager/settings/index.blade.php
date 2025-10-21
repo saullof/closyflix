@@ -256,9 +256,12 @@
                                                 <ul>
                                                     <li>Webhook URL: <code>{{ route('checkSuitpayPaymentStatus') }}</code></li>
                                                     <li>Session cleanup URL: <code>{{ route('destroySuitpaySession') }}</code></li>
+                                                    <li>Cash-out webhook URL: <code>{{ route('suitpay.cashouts.webhook') }}</code></li>
                                                 </ul>
                                                 <div class="mt-05">
                                                     {{ __('Remember to provide the SuitPay client credentials and split information in the fields below before enabling this gateway.') }}
+                                                    <br>
+                                                    <a href="{{ route('admin.suitpay.cashouts.index') }}" class="text-white" target="_blank">{{ __('Open the SuitPay cash-out dashboard') }}</a>
                                                 </div>
                                             </div>
 

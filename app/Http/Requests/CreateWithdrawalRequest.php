@@ -28,6 +28,9 @@ class CreateWithdrawalRequest extends FormRequest
             'method' => 'required',
             'identifier' => '',
             'message' => '',
+            'pix_key_type' => 'nullable|string',
+            'pix_beneficiary_name' => 'nullable|string',
+            'pix_document' => 'nullable|string',
         ];
     }
 }
