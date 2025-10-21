@@ -6,7 +6,6 @@ use App\Http\Controllers\Controller;
 use App\Model\Withdrawal;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
-use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -18,29 +17,26 @@ class SuitpayCashoutController extends Controller
 {
     public function index()
     {
-        if (! $this->hasSuitpayPixColumns()) {
-            $withdrawals = new LengthAwarePaginator([], 0, 20, null, [
-                'path' => request()->url(),
-                'query' => request()->query(),
-            ]);
+        $hasPixColumns = $this->hasSuitpayPixColumns();
 
-            return Voyager::view('vendor.voyager.suitpay.cashouts.index', [
-                'withdrawals' => $withdrawals,
-                'missingPixColumns' => true,
-            ]);
-        }
-
-        $withdrawals = Withdrawal::query()
+        $withdrawalsQuery = Withdrawal::query()
             ->with('user')
-            ->where(function ($query) {
+            ->orderByDesc('created_at');
+
+        if ($hasPixColumns) {
+            $withdrawalsQuery->where(function ($query) {
                 $query->whereNotNull('pix_key_type')
                     ->orWhere('payment_method', 'LIKE', '%PIX%');
-            })
-            ->orderByDesc('created_at')
-            ->paginate(20);
+            });
+        } else {
+            $withdrawalsQuery->where('payment_method', 'LIKE', '%PIX%');
+        }
+
+        $withdrawals = $withdrawalsQuery->paginate(20);
 
         return Voyager::view('vendor.voyager.suitpay.cashouts.index', [
             'withdrawals' => $withdrawals,
+            'missingPixColumns' => ! $hasPixColumns,
         ]);
     }
 
