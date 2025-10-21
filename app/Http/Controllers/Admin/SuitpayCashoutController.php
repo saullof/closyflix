@@ -9,7 +9,6 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use TCG\Voyager\Facades\Voyager;
 
@@ -209,14 +208,16 @@ class SuitpayCashoutController extends Controller
 
     protected function hasSuitpayPixColumns(): bool
     {
-        return Schema::hasColumn('withdrawals', 'pix_key_type')
-            && Schema::hasColumn('withdrawals', 'pix_beneficiary_name')
-            && Schema::hasColumn('withdrawals', 'pix_document');
+        return $this->withdrawalColumnsAvailable([
+            'pix_key_type',
+            'pix_beneficiary_name',
+            'pix_document',
+        ]);
     }
 
     protected function hasSuitpayTrackingColumns(): bool
     {
-        $requiredColumns = [
+        return $this->withdrawalColumnsAvailable([
             'suitpay_cashout_payload',
             'suitpay_cashout_status',
             'suitpay_cashout_id',
@@ -224,14 +225,33 @@ class SuitpayCashoutController extends Controller
             'suitpay_cashout_processed_at',
             'suitpay_cashout_error',
             'suitpay_cashout_response',
-        ];
+        ]);
+    }
 
-        foreach ($requiredColumns as $column) {
-            if (! Schema::hasColumn('withdrawals', $column)) {
-                return false;
-            }
+    protected function withdrawalColumnsAvailable(array $columns): bool
+    {
+        static $columnCache = [];
+
+        $cacheKey = implode('|', $columns);
+
+        if (array_key_exists($cacheKey, $columnCache)) {
+            return $columnCache[$cacheKey];
         }
 
-        return true;
+        try {
+            Withdrawal::query()
+                ->select(array_merge(['id'], $columns))
+                ->limit(1)
+                ->first();
+
+            return $columnCache[$cacheKey] = true;
+        } catch (\Throwable $exception) {
+            Log::warning('SuitPay cash-out columns unavailable', [
+                'columns' => $columns,
+                'error' => $exception->getMessage(),
+            ]);
+
+            return $columnCache[$cacheKey] = false;
+        }
     }
 }
