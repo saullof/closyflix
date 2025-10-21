@@ -3,7 +3,6 @@
 namespace App\Model;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Facades\Schema;
 
 class Withdrawal extends Model
 {
@@ -69,25 +68,4 @@ class Withdrawal extends Model
         return $this->belongsTo('App\User', 'user_id');
     }
 
-    public static function hasPixDetailColumns(): bool
-    {
-        return Schema::hasColumns('withdrawals', [
-            'pix_key_type',
-            'pix_beneficiary_name',
-            'pix_document',
-        ]);
-    }
-
-    public static function hasSuitpayCashoutTrackingColumns(): bool
-    {
-        return Schema::hasColumns('withdrawals', [
-            'suitpay_cashout_id',
-            'suitpay_cashout_status',
-            'suitpay_cashout_payload',
-            'suitpay_cashout_response',
-            'suitpay_cashout_error',
-            'suitpay_cashout_requested_at',
-            'suitpay_cashout_processed_at',
-        ]);
-    }
 }

@@ -16,28 +16,17 @@ class SuitpayCashoutController extends Controller
 {
     public function index()
     {
-        $supportsPixColumns = Withdrawal::hasPixDetailColumns();
-        $supportsCashoutColumns = Withdrawal::hasSuitpayCashoutTrackingColumns();
-
-        $withdrawalsQuery = Withdrawal::query()->with('user');
-
-        if ($supportsPixColumns) {
-            $withdrawalsQuery->where(function ($query) {
+        $withdrawals = Withdrawal::query()
+            ->with('user')
+            ->where(function ($query) {
                 $query->whereNotNull('pix_key_type')
                     ->orWhere('payment_method', 'LIKE', '%PIX%');
-            });
-        } else {
-            $withdrawalsQuery->where('payment_method', 'LIKE', '%PIX%');
-        }
-
-        $withdrawals = $withdrawalsQuery
+            })
             ->orderByDesc('created_at')
             ->paginate(20);
 
         return Voyager::view('vendor.voyager.suitpay.cashouts.index', [
             'withdrawals' => $withdrawals,
-            'supportsPixColumns' => $supportsPixColumns,
-            'supportsCashoutColumns' => $supportsCashoutColumns,
         ]);
     }
 
@@ -63,11 +52,9 @@ class SuitpayCashoutController extends Controller
 
         $sanitizedDocument = $this->sanitizePixDocument($validated['pix_document'] ?? null);
         $withdrawal->payment_identifier = $validated['payment_identifier'];
-        if (Withdrawal::hasPixDetailColumns()) {
-            $withdrawal->pix_key_type = $normalizedType;
-            $withdrawal->pix_beneficiary_name = $validated['pix_beneficiary_name'];
-            $withdrawal->pix_document = $sanitizedDocument;
-        }
+        $withdrawal->pix_key_type = $normalizedType;
+        $withdrawal->pix_beneficiary_name = $validated['pix_beneficiary_name'];
+        $withdrawal->pix_document = $sanitizedDocument;
 
         $payload = [
             'value' => round((float) $withdrawal->amount, 2),
@@ -81,13 +68,9 @@ class SuitpayCashoutController extends Controller
             $payload['documentValidation'] = $sanitizedDocument;
         }
 
-        if (Withdrawal::hasSuitpayCashoutTrackingColumns()) {
-            $withdrawal->suitpay_cashout_payload = $payload;
-            $withdrawal->suitpay_cashout_requested_at = Carbon::now();
-            $withdrawal->suitpay_cashout_error = null;
-        } else {
-            $this->appendMessageMetadata($withdrawal, ['payload' => $payload]);
-        }
+        $withdrawal->suitpay_cashout_payload = $payload;
+        $withdrawal->suitpay_cashout_requested_at = Carbon::now();
+        $withdrawal->suitpay_cashout_error = null;
 
         $response = Http::withHeaders([
             'ci' => config('services.suitpay.client_id'),
@@ -95,15 +78,9 @@ class SuitpayCashoutController extends Controller
         ])->post('https://ws.suitpay.app/api/v1/gateway/pix-payment', $payload);
 
         if ($response->failed()) {
-            if (Withdrawal::hasSuitpayCashoutTrackingColumns()) {
-                $withdrawal->suitpay_cashout_status = 'ERROR';
-                $withdrawal->suitpay_cashout_response = ['body' => $response->body(), 'status' => $response->status()];
-                $withdrawal->suitpay_cashout_error = $response->json('message', $response->body());
-            } else {
-                $this->appendMessageMetadata($withdrawal, [
-                    'response_error' => $response->json() ?: $response->body(),
-                ]);
-            }
+            $withdrawal->suitpay_cashout_status = 'ERROR';
+            $withdrawal->suitpay_cashout_response = ['body' => $response->body(), 'status' => $response->status()];
+            $withdrawal->suitpay_cashout_error = $response->json('message', $response->body());
             $withdrawal->save();
 
             return back()->withErrors([
@@ -115,15 +92,9 @@ class SuitpayCashoutController extends Controller
         $cashoutId = Arr::get($data, 'idTransaction');
         $cashoutStatus = Arr::get($data, 'response');
 
-        if (Withdrawal::hasSuitpayCashoutTrackingColumns()) {
-            $withdrawal->suitpay_cashout_id = $cashoutId;
-            $withdrawal->suitpay_cashout_status = $cashoutStatus;
-            $withdrawal->suitpay_cashout_response = $data;
-        } else {
-            $this->appendMessageMetadata($withdrawal, [
-                'response' => $data,
-            ]);
-        }
+        $withdrawal->suitpay_cashout_id = $cashoutId;
+        $withdrawal->suitpay_cashout_status = $cashoutStatus;
+        $withdrawal->suitpay_cashout_response = $data;
         $withdrawal->save();
 
         return back()->with([
@@ -158,56 +129,26 @@ class SuitpayCashoutController extends Controller
         $status = $payload['statusTransaction'] ?? $payload['response'] ?? null;
         $normalizedStatus = $status ? Str::upper($status) : null;
 
-        if (Withdrawal::hasSuitpayCashoutTrackingColumns()) {
-            $withdrawal->suitpay_cashout_status = $status;
-            $withdrawal->suitpay_cashout_response = $payload;
-        } else {
-            $this->appendMessageMetadata($withdrawal, ['webhook' => $payload]);
-        }
+        $withdrawal->suitpay_cashout_status = $status;
+        $withdrawal->suitpay_cashout_response = $payload;
 
         if ($normalizedStatus && in_array($normalizedStatus, ['PAID_OUT', 'PAID', 'OK'], true)) {
             if ($withdrawal->status !== Withdrawal::APPROVED_STATUS) {
                 $withdrawal->status = Withdrawal::APPROVED_STATUS;
             }
 
-            if (Withdrawal::hasSuitpayCashoutTrackingColumns() && ! $withdrawal->suitpay_cashout_processed_at) {
+            if (! $withdrawal->suitpay_cashout_processed_at) {
                 $withdrawal->suitpay_cashout_processed_at = Carbon::now();
             }
         }
 
         if ($normalizedStatus && in_array($normalizedStatus, ['NO_FUNDS', 'ACCOUNT_DOCUMENTS_NOT_VALIDATED', 'PIX_KEY_NOT_FOUND', 'DOCUMENT_VALIDATE', 'ERROR'], true)) {
-            if (Withdrawal::hasSuitpayCashoutTrackingColumns()) {
-                $withdrawal->suitpay_cashout_error = $payload['message'] ?? $normalizedStatus;
-            } else {
-                $this->appendMessageMetadata($withdrawal, [
-                    'webhook_error' => $payload['message'] ?? $normalizedStatus,
-                ]);
-            }
+            $withdrawal->suitpay_cashout_error = $payload['message'] ?? $normalizedStatus;
         }
 
         $withdrawal->save();
 
         return response()->json(['status' => 'ok']);
-    }
-
-    protected function appendMessageMetadata(Withdrawal $withdrawal, array $data): void
-    {
-        $existing = [];
-
-        if (! empty($withdrawal->message)) {
-            $decoded = json_decode($withdrawal->message, true);
-            if (json_last_error() === JSON_ERROR_NONE) {
-                $existing = $decoded;
-            } else {
-                $existing['original_message'] = $withdrawal->message;
-            }
-        }
-
-        $existingSuitpayData = $existing['suitpay_cashout'] ?? [];
-
-        $withdrawal->message = json_encode(array_merge($existing, [
-            'suitpay_cashout' => array_merge($existingSuitpayData, $data),
-        ]), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
     }
 
     protected function mapPixKeyType(?string $type): ?string

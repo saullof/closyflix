@@ -48,22 +48,6 @@
                         </thead>
                         <tbody>
                         @forelse($withdrawals as $withdrawal)
-                            @php
-                                $messageData = [];
-                                if ((! $supportsPixColumns || ! $supportsCashoutColumns) && ! empty($withdrawal->message)) {
-                                    $decodedMessage = json_decode($withdrawal->message, true);
-                                    if (json_last_error() === JSON_ERROR_NONE) {
-                                        $messageData = $decodedMessage;
-                                    }
-                                }
-
-                                $pixDetailsFallback = data_get($messageData, 'pix_details', []);
-                                $cashoutMetaFallback = data_get($messageData, 'suitpay_cashout', []);
-
-                                $currentPixKeyType = $supportsPixColumns ? $withdrawal->pix_key_type : ($pixDetailsFallback['key_type'] ?? null);
-                                $currentPixBeneficiary = $supportsPixColumns ? $withdrawal->pix_beneficiary_name : ($pixDetailsFallback['beneficiary'] ?? null);
-                                $currentPixDocument = $supportsPixColumns ? $withdrawal->pix_document : ($pixDetailsFallback['document'] ?? null);
-                            @endphp
                             <tr>
                                 <td>#{{ $withdrawal->id }}</td>
                                 <td>{{ optional($withdrawal->created_at)->format('d/m/Y H:i') }}</td>
@@ -92,15 +76,13 @@
                                     @endif
                                     @if($withdrawal->suitpay_cashout_error)
                                         <small class="text-danger">{{ $withdrawal->suitpay_cashout_error }}</small>
-                                    @elseif(!$supportsCashoutColumns && !empty($cashoutMetaFallback['response_error']))
-                                        <small class="text-danger">{{ is_array($cashoutMetaFallback['response_error']) ? json_encode($cashoutMetaFallback['response_error']) : $cashoutMetaFallback['response_error'] }}</small>
                                     @endif
                                 </td>
                                 <td>
                                     <div><strong>{{ __('Chave') }}:</strong> {{ $withdrawal->payment_identifier ?? __('não informada') }}</div>
-                                    <div><strong>{{ __('Tipo') }}:</strong> {{ $currentPixKeyType ?? __('não informado') }}</div>
-                                    <div><strong>{{ __('Beneficiário') }}:</strong> {{ $currentPixBeneficiary ?? __('não informado') }}</div>
-                                    <div><strong>{{ __('Documento') }}:</strong> {{ $currentPixDocument ?? __('não informado') }}</div>
+                                    <div><strong>{{ __('Tipo') }}:</strong> {{ $withdrawal->pix_key_type ?? __('não informado') }}</div>
+                                    <div><strong>{{ __('Beneficiário') }}:</strong> {{ $withdrawal->pix_beneficiary_name ?? __('não informado') }}</div>
+                                    <div><strong>{{ __('Documento') }}:</strong> {{ $withdrawal->pix_document ?? __('não informado') }}</div>
                                 </td>
                                 <td>
                                     <form method="POST" action="{{ route('admin.suitpay.cashouts.process', $withdrawal) }}" class="form-inline">
@@ -114,24 +96,21 @@
                                             <select class="form-control input-sm" id="pix_key_type_{{ $withdrawal->id }}" name="pix_key_type">
                                                 @php($options = ['cpf' => 'CPF', 'cnpj' => 'CNPJ', 'email' => 'Email', 'phone' => 'Telefone', 'random' => 'Aleatória', 'paymentcode' => 'QrCode'])
                                                 @foreach($options as $value => $label)
-                                                    <option value="{{ $value }}" @selected(old('pix_key_type', $currentPixKeyType) === $value)>{{ __($label) }}</option>
+                                                    <option value="{{ $value }}" @selected(old('pix_key_type', $withdrawal->pix_key_type) === $value)>{{ __($label) }}</option>
                                                 @endforeach
                                             </select>
                                         </div>
                                         <div class="form-group mt-1">
                                             <label class="sr-only" for="pix_beneficiary_name_{{ $withdrawal->id }}">{{ __('Beneficiário') }}</label>
-                                            <input type="text" class="form-control input-sm" id="pix_beneficiary_name_{{ $withdrawal->id }}" name="pix_beneficiary_name" value="{{ old('pix_beneficiary_name', $currentPixBeneficiary) }}" placeholder="{{ __('Nome do Beneficiário') }}">
+                                            <input type="text" class="form-control input-sm" id="pix_beneficiary_name_{{ $withdrawal->id }}" name="pix_beneficiary_name" value="{{ old('pix_beneficiary_name', $withdrawal->pix_beneficiary_name) }}" placeholder="{{ __('Nome do Beneficiário') }}">
                                         </div>
                                         <div class="form-group mt-1">
                                             <label class="sr-only" for="pix_document_{{ $withdrawal->id }}">{{ __('Documento') }}</label>
-                                            <input type="text" class="form-control input-sm" id="pix_document_{{ $withdrawal->id }}" name="pix_document" value="{{ old('pix_document', $currentPixDocument) }}" placeholder="{{ __('Documento') }}">
+                                            <input type="text" class="form-control input-sm" id="pix_document_{{ $withdrawal->id }}" name="pix_document" value="{{ old('pix_document', $withdrawal->pix_document) }}" placeholder="{{ __('Documento') }}">
                                         </div>
                                         <button type="submit" class="btn btn-primary btn-sm mt-1" @if($withdrawal->status === \App\Model\Withdrawal::APPROVED_STATUS && $withdrawal->suitpay_cashout_status) disabled @endif>
                                             {{ __('Enviar cash-out') }}
                                         </button>
-                                        @if(!$supportsCashoutColumns && !empty($cashoutMetaFallback['payload']))
-                                            <small class="text-muted d-block mt-1">{{ __('Os detalhes completos do cash-out estão armazenados na mensagem do saque.') }}</small>
-                                        @endif
                                     </form>
                                 </td>
                             </tr>

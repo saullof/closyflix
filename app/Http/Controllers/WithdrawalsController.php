@@ -68,20 +68,9 @@ class WithdrawalsController extends Controller
                     'fee' => $fee,
                 ];
 
-                if (Withdrawal::hasPixDetailColumns()) {
-                    $attributes['pix_key_type'] = $normalizedPixKeyType;
-                    $attributes['pix_beneficiary_name'] = $pixBeneficiaryName;
-                    $attributes['pix_document'] = $normalizedPixDocument;
-                } elseif ($method && Str::contains(Str::lower($method), 'pix')) {
-                    $attributes['message'] = json_encode(array_merge(
-                        ['original_message' => $message],
-                        ['pix_details' => [
-                            'key_type' => $normalizedPixKeyType,
-                            'beneficiary' => $pixBeneficiaryName,
-                            'document' => $normalizedPixDocument,
-                        ]]
-                    ), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
-                }
+                $attributes['pix_key_type'] = $normalizedPixKeyType;
+                $attributes['pix_beneficiary_name'] = $pixBeneficiaryName;
+                $attributes['pix_document'] = $normalizedPixDocument;
 
                 Withdrawal::create($attributes);
 

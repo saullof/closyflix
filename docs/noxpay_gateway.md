@@ -49,6 +49,10 @@ Este documento resume os principais endpoints da API NoxPay V2 que serão utiliz
 - **Descrição:** Reenvia a notificação de webhook para o pagamento identificado por `txid`.
 - **Resposta 200:** texto simples confirmando o reenvio.
 
+## Webhooks
+- Configure a URL de webhook apontando para `https://{seu_dominio}/payment/noxpay/status`.
+- Quando o webhook estiver ativo, informe um segredo na área de configurações da NoxPay e envie-o nos headers `X-Webhook-Secret` (ou `X-Noxpay-Webhook-Secret`). Ele será validado pelo painel administrativo antes de processar o payload.
+
 ## Próximos passos sugeridos
 1. Implementar um cliente HTTP que injete automaticamente o cabeçalho `api-key`.
 2. Criar serviços para cada endpoint com tratamento de erros e logging.

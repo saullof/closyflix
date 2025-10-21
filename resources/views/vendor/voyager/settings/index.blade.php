@@ -271,9 +271,10 @@
                                                 <ul>
                                                     <li>Webhook URL: <code>{{route('noxpay.webhook')}}</code></li>
                                                     <li>Status check URL: <code>{{route('payment.checkNoxpayPaymentStatus')}}</code></li>
+                                                    <li>Webhook header: <code>X-Webhook-Secret</code> (ou <code>X-Noxpay-Webhook-Secret</code>)</li>
                                                 </ul>
                                                 <div class="mt-05">
-                                                    {{__('Remember to add your API key in the fields below before enabling this gateway.')}}
+                                                    {{__('Remember to add your API key, webhook secret, and toggle checkout availability in the fields below before enabling this gateway.')}}
                                                 </div>
                                             </div>
                                         </div>
