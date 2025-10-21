@@ -83,6 +83,40 @@ class SettingsServiceProvider extends ServiceProvider
             config(['paypal.secret' => getSetting('payments.paypal_secret')]);
         }
 
+        $suitpayEnabled = getSetting('payments.suitpay_enabled');
+        if ($suitpayEnabled !== null) {
+            config(['services.suitpay.enabled' => (bool) $suitpayEnabled]);
+        }
+
+        if ($suitpayClientId = getSetting('payments.suitpay_client_id')) {
+            config(['services.suitpay.client_id' => $suitpayClientId]);
+        }
+
+        if ($suitpayClientSecret = getSetting('payments.suitpay_client_secret')) {
+            config(['services.suitpay.client_secret' => $suitpayClientSecret]);
+        }
+
+        if ($suitpaySplitUsername = getSetting('payments.suitpay_split_username')) {
+            config(['services.suitpay.split.username' => $suitpaySplitUsername]);
+        }
+
+        if (($suitpaySplitPercentage = getSetting('payments.suitpay_split_percentage')) !== null && $suitpaySplitPercentage !== '') {
+            config(['services.suitpay.split.percentage' => (float) $suitpaySplitPercentage]);
+        }
+
+        $noxpayEnabled = getSetting('payments.noxpay_enabled');
+        if ($noxpayEnabled !== null) {
+            config(['services.noxpay.enabled' => (bool) $noxpayEnabled]);
+        }
+
+        if ($noxpayApiKey = getSetting('payments.noxpay_api_key')) {
+            config(['services.noxpay.api_key' => $noxpayApiKey]);
+        }
+
+        if ($noxpayWebhookSecret = getSetting('payments.noxpay_webhook_secret')) {
+            config(['services.noxpay.webhook_secret' => $noxpayWebhookSecret]);
+        }
+
         // Overriding default config values for logos & favicons, appending public path to them
         config(['app.site.light_logo' => asset(config('app.site.light_logo'))]);
         config(['app.site.dark_logo' => asset(config('app.site.dark_logo'))]);

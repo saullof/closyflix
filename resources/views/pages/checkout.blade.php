@@ -1021,6 +1021,13 @@
                                                         </div>
                                                     </div>
                                                 @endif
+                                                @if(config('services.noxpay.enabled') && (getSetting('payments.noxpay_api_key') || config('services.noxpay.api_key')) && !getSetting('payments.noxpay_checkout_disabled'))
+                                                    <div class="p-1 col-6 col-md-3 d-none noxpay-payment-method payment-method" data-value="noxpay">
+                                                        <div class="radio mx-auto noxpay-payment-provider checkout-payment-provider d-flex align-items-center justify-content-center">
+                                                            <img src="{{asset('/img/logos/noxpay.svg')}}" alt="NoxPay">
+                                                        </div>
+                                                    </div>
+                                                @endif
                                                 <div class="credit-payment-method p-1 col-6 col-md-3 col-lg-3 payment-method" data-value="credit">
                                                     <div class="radio mx-auto credit-payment-provider checkout-payment-provider d-flex align-items-center justify-content-center">
                                                         <div class="credit-provider-text">

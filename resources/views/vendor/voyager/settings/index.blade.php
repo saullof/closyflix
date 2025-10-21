@@ -252,10 +252,14 @@
 
                                             <div class="alert alert-info alert-dismissible mb-1 payments-info-nowpayments d-none">
                                                 <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-                                                <div class="info-label"><div class="icon voyager-info-circled"></div> In order to use NowPayments as payment provider you'll need the following endpoint:</div>
+                                                <div class="info-label"><div class="icon voyager-info-circled"></div> Configure your SuitPay integration using the endpoints below:</div>
                                                 <ul>
-                                                    <li>IPN Callback URL: <code>{{route('nowPayments.payment.update')}}</code></li>
+                                                    <li>Webhook URL: <code>{{ route('checkSuitpayPaymentStatus') }}</code></li>
+                                                    <li>Session cleanup URL: <code>{{ route('destroySuitpaySession') }}</code></li>
                                                 </ul>
+                                                <div class="mt-05">
+                                                    {{ __('Remember to provide the SuitPay client credentials and split information in the fields below before enabling this gateway.') }}
+                                                </div>
                                             </div>
 
                                             <div class="alert alert-info alert-dismissible mb-1 payments-info-noxpay d-none">
@@ -313,7 +317,7 @@
                                                 <option value="stripe">Stripe</option>
                                                 <option value="paypal">Paypal</option>
                                                 <option value="coinbase">Coinbase</option>
-                                                <option value="nowpayments">NowPayments</option>
+                                                <option value="nowpayments">SuitPay</option>
                                                 <option value="ccbill">CCBill</option>
                                                 <option value="offline">Offline payments</option>
                                                 <option value="paystack">Paystack</option>

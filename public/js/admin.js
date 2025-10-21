@@ -361,10 +361,23 @@ var Admin = {
         //TODO: Use lets/unset them?
         var rows = $('.setting-row');
         var rowsLength = rows.length;
+        var patterns = [pattern];
+
+        if (pattern === 'nowpayments') {
+            patterns.push('suitpay');
+        } else if (pattern === 'suitpay') {
+            patterns.push('nowpayments');
+        }
+
         for(let i = 0; i < rowsLength; i++){
             let element = rows[i];
-            if($(element).attr('class').indexOf('payments.'+pattern) >= 0){
-                element.style.display = 'block';
+            let elementClass = $(element).attr('class') || '';
+
+            for (let j = 0; j < patterns.length; j++) {
+                if (elementClass.indexOf('payments.' + patterns[j]) >= 0) {
+                    element.style.display = 'block';
+                    break;
+                }
             }
         }
         Admin.togglePaymentsSubCategoryInfo(pattern);
