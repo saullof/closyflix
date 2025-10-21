@@ -26,6 +26,12 @@
             </div>
         @endif
 
+        @if(!empty($missingPixColumns))
+            <div class="alert alert-warning">
+                {{ __('A tabela de saques ainda não possui as colunas necessárias para os dados de PIX. Execute as migrações pendentes antes de utilizar este painel.') }}
+            </div>
+        @endif
+
         <div class="panel panel-bordered">
             <div class="panel-body">
                 <p class="text-muted">

@@ -6,9 +6,11 @@ use App\Http\Controllers\Controller;
 use App\Model\Withdrawal;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use TCG\Voyager\Facades\Voyager;
 
@@ -16,6 +18,18 @@ class SuitpayCashoutController extends Controller
 {
     public function index()
     {
+        if (! $this->hasSuitpayPixColumns()) {
+            $withdrawals = new LengthAwarePaginator([], 0, 20, null, [
+                'path' => request()->url(),
+                'query' => request()->query(),
+            ]);
+
+            return Voyager::view('vendor.voyager.suitpay.cashouts.index', [
+                'withdrawals' => $withdrawals,
+                'missingPixColumns' => true,
+            ]);
+        }
+
         $withdrawals = Withdrawal::query()
             ->with('user')
             ->where(function ($query) {
@@ -32,6 +46,12 @@ class SuitpayCashoutController extends Controller
 
     public function store(Request $request, Withdrawal $withdrawal)
     {
+        if (! $this->hasSuitpayPixColumns()) {
+            return back()->withErrors([
+                'cashout' => __('Execute as migrações pendentes antes de processar cash-outs pela SuitPay.'),
+            ]);
+        }
+
         $this->ensureSuitpayConfigured();
 
         $validated = $request->validate([
@@ -71,6 +91,12 @@ class SuitpayCashoutController extends Controller
         $withdrawal->suitpay_cashout_payload = $payload;
         $withdrawal->suitpay_cashout_requested_at = Carbon::now();
         $withdrawal->suitpay_cashout_error = null;
+
+        if (! $this->hasSuitpayTrackingColumns()) {
+            return back()->withErrors([
+                'cashout' => __('Execute as migrações pendentes antes de processar cash-outs pela SuitPay.'),
+            ])->withInput();
+        }
 
         $response = Http::withHeaders([
             'ci' => config('services.suitpay.client_id'),
@@ -183,5 +209,33 @@ class SuitpayCashoutController extends Controller
         if (! config('services.suitpay.client_id') || ! config('services.suitpay.client_secret')) {
             abort(403, __('Configure as credenciais da SuitPay antes de processar cash-outs.'));
         }
+    }
+
+    protected function hasSuitpayPixColumns(): bool
+    {
+        return Schema::hasColumn('withdrawals', 'pix_key_type')
+            && Schema::hasColumn('withdrawals', 'pix_beneficiary_name')
+            && Schema::hasColumn('withdrawals', 'pix_document');
+    }
+
+    protected function hasSuitpayTrackingColumns(): bool
+    {
+        $requiredColumns = [
+            'suitpay_cashout_payload',
+            'suitpay_cashout_status',
+            'suitpay_cashout_id',
+            'suitpay_cashout_requested_at',
+            'suitpay_cashout_processed_at',
+            'suitpay_cashout_error',
+            'suitpay_cashout_response',
+        ];
+
+        foreach ($requiredColumns as $column) {
+            if (! Schema::hasColumn('withdrawals', $column)) {
+                return false;
+            }
+        }
+
+        return true;
     }
 }

@@ -10,6 +10,7 @@ use App\Providers\PaymentsServiceProvider;
 use App\Providers\SettingsServiceProvider;
 use App\User;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 
 class WithdrawalsController extends Controller
@@ -68,9 +69,17 @@ class WithdrawalsController extends Controller
                     'fee' => $fee,
                 ];
 
-                $attributes['pix_key_type'] = $normalizedPixKeyType;
-                $attributes['pix_beneficiary_name'] = $pixBeneficiaryName;
-                $attributes['pix_document'] = $normalizedPixDocument;
+                if (Schema::hasColumn('withdrawals', 'pix_key_type')) {
+                    $attributes['pix_key_type'] = $normalizedPixKeyType;
+                }
+
+                if (Schema::hasColumn('withdrawals', 'pix_beneficiary_name')) {
+                    $attributes['pix_beneficiary_name'] = $pixBeneficiaryName;
+                }
+
+                if (Schema::hasColumn('withdrawals', 'pix_document')) {
+                    $attributes['pix_document'] = $normalizedPixDocument;
+                }
 
                 Withdrawal::create($attributes);
 
