@@ -44,6 +44,17 @@ return [
         'enabled' => env('NOXPAY_ENABLED', false),
         'api_key' => env('NOXPAY_API_KEY'),
         'webhook_secret' => env('NOXPAY_WEBHOOK_SECRET'),
+        'crossramp' => [
+            'enabled' => env('NOXPAY_CROSSRAMP_ENABLED', false),
+            'template_id' => env('NOXPAY_CROSSRAMP_TEMPLATE_ID'),
+            'process' => env('NOXPAY_CROSSRAMP_PROCESS'),
+            'currency_from' => env('NOXPAY_CROSSRAMP_CURRENCY_FROM'),
+            'currency_to' => env('NOXPAY_CROSSRAMP_CURRENCY_TO'),
+            'wallet' => env('NOXPAY_CROSSRAMP_WALLET'),
+            'return_url' => env('NOXPAY_CROSSRAMP_RETURN_URL'),
+            'base_url' => env('NOXPAY_CROSSRAMP_BASE_URL', 'https://api2.noxpay.io'),
+            'extra_payload' => env('NOXPAY_CROSSRAMP_EXTRA_PAYLOAD'),
+        ],
     ],
 
 ];
