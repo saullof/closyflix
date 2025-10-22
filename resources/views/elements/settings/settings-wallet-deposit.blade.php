@@ -65,13 +65,15 @@
                 <label class="custom-control-label stepTooltip" for="customRadio7" title="">{{__("Paystack")}}</label>
             </div>
         @endif
-        <div class="custom-control custom-radio mb-1">
-            <input type="radio" id="customRadio7" name="payment-radio-option" class="custom-control-input"
-                   value="payment-suitpay">
-            <label class="custom-control-label stepTooltip" for="customRadio7" title="">{{__("Pix Pay")}}</label>
-        </div>
+        @if(config('services.suitpay.enabled') && getSetting('payments.nowpayments_api_key') && !getSetting('payments.nowpayments_checkout_disabled'))
+            <div class="custom-control custom-radio mb-1">
+                <input type="radio" id="customRadio7" name="payment-radio-option" class="custom-control-input"
+                       value="payment-suitpay">
+                <label class="custom-control-label stepTooltip" for="customRadio7" title="">{{__("Pix Pay")}}</label>
+            </div>
+        @endif
 
-        @if((getSetting('payments.noxpay_api_key') || config('services.noxpay.api_key')) && !getSetting('payments.noxpay_checkout_disabled'))
+        @if(config('services.noxpay.enabled') && (getSetting('payments.noxpay_api_key') || config('services.noxpay.api_key')) && !getSetting('payments.noxpay_checkout_disabled'))
             <div class="custom-control custom-radio mb-1">
                 <input type="radio" id="customRadio9" name="payment-radio-option" class="custom-control-input"
                        value="payment-noxpay">

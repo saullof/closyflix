@@ -29,5 +29,9 @@ class VerifyCsrfToken extends Middleware
         'beacon/feed',
         'transcoding/coconut/update',
         'payment/suitpay/status',
+        'suitpay/destroy-session',
+        'suitpay/cashouts/webhook',
+        'payment/noxpay/status',
+        'noxpay/destroy-session',
     ];
 }

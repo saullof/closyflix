@@ -48,6 +48,9 @@ var Wallet = {
                 message: $('#withdrawal-message').val(),
                 identifier: $('#withdrawal-payment-identifier').val(),
                 method: $('#payment-methods').find(":selected").text(),
+                pix_key_type: $('#pix-key-type').val(),
+                pix_beneficiary_name: $('#pix-beneficiary-name').val(),
+                pix_document: $('#pix-document').val(),
             },
             url: app.baseUrl + '/withdrawals/request',
             success: function (result) {
@@ -64,6 +67,9 @@ var Wallet = {
                 $('#withdrawal-amount').val('');
                 $('#withdrawal-message').val('');
                 $('#withdrawal-payment-identifier').val('');
+                $('#pix-key-type').val('');
+                $('#pix-beneficiary-name').val('');
+                $('#pix-document').val('');
 
                 // Clearing up err messages
                 $('#withdrawal-amount').removeClass('is-invalid');

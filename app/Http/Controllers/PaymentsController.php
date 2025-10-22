@@ -1021,6 +1021,24 @@ class PaymentsController extends Controller
 
     public function verifyNoxpayTransaction(Request $request)
     {
+        $expectedSecret = config('services.noxpay.webhook_secret');
+
+        if ($expectedSecret) {
+            $providedSecret = $request->header('x-webhook-secret')
+                ?? $request->header('x-noxpay-webhook-secret')
+                ?? $request->header('x-noxpay-signature')
+                ?? $request->header('api-key')
+                ?? $request->input('secret');
+
+            if (! $providedSecret || ! hash_equals($expectedSecret, (string) $providedSecret)) {
+                Log::warning('NoxPay webhook rejected due to invalid secret.', [
+                    'headers' => $request->headers->all(),
+                ]);
+
+                return response()->json(['status' => 'forbidden'], 403);
+            }
+        }
+
         $payload = $request->all();
         Log::info('NoxPay payload received.', ['payload' => $payload]);
 

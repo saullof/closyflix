@@ -275,7 +275,7 @@ $(function(){
                                     </div>
                                 @endif
                                 
-                                @if (config('services.suitpay.enabled'))
+                                @if (config('services.suitpay.enabled') && getSetting('payments.nowpayments_api_key') && !getSetting('payments.nowpayments_checkout_disabled'))
                                     <div class="p-1 col-6 col-md-3 d-none suitpay-payment-method">
                                         <div class="radio mx-auto suitpay-payment-provider checkout-payment-provider d-flex align-items-center justify-content-center" data-value="suitpay">
                                             <img src="{{asset('/img/logos/pix.png')}}">
@@ -283,7 +283,7 @@ $(function(){
                                     </div>
                                 @endif
 
-                                @if((getSetting('payments.noxpay_api_key') || config('services.noxpay.api_key')) && !getSetting('payments.noxpay_checkout_disabled'))
+                                @if(config('services.noxpay.enabled') && (getSetting('payments.noxpay_api_key') || config('services.noxpay.api_key')) && !getSetting('payments.noxpay_checkout_disabled'))
                                     <div class="p-1 col-6 col-md-3 d-none noxpay-payment-method">
                                         <div class="radio mx-auto noxpay-payment-provider checkout-payment-provider d-flex align-items-center justify-content-center" data-value="noxpay">
                                             <img src="{{asset('/img/logos/noxpay.svg')}}" alt="NoxPay">

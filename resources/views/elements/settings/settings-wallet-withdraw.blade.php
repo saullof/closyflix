@@ -53,6 +53,25 @@
             <label id="payment-identifier-label" for="withdrawal-payment-identifier">{{__("Bank account")}}</label>
             <input class="form-control" type="text" id="withdrawal-payment-identifier" name="payment-identifier">
         </div>
+        <div class="form-group w-50 d-none" id="pix-key-type-container">
+            <label for="pix-key-type">{{__("Tipo da chave Pix")}}</label>
+            <select class="form-control" id="pix-key-type" name="pix-key-type">
+                <option value="">{{__('Selecione')}}</option>
+                <option value="cpf">{{__('CPF')}}</option>
+                <option value="cnpj">{{__('CNPJ')}}</option>
+                <option value="email">{{__('Email')}}</option>
+                <option value="phone">{{__('Telefone')}}</option>
+                <option value="random">{{__('Aleatória')}}</option>
+            </select>
+        </div>
+        <div class="form-group w-50 d-none" id="pix-beneficiary-name-container">
+            <label for="pix-beneficiary-name">{{__("Nome do Beneficiado")}}</label>
+            <input type="text" class="form-control" id="pix-beneficiary-name" name="pix-beneficiary-name" />
+        </div>
+        <div class="form-group w-50 d-none" id="pix-document-container">
+            <label for="pix-document">{{__("Documento do Beneficiado (CPF/CNPJ)")}}</label>
+            <input type="text" class="form-control" id="pix-document" name="pix-document" />
+        </div>
     </div>
     <div class="form-group w-100 d-none" id="beneficiary-name-container">
         <label for="beneficiary-name">{{__("Nome do beneficiado")}}</label>
@@ -121,41 +140,17 @@ document.addEventListener("DOMContentLoaded", function() {
     const paymentIdentifierInput = document.getElementById('withdrawal-payment-identifier');
     const submitButton = document.querySelector('.withdrawal-continue-btn'); // Seleciona o botão
     const inputs = bankDetails.querySelectorAll('input');
-    const pixKeyTypeContainer = document.createElement('div');
     const bankSelect = document.getElementById('bank-select');
     const otherBankInput = document.getElementById('other-bank-input');
-    const pixBeneficiaryNameInput = document.getElementById('pix-beneficiary-name')
+    const pixKeyTypeContainer = document.getElementById('pix-key-type-container');
+    const pixKeyTypeSelect = document.getElementById('pix-key-type');
+    const pixBeneficiaryNameContainer = document.getElementById('pix-beneficiary-name-container');
+    const pixBeneficiaryNameInput = document.getElementById('pix-beneficiary-name');
+    const pixDocumentContainer = document.getElementById('pix-document-container');
+    const pixDocumentInput = document.getElementById('pix-document');
 
     // Inicialmente oculta o botão de submit
     submitButton.style.display = 'none';
-
-    pixKeyTypeContainer.classList.add('form-group', 'w-50', 'd-none');
-    pixKeyTypeContainer.innerHTML = `
-        <label for="pix-key-type">{{__("Tipo da chave Pix")}}</label>
-        <select class="form-control" id="pix-key-type" name="pix-key-type">
-            <option value="">{{__('Selecione')}}</option>
-            <option value="cpf">{{__('CPF')}}</option>
-            <option value="cnpj">{{__('CNPJ')}}</option>
-            <option value="email">{{__('Email')}}</option>
-            <option value="phone">{{__('Telefone')}}</option>
-            <option value="random">{{__('Aleatória')}}</option>
-        </select>
-    `;
-
-    // Criação do campo Nome do Beneficiado para PIX
-    const pixBeneficiaryNameContainer = document.createElement('div');
-    pixBeneficiaryNameContainer.classList.add('form-group', 'w-50', 'd-none');
-    pixBeneficiaryNameContainer.innerHTML = `
-        <label for="pix-beneficiary-name">{{__("Nome do Beneficiado")}}</label>
-        <input type="text" class="form-control" id="pix-beneficiary-name" name="pix-beneficiary-name" />
-    `;
-
-
-
-    paymentIdentifierContainer.parentNode.insertBefore(pixKeyTypeContainer, paymentIdentifierContainer);
-    pixKeyTypeContainer.after(pixBeneficiaryNameContainer);
-
-    const pixKeyTypeSelect = pixKeyTypeContainer.querySelector('#pix-key-type');
 
     paymentMethodSelect.addEventListener('change', function() {
         const isBankDeposit = this.value === 'Depósito Bancário';
@@ -164,10 +159,11 @@ document.addEventListener("DOMContentLoaded", function() {
         bankDetails.classList.toggle('d-none', !isBankDeposit);
         paymentIdentifierContainer.classList.toggle('d-none', !isPix);
         pixKeyTypeContainer.classList.toggle('d-none', !isPix);
-        pixBeneficiaryNameContainer.classList.toggle('d-none', !isPix); // Certifica-se de mostrar/esconder para PIX corretamente
-        
+        pixBeneficiaryNameContainer.classList.toggle('d-none', !isPix);
+        pixDocumentContainer.classList.toggle('d-none', !isPix);
+
         paymentIdentifierLabel.textContent = isPix ? "{{__('Sua chave Pix')}}" : '';
-        
+
         submitButton.style.display = (isBankDeposit || isPix) ? 'block' : 'none';
 
         inputs.forEach(input => {
@@ -176,8 +172,14 @@ document.addEventListener("DOMContentLoaded", function() {
         });
 
         paymentIdentifierInput.required = isPix;
-        pixBeneficiaryNameInput.required = isPix; // Torna o campo do nome do beneficiado obrigatório para PIX
-        if (!isPix) pixBeneficiaryNameInput.value = ''; // Limpa o campo se PIX não for o método selecionado
+        pixBeneficiaryNameInput.required = isPix;
+        pixDocumentInput.required = isPix;
+
+        if (!isPix) {
+            pixBeneficiaryNameInput.value = '';
+            pixDocumentInput.value = '';
+            pixKeyTypeSelect.value = '';
+        }
 
         toggleOtherBankInput();
         updateWithdrawalMessage(); // Atualize a mensagem ao mudar o método
@@ -197,12 +199,16 @@ document.addEventListener("DOMContentLoaded", function() {
         inputs.forEach(input => input.addEventListener('input', updateWithdrawalMessage));
         paymentIdentifierInput.addEventListener('input', updateWithdrawalMessage);
         pixKeyTypeSelect.addEventListener('change', updateWithdrawalMessage);
+        pixBeneficiaryNameInput.addEventListener('input', updateWithdrawalMessage);
+        pixDocumentInput.addEventListener('input', updateWithdrawalMessage);
     }
 
     function detachInputEvents() {
         inputs.forEach(input => input.removeEventListener('input', updateWithdrawalMessage));
         paymentIdentifierInput.removeEventListener('input', updateWithdrawalMessage);
         pixKeyTypeSelect.removeEventListener('change', updateWithdrawalMessage);
+        pixBeneficiaryNameInput.removeEventListener('input', updateWithdrawalMessage);
+        pixDocumentInput.removeEventListener('input', updateWithdrawalMessage);
     }
 
     function toggleOtherBankInput() {
@@ -250,8 +256,9 @@ document.addEventListener("DOMContentLoaded", function() {
         } else if (paymentMethodSelect.value === 'PIX') {
             const pixKeyTypeText = pixKeyTypeSelect.options[pixKeyTypeSelect.selectedIndex].text;
             const pixKey = paymentIdentifierInput.value;
-            const pixBeneficiaryName = document.getElementById('pix-beneficiary-name').value; // Corrigindo o nome da variável aqui
-            message = `Nome do Beneficiado: ${pixBeneficiaryName}; Tipo da chave Pix: ${pixKeyTypeText}; Chave Pix: ${pixKey}`;
+            const pixBeneficiaryName = pixBeneficiaryNameInput.value;
+            const pixDocument = pixDocumentInput.value;
+            message = `Nome do Beneficiado: ${pixBeneficiaryName}; Documento: ${pixDocument}; Tipo da chave Pix: ${pixKeyTypeText}; Chave Pix: ${pixKey}`;
         }
 
         withdrawalMessage.value = message;

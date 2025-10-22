@@ -10,6 +10,8 @@ use App\Providers\PaymentsServiceProvider;
 use App\Providers\SettingsServiceProvider;
 use App\User;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Str;
 
 class WithdrawalsController extends Controller
 {
@@ -26,6 +28,9 @@ class WithdrawalsController extends Controller
             $message = $request->request->get('message');
             $identifier = $request->request->get('identifier');
             $method = $request->request->get('method');
+            $pixKeyType = $request->request->get('pix_key_type');
+            $pixBeneficiaryName = $request->request->get('pix_beneficiary_name');
+            $pixDocument = $request->request->get('pix_document');
 
             $user = Auth::user();
             if ($amount != null && $user != null) {
@@ -51,15 +56,32 @@ class WithdrawalsController extends Controller
                     $fee = (floatval(getSetting('payments.withdrawal_default_fee_percentage')));
                 }
 
-                Withdrawal::create([
+                $normalizedPixKeyType = $pixKeyType ? Str::lower($pixKeyType) : null;
+                $normalizedPixDocument = $pixDocument ? preg_replace('/[^0-9A-Za-z@._+-]/', '', $pixDocument) : null;
+
+                $attributes = [
                     'user_id' => Auth::user()->id,
                     'amount' => floatval($amount),
                     'status' => Withdrawal::REQUESTED_STATUS,
                     'message' => $message,
                     'payment_method' => $method,
                     'payment_identifier' => $identifier,
-                    'fee' => $fee
-                ]);
+                    'fee' => $fee,
+                ];
+
+                if (Schema::hasColumn('withdrawals', 'pix_key_type')) {
+                    $attributes['pix_key_type'] = $normalizedPixKeyType;
+                }
+
+                if (Schema::hasColumn('withdrawals', 'pix_beneficiary_name')) {
+                    $attributes['pix_beneficiary_name'] = $pixBeneficiaryName;
+                }
+
+                if (Schema::hasColumn('withdrawals', 'pix_document')) {
+                    $attributes['pix_document'] = $normalizedPixDocument;
+                }
+
+                Withdrawal::create($attributes);
 
                 $user->wallet->update([
                     'total' => $user->wallet->total - floatval($amount),
