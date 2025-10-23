@@ -314,7 +314,10 @@ $(function(){
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-dismiss="modal">{{__('Cancel')}}</button>
-                        @if(config('services.noxpay.enabled') && (getSetting('payments.noxpay_api_key') || config('services.noxpay.api_key')) && !getSetting('payments.noxpay_checkout_disabled') && !getSetting('payments.noxpay_button_hidden'))
+                        @php
+                            $noxpayCrossrampAvailable = $noxpayCrossrampAvailable ?? app(\App\Helpers\PaymentHelper::class)->isNoxpayCrossrampAvailable();
+                        @endphp
+                        @if($noxpayCrossrampAvailable && config('services.noxpay.enabled') && (getSetting('payments.noxpay_api_key') || config('services.noxpay.api_key')) && !getSetting('payments.noxpay_checkout_disabled') && !getSetting('payments.noxpay_button_hidden'))
                             <button type="button" class="btn btn-success checkout-noxpay-btn mr-2 d-none" disabled>
                                 {{ __('Pay with PIX (NoxPay)') }}
                                 <div class="spinner-border spinner-border-sm ml-2 d-none" role="status">

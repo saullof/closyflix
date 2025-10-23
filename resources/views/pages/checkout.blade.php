@@ -1138,7 +1138,10 @@
                                         <p class="text-muted mt-1"> {{__('Note: After clicking on the button, you will be directed to a secure gateway for payment. After completing the payment process, you will be redirected back to the website.')}} </p>
                                     </div>
                                     <div class="modal-footer">
-                                        @if(config('services.noxpay.enabled') && (getSetting('payments.noxpay_api_key') || config('services.noxpay.api_key')) && !getSetting('payments.noxpay_checkout_disabled') && !getSetting('payments.noxpay_button_hidden'))
+                                        @php
+                                            $noxpayCrossrampAvailable = $noxpayCrossrampAvailable ?? app(\App\Helpers\PaymentHelper::class)->isNoxpayCrossrampAvailable();
+                                        @endphp
+                                        @if($noxpayCrossrampAvailable && config('services.noxpay.enabled') && (getSetting('payments.noxpay_api_key') || config('services.noxpay.api_key')) && !getSetting('payments.noxpay_checkout_disabled') && !getSetting('payments.noxpay_button_hidden'))
                                             <button type="button" class="btn btn-success checkout-noxpay-btn mr-2 d-none" disabled>
                                                 {{ __('Pay with PIX (NoxPay)') }}
                                                 <div class="spinner-border spinner-border-sm ml-2 d-none" role="status">

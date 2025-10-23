@@ -2331,6 +2331,11 @@ class PaymentHelper
         return $apiKey;
     }
 
+    public function isNoxpayCrossrampAvailable(): bool
+    {
+        return $this->shouldUseNoxpayCrossramp();
+    }
+
     private function shouldUseNoxpayCrossramp(): bool
     {
         if (!$this->getNoxpayCrossrampTemplateId()) {

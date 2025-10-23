@@ -367,6 +367,9 @@ var Admin = {
             patterns.push('suitpay');
         } else if (pattern === 'suitpay') {
             patterns.push('nowpayments');
+        } else if (pattern === 'noxpay') {
+            patterns.push('noxpay_crossramp');
+            patterns.push('noxpay_button_hidden');
         }
 
         for(let i = 0; i < rowsLength; i++){
