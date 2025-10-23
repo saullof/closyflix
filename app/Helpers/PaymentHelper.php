@@ -1874,6 +1874,12 @@ class PaymentHelper
 
         $code = $this->generateNoxpayUniqueTransactionCode($transaction);
 
+        if ($this->shouldUseNoxpayCrossramp()) {
+            $this->generateNoxpayCrossrampCheckout($transaction, $user, $apiKey);
+
+            return;
+        }
+
         $payload = [
             'method' => 'PIX',
             'code' => $code,
@@ -1908,6 +1914,87 @@ class PaymentHelper
         $transaction->noxpay_qr_code = data_get($data, 'qrCode');
         $transaction->noxpay_qr_code_text = data_get($data, 'qrCodeText');
         $transaction->noxpay_payment_url = data_get($data, 'url');
+        $transaction->save();
+
+        $this->setNoxpayPaymentDataToSession($transaction);
+    }
+
+    private function generateNoxpayCrossrampCheckout($transaction, $user, string $apiKey): void
+    {
+        $templateId = $this->getNoxpayCrossrampTemplateId();
+        $process = $this->getNoxpayCrossrampProcess();
+
+        if (!$templateId || !$process) {
+            throw new \Exception(__('NoxPay Crossramp is not configured.'));
+        }
+
+        $payload = [
+            'template_id' => $templateId,
+            'process' => $process,
+            'code' => $transaction->noxpay_payment_code,
+            'amount_from' => $this->formatAmountToCents($transaction->amount),
+            'currency_from' => $this->getNoxpayCrossrampSetting('currency_from', 'BRL'),
+            'currency_to' => $this->getNoxpayCrossrampSetting('currency_to'),
+            'return_url' => $this->resolveNoxpayCrossrampReturnUrl($transaction),
+            'webhook' => route('noxpay.webhook'),
+            'document' => $this->sanitizeDocument($user->document ?? null),
+            'email' => $user->email,
+            'name' => $user->name,
+            'metadata' => [
+                'transaction_id' => $transaction->id,
+                'sender_user_id' => $transaction->sender_user_id,
+                'recipient_user_id' => $transaction->recipient_user_id,
+                'type' => $transaction->type,
+            ],
+        ];
+
+        if ($wallet = $this->getNoxpayCrossrampSetting('wallet')) {
+            $payload['wallet'] = $wallet;
+        }
+
+        $extraPayload = $this->getNoxpayCrossrampExtraPayload();
+        if (!empty($extraPayload)) {
+            $payload = array_merge($payload, $extraPayload);
+        }
+
+        $payload = $this->filterNoxpayPayload($payload);
+
+        $endpoint = $this->getNoxpayCrossrampBaseUrl() . '/link';
+
+        $response = Http::withHeaders([
+            'api-key' => $apiKey,
+            'Accept' => 'application/json',
+        ])->post($endpoint, $payload);
+
+        if (!$response->successful()) {
+            Log::error('Failed generating NoxPay Crossramp checkout', [
+                'endpoint' => $endpoint,
+                'payload' => $payload,
+                'response' => $response->body(),
+            ]);
+
+            throw new \Exception(__('Failed generating NoxPay payment.'));
+        }
+
+        $data = $response->json();
+
+        if (isset($data['data']) && is_array($data['data'])) {
+            $data = $data['data'];
+        }
+
+        if (isset($data['checkout']) && is_array($data['checkout'])) {
+            $data = $data['checkout'];
+        }
+
+        $transaction->noxpay_payment_code = data_get($data, 'code', $transaction->noxpay_payment_code);
+        $transaction->noxpay_payment_txid = data_get($data, 'txid', $transaction->noxpay_payment_txid);
+        $transaction->noxpay_payment_url = data_get($data, 'checkout_url', data_get($data, 'url', $transaction->noxpay_payment_url));
+        $transaction->noxpay_checkout_end2end = data_get($data, 'end2end', $transaction->noxpay_checkout_end2end);
+        $transaction->noxpay_checkout_status = data_get($data, 'status', $transaction->noxpay_checkout_status);
+        $transaction->noxpay_checkout_substatus = data_get($data, 'substatus', $transaction->noxpay_checkout_substatus);
+        $transaction->noxpay_checkout_process = data_get($data, 'process', $transaction->noxpay_checkout_process ?? $process);
+        $transaction->noxpay_qr_code = null;
+        $transaction->noxpay_qr_code_text = null;
         $transaction->save();
 
         $this->setNoxpayPaymentDataToSession($transaction);
@@ -2162,6 +2249,10 @@ class PaymentHelper
             'noxpay_qr_code' => $transaction->noxpay_qr_code,
             'noxpay_qr_code_text' => $transaction->noxpay_qr_code_text,
             'noxpay_payment_url' => $transaction->noxpay_payment_url,
+            'noxpay_checkout_end2end' => $transaction->noxpay_checkout_end2end,
+            'noxpay_checkout_status' => $transaction->noxpay_checkout_status,
+            'noxpay_checkout_substatus' => $transaction->noxpay_checkout_substatus,
+            'noxpay_checkout_process' => $transaction->noxpay_checkout_process,
         ];
 
         Session::put('noxpay_payment_data', $sessionData);
@@ -2240,6 +2331,210 @@ class PaymentHelper
         return $apiKey;
     }
 
+    public function isNoxpayCrossrampAvailable(): bool
+    {
+        return $this->shouldUseNoxpayCrossramp();
+    }
+
+    private function shouldUseNoxpayCrossramp(): bool
+    {
+        if (!$this->getNoxpayCrossrampTemplateId()) {
+            return false;
+        }
+
+        $enabledSetting = getSetting('payments.noxpay_crossramp_enabled');
+
+        if ($enabledSetting !== null) {
+            return (bool) $enabledSetting;
+        }
+
+        return (bool) config('services.noxpay.crossramp.enabled', false);
+    }
+
+    private function getNoxpayCrossrampTemplateId(): ?string
+    {
+        $value = $this->getNoxpayCrossrampSetting('template_id');
+
+        return $value !== '' ? $value : null;
+    }
+
+    private function getNoxpayCrossrampProcess(): ?string
+    {
+        $value = $this->getNoxpayCrossrampSetting('process');
+
+        return $value !== '' ? $value : null;
+    }
+
+    private function getNoxpayCrossrampSetting(string $key, $default = null)
+    {
+        $settingKey = 'payments.noxpay_crossramp_' . $key;
+        $value = getSetting($settingKey);
+
+        if ($value === null || $value === '') {
+            $value = data_get(config('services.noxpay.crossramp', []), $key, $default);
+        }
+
+        return $value ?? $default;
+    }
+
+    private function getNoxpayCrossrampBaseUrl(): string
+    {
+        $baseUrl = $this->getNoxpayCrossrampSetting('base_url', config('services.noxpay.crossramp.base_url', 'https://api2.noxpay.io'));
+
+        return rtrim($baseUrl ?: 'https://api2.noxpay.io', '/');
+    }
+
+    private function resolveNoxpayCrossrampReturnUrl($transaction): string
+    {
+        $returnUrl = $this->getNoxpayCrossrampSetting('return_url');
+
+        if (!empty($returnUrl)) {
+            return $returnUrl;
+        }
+
+        $configReturnUrl = config('services.noxpay.crossramp.return_url');
+
+        if (!empty($configReturnUrl)) {
+            return $configReturnUrl;
+        }
+
+        return url('/');
+    }
+
+    private function getNoxpayCrossrampExtraPayload(): array
+    {
+        $payload = $this->getNoxpayCrossrampSetting('extra_payload');
+
+        if (is_array($payload)) {
+            return $payload;
+        }
+
+        if (is_string($payload) && trim($payload) !== '') {
+            $decoded = json_decode($payload, true);
+
+            if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
+                return $decoded;
+            }
+
+            Log::warning('Invalid NoxPay Crossramp extra payload received from settings.', ['payload' => $payload]);
+        }
+
+        $configPayload = config('services.noxpay.crossramp.extra_payload');
+
+        if (is_array($configPayload)) {
+            return $configPayload;
+        }
+
+        if (is_string($configPayload) && trim($configPayload) !== '') {
+            $decoded = json_decode($configPayload, true);
+
+            if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
+                return $decoded;
+            }
+
+            Log::warning('Invalid NoxPay Crossramp extra payload received from configuration.', ['payload' => $configPayload]);
+        }
+
+        return [];
+    }
+
+    private function filterNoxpayPayload(array $payload): array
+    {
+        foreach ($payload as $key => $value) {
+            if (is_array($value)) {
+                $payload[$key] = $this->filterNoxpayPayload($value);
+
+                if ($payload[$key] === []) {
+                    unset($payload[$key]);
+                }
+            } elseif ($value === null || $value === '') {
+                unset($payload[$key]);
+            }
+        }
+
+        return $payload;
+    }
+
+    private function sanitizeDocument(?string $document): ?string
+    {
+        if ($document === null) {
+            return null;
+        }
+
+        $digits = preg_replace('/\D+/', '', $document);
+
+        return $digits !== '' ? $digits : null;
+    }
+
+    private function formatAmountToCents($amount): int
+    {
+        return (int) round(((float) $amount) * 100);
+    }
+
+    private function isCrossrampPayload(array $payload, ?Transaction $transaction = null): bool
+    {
+        if ($transaction && !empty($transaction->noxpay_checkout_end2end)) {
+            return true;
+        }
+
+        if (isset($payload['end2end']) || isset($payload['checkout_url']) || isset($payload['process']) || isset($payload['substatus'])) {
+            return true;
+        }
+
+        $status = strtolower((string) data_get($payload, 'status', data_get($payload, 'transaction.status', '')));
+
+        $knownStatuses = [
+            'quoting', 'kyc_validation', 'id_validation', 'pix_deposit', 'pix_withdrawal',
+            'crypto_deposit', 'crypto_withdrawal', 'swap_fiat_for_crypto', 'swap_crypto_for_fiat',
+            'success', 'client_side_success', 'refund_processed', 'refund_processing',
+        ];
+
+        return in_array($status, $knownStatuses, true);
+    }
+
+    private function isCrossrampSuccessful(string $status, string $substatus): bool
+    {
+        $status = strtoupper($status);
+        $substatus = strtoupper($substatus);
+
+        $successStatuses = ['SUCCESS', 'CLIENT_SIDE_SUCCESS', 'COMPLETED', 'APPROVED'];
+        if (in_array($status, $successStatuses, true)) {
+            return true;
+        }
+
+        $phaseSuccess = [
+            'PIX_WITHDRAWAL' => ['DONE'],
+            'SWAP_FIAT_FOR_CRYPTO' => ['DONE'],
+            'SWAP_CRYPTO_FOR_FIAT' => ['DONE'],
+            'CRYPTO_DEPOSIT' => ['DONE'],
+        ];
+
+        return isset($phaseSuccess[$status]) && in_array($substatus, $phaseSuccess[$status], true);
+    }
+
+    private function isCrossrampFailed(string $status, string $substatus): bool
+    {
+        $status = strtoupper($status);
+        $substatus = strtoupper($substatus);
+
+        $failedStatuses = ['CANCELLED', 'CANCELED', 'FAILED', 'EXPIRED', 'REFUND_PROCESSED', 'REFUND_PROCESSING'];
+        $failedSubstatuses = ['CANCELLED', 'CANCELED', 'ERROR', 'EXPIRED', 'IRREGULAR', 'DIVERGENT'];
+
+        return in_array($status, $failedStatuses, true) || in_array($substatus, $failedSubstatuses, true);
+    }
+
+    private function looksLikeCrossrampIdentifier(string $identifier): bool
+    {
+        $identifier = trim($identifier);
+
+        if (strlen($identifier) <= 20) {
+            return false;
+        }
+
+        return Str::startsWith($identifier, 'NOX') || Str::startsWith($identifier, 'nox');
+    }
+
+
     public function updateTransactionFromNoxpayPayload(array $payload)
     {
         $transaction = null;
@@ -2256,6 +2551,10 @@ class PaymentHelper
             $transaction = Transaction::query()->where('noxpay_payment_txid', $payload['transaction']['txid'])->first();
         }
 
+        if ($transaction === null && isset($payload['end2end'])) {
+            $transaction = Transaction::query()->where('noxpay_checkout_end2end', $payload['end2end'])->first();
+        }
+
         if ($transaction === null) {
             Log::warning('NoxPay transaction not found', ['payload' => $payload]);
             return null;
@@ -2265,11 +2564,25 @@ class PaymentHelper
         $transaction->noxpay_payment_code = data_get($payload, 'code', $transaction->noxpay_payment_code);
         $transaction->noxpay_qr_code = data_get($payload, 'qrCode', $transaction->noxpay_qr_code);
         $transaction->noxpay_qr_code_text = data_get($payload, 'qrCodeText', $transaction->noxpay_qr_code_text);
-        $transaction->noxpay_payment_url = data_get($payload, 'url', $transaction->noxpay_payment_url);
+        $transaction->noxpay_payment_url = data_get($payload, 'checkout_url', data_get($payload, 'url', $transaction->noxpay_payment_url));
+        $transaction->noxpay_checkout_end2end = data_get($payload, 'end2end', $transaction->noxpay_checkout_end2end);
+        $transaction->noxpay_checkout_status = data_get($payload, 'status', data_get($payload, 'transaction.status', $transaction->noxpay_checkout_status));
+        $transaction->noxpay_checkout_substatus = data_get($payload, 'substatus', data_get($payload, 'transaction.substatus', $transaction->noxpay_checkout_substatus));
+        $transaction->noxpay_checkout_process = data_get($payload, 'process', $transaction->noxpay_checkout_process);
 
-        $status = strtoupper((string) data_get($payload, 'status', data_get($payload, 'transaction.status', '')));
+        $rawStatus = (string) data_get($payload, 'status', data_get($payload, 'transaction.status', ''));
+        $rawSubstatus = (string) data_get($payload, 'substatus', data_get($payload, 'transaction.substatus', ''));
 
-        if (in_array($status, ['PAID', 'PAID_OUT', 'APPROVED', 'COMPLETED', 'CONFIRMED'])) {
+        $statusUpper = strtoupper($rawStatus);
+        $substatusUpper = strtoupper($rawSubstatus);
+
+        $isCrossramp = $this->isCrossrampPayload($payload, $transaction);
+
+        $legacySuccessStatuses = ['PAID', 'PAID_OUT', 'APPROVED', 'COMPLETED', 'CONFIRMED'];
+        $legacyFailureStatuses = ['CANCELED', 'CANCELLED', 'FAILED', 'EXPIRED'];
+
+        if (($isCrossramp && $this->isCrossrampSuccessful($statusUpper, $substatusUpper))
+            || (!$isCrossramp && in_array($statusUpper, $legacySuccessStatuses, true))) {
             if ($transaction->status !== Transaction::APPROVED_STATUS) {
                 $transaction->status = Transaction::APPROVED_STATUS;
                 $transaction->save();
@@ -2286,11 +2599,12 @@ class PaymentHelper
             } else {
                 $transaction->save();
             }
-        } elseif (in_array($status, ['CANCELED', 'CANCELLED', 'FAILED', 'EXPIRED'])) {
+        } elseif (($isCrossramp && $this->isCrossrampFailed($statusUpper, $substatusUpper))
+            || (!$isCrossramp && in_array($statusUpper, $legacyFailureStatuses, true))) {
             $transaction->status = Transaction::CANCELED_STATUS;
             $transaction->save();
             Session::forget('noxpay_payment_data');
-        } elseif (!empty($status)) {
+        } elseif (!empty($rawStatus)) {
             $transaction->status = Transaction::PENDING_STATUS;
             $transaction->save();
             $this->setNoxpayPaymentDataToSession($transaction);
@@ -2309,14 +2623,47 @@ class PaymentHelper
             return null;
         }
 
+        $identifier = (string) $identifier;
+
+        $transaction = Transaction::query()
+            ->where('noxpay_payment_code', $identifier)
+            ->orWhere('noxpay_payment_txid', $identifier)
+            ->orWhere('noxpay_checkout_end2end', $identifier)
+            ->first();
+
+        $identifierToQuery = $identifier;
+
+        if ($transaction && !empty($transaction->noxpay_checkout_end2end)) {
+            $identifierToQuery = $transaction->noxpay_checkout_end2end;
+        }
+
+        $shouldQueryCrossramp = false;
+
+        if ($transaction) {
+            if (!empty($transaction->noxpay_checkout_end2end)) {
+                $shouldQueryCrossramp = true;
+            } elseif (!empty($transaction->noxpay_payment_url) && Str::contains($transaction->noxpay_payment_url, 'checkout')) {
+                $shouldQueryCrossramp = true;
+            }
+        }
+
+        if (!$shouldQueryCrossramp && $this->looksLikeCrossrampIdentifier($identifier)) {
+            $shouldQueryCrossramp = true;
+        }
+
+        $endpoint = $shouldQueryCrossramp
+            ? $this->getNoxpayCrossrampBaseUrl() . '/checkout/' . urlencode($identifierToQuery)
+            : 'https://api2.noxpay.io/payment/' . urlencode($identifierToQuery);
+
         $response = Http::withHeaders([
             'api-key' => $apiKey,
             'Accept' => 'application/json',
-        ])->get('https://api2.noxpay.io/payment/' . urlencode($identifier));
+        ])->get($endpoint);
 
         if (!$response->successful()) {
             Log::error('Failed to fetch NoxPay payment status', [
-                'identifier' => $identifier,
+                'identifier' => $identifierToQuery,
+                'endpoint' => $endpoint,
                 'response' => $response->body(),
             ]);
 
@@ -2329,7 +2676,11 @@ class PaymentHelper
             $data = $data['payment'];
         }
 
-        if (isset($data['data']) && is_array($data['data']) && isset($data['data']['code'])) {
+        if (isset($data['checkout']) && is_array($data['checkout'])) {
+            $data = $data['checkout'];
+        }
+
+        if (isset($data['data']) && is_array($data['data']) && (isset($data['data']['code']) || isset($data['data']['end2end']))) {
             $data = $data['data'];
         }
 

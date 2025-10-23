@@ -78,7 +78,8 @@ class Transaction extends Model
         'coinbase_charge_id', 'coinbase_transaction_token', 'ccbill_payment_token', 'ccbill_transaction_id', 'nowpayments_payment_id',
         'nowpayments_order_id', 'stream_id', 'ccbill_subscription_id', 'user_message_id', 'paystack_transaction_token',
         'suitpay_payment_token', 'suitpay_payment_id', 'suitpay_payment_order_id', 'suitpay_payment_code', 'suitpay_payment_transaction_id',
-        'noxpay_payment_code', 'noxpay_payment_txid', 'noxpay_qr_code', 'noxpay_qr_code_text', 'noxpay_payment_url', 'coupon',
+        'noxpay_payment_code', 'noxpay_payment_txid', 'noxpay_qr_code', 'noxpay_qr_code_text', 'noxpay_payment_url',
+        'noxpay_checkout_end2end', 'noxpay_checkout_status', 'noxpay_checkout_substatus', 'noxpay_checkout_process', 'coupon',
     ];
 
     /**

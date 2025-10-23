@@ -287,7 +287,7 @@
 
         $(function(){
             var $phone     = $('#paymentPhone');
-            var $submitBtn = $('.checkout-continue-btn');
+            var $submitButtons = $('.checkout-continue-btn, .checkout-noxpay-btn');
 
             // Função que formata em (00) 00000-0000
             function formatPhone(value) {
@@ -310,11 +310,19 @@
                 var digits = $phone.val().replace(/\D/g, '');
 
                 if (digits.length === 11) {
-                $phone.removeClass('is-invalid').addClass('is-valid');
-                $submitBtn.prop('disabled', false);
+                    $phone.removeClass('is-invalid').addClass('is-valid');
+                    $submitButtons.each(function(){
+                        if (!$(this).hasClass('is-processing')) {
+                            $(this).prop('disabled', false);
+                        }
+                    });
                 } else {
-                $phone.removeClass('is-valid').addClass('is-invalid');
-                $submitBtn.prop('disabled', true);
+                    $phone.removeClass('is-valid').addClass('is-invalid');
+                    $submitButtons.each(function(){
+                        if (!$(this).hasClass('is-processing')) {
+                            $(this).prop('disabled', true);
+                        }
+                    });
                 }
             }, 1000);
 
@@ -1130,7 +1138,18 @@
                                         <p class="text-muted mt-1"> {{__('Note: After clicking on the button, you will be directed to a secure gateway for payment. After completing the payment process, you will be redirected back to the website.')}} </p>
                                     </div>
                                     <div class="modal-footer">
-                                        <button type="submit" class="btn btn-primary checkout-continue-btn">{{__('Continue')}}
+                                        @php
+                                            $noxpayCrossrampAvailable = $noxpayCrossrampAvailable ?? app(\App\Helpers\PaymentHelper::class)->isNoxpayCrossrampAvailable();
+                                        @endphp
+                                        @if($noxpayCrossrampAvailable && config('services.noxpay.enabled') && (getSetting('payments.noxpay_api_key') || config('services.noxpay.api_key')) && !getSetting('payments.noxpay_checkout_disabled') && !getSetting('payments.noxpay_button_hidden'))
+                                            <button type="button" class="btn btn-success checkout-noxpay-btn mr-2 d-none" disabled>
+                                                {{ __('Pay with PIX (NoxPay)') }}
+                                                <div class="spinner-border spinner-border-sm ml-2 d-none" role="status">
+                                                    <span class="sr-only">{{ __('Loading...') }}</span>
+                                                </div>
+                                            </button>
+                                        @endif
+                                        <button type="submit" class="btn btn-primary checkout-continue-btn" disabled>{{__('Continue')}}
                                             <div class="spinner-border spinner-border-sm ml-2 d-none" role="status">
                                                 <span class="sr-only">{{__('Loading...')}}</span>
                                             </div>
@@ -1184,46 +1203,8 @@
 </div>
 
 
-{{--  noxpay qrcode  --}}
-<div class="modal fade" tabindex="-1" role="dialog" id="noxpayQrcodeModal">
-    <div class="modal-dialog modal-dialog-centered" role="document">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">{{ __('Verify Payment') }}</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="{{__('Close')}}">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-            </div>
-            <div class="modal-body">
-                @if (Session::has('noxpay_payment_data') && Session::get('noxpay_payment_data')['user_id'] == Auth::user()->id)
-                    @php
-                        $noxpayData = Session::get('noxpay_payment_data');
-                    @endphp
-                    <div class="mt-4 text-center">
-                        @if (!empty($noxpayData['noxpay_qr_code']))
-                            <img src="data:image/png;base64,{{$noxpayData['noxpay_qr_code']}}" alt="NoxPay QR" style="max-width: 140px;">
-                        @elseif (!empty($noxpayData['noxpay_qr_code_text']))
-                            {!! QrCode::size(140)->generate($noxpayData['noxpay_qr_code_text']) !!}
-                        @endif
-                        <p>
-                            <a href="javascript:void(0)" onclick="copyNoxpayPaymentCode('{{ $noxpayData['noxpay_qr_code_text'] ?? $noxpayData['noxpay_payment_code'] }}')" data-noxpay-payment-code="{{ $noxpayData['noxpay_qr_code_text'] ?? $noxpayData['noxpay_payment_code'] }}" class="btn btn-link  mr-0 mt-4">{{__('Scan the QR Code Or Click to copy code & Verify Payment')}}</a>
-                        </p>
-                    </div>
-
-                    @php
-                        if (Session::has('noxpay_payment_data')) {
-                            $transaction = \App\Model\Transaction::where('id', $noxpayData['transaction_id'])->first();
-
-                            if ($transaction && $transaction->created_at->diffInMinutes(now()) > 2) {
-                                Session::forget('noxpay_payment_data');
-                            }
-                        }
-                    @endphp
-                @endif
-            </div>
-        </div>
-    </div>
-</div>
+{{--  noxpay checkout/modal  --}}
+@include('elements.noxpay.modal')
 @endsection
 
 
