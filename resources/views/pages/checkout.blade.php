@@ -287,7 +287,7 @@
 
         $(function(){
             var $phone     = $('#paymentPhone');
-            var $submitBtn = $('.checkout-continue-btn');
+            var $submitButtons = $('.checkout-continue-btn, .checkout-noxpay-btn');
 
             // Função que formata em (00) 00000-0000
             function formatPhone(value) {
@@ -310,11 +310,19 @@
                 var digits = $phone.val().replace(/\D/g, '');
 
                 if (digits.length === 11) {
-                $phone.removeClass('is-invalid').addClass('is-valid');
-                $submitBtn.prop('disabled', false);
+                    $phone.removeClass('is-invalid').addClass('is-valid');
+                    $submitButtons.each(function(){
+                        if (!$(this).hasClass('is-processing')) {
+                            $(this).prop('disabled', false);
+                        }
+                    });
                 } else {
-                $phone.removeClass('is-valid').addClass('is-invalid');
-                $submitBtn.prop('disabled', true);
+                    $phone.removeClass('is-valid').addClass('is-invalid');
+                    $submitButtons.each(function(){
+                        if (!$(this).hasClass('is-processing')) {
+                            $(this).prop('disabled', true);
+                        }
+                    });
                 }
             }, 1000);
 
@@ -1130,7 +1138,15 @@
                                         <p class="text-muted mt-1"> {{__('Note: After clicking on the button, you will be directed to a secure gateway for payment. After completing the payment process, you will be redirected back to the website.')}} </p>
                                     </div>
                                     <div class="modal-footer">
-                                        <button type="submit" class="btn btn-primary checkout-continue-btn">{{__('Continue')}}
+                                        @if(config('services.noxpay.enabled') && (getSetting('payments.noxpay_api_key') || config('services.noxpay.api_key')) && !getSetting('payments.noxpay_checkout_disabled') && !getSetting('payments.noxpay_button_hidden'))
+                                            <button type="button" class="btn btn-success checkout-noxpay-btn mr-2 d-none" disabled>
+                                                {{ __('Pay with PIX (NoxPay)') }}
+                                                <div class="spinner-border spinner-border-sm ml-2 d-none" role="status">
+                                                    <span class="sr-only">{{ __('Loading...') }}</span>
+                                                </div>
+                                            </button>
+                                        @endif
+                                        <button type="submit" class="btn btn-primary checkout-continue-btn" disabled>{{__('Continue')}}
                                             <div class="spinner-border spinner-border-sm ml-2 d-none" role="status">
                                                 <span class="sr-only">{{__('Loading...')}}</span>
                                             </div>

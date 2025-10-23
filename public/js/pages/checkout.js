@@ -172,7 +172,28 @@ $(function () {
 
     // Checkout proceed button event listener
     $('.checkout-continue-btn').on('click', function () {
+        checkout.activePaymentButton = $(this);
         checkout.initPayment();
+    });
+
+    $('.checkout-noxpay-btn').on('click', function () {
+        const $button = $(this);
+        checkout.activePaymentButton = $button;
+        const $noxpayMethod = $('.noxpay-payment-method');
+        if ($noxpayMethod.length && $noxpayMethod.hasClass('d-none')) {
+            $noxpayMethod.removeClass('d-none');
+        }
+        const $noxpayProvider = $('.noxpay-payment-provider');
+        if ($noxpayProvider.length) {
+            $noxpayProvider.trigger('click');
+            const $noxpayContainer = $noxpayProvider.closest('.payment-method');
+            if ($noxpayContainer.length) {
+                $('.payment-method').removeClass('selected-payment');
+                $noxpayContainer.addClass('selected-payment');
+            }
+            checkout.syncNoxpayButton();
+            checkout.initPayment();
+        }
     });
 
     $('.custom-control').on('change', function () {
@@ -490,6 +511,7 @@ $(function () {
         checkout.updatePaymentSummaryData();
     });
 
+    checkout.syncNoxpayButton();
 });
 
 /**
@@ -498,6 +520,7 @@ $(function () {
 var checkout = {
     allowedPaymentProcessors: ['stripe', 'paypal', 'credit', 'coinbase', 'nowpayments', 'ccbill', 'paystack', 'oxxo', 'mercado', 'suitpay', 'noxpay'],
     paymentData: {},
+    activePaymentButton: null,
     oneTimePaymentProcessorClasses: [
         '.nowpayments-payment-method',
         '.coinbase-payment-method',
@@ -611,7 +634,10 @@ var checkout = {
     
             if (checkout.allowedPaymentProcessors.includes(processor)) {
                 checkout.updatePaymentForm();
-                $('.checkout-continue-btn .spinner-border').removeClass('d-none');
+                if (!checkout.activePaymentButton || !checkout.activePaymentButton.length) {
+                    checkout.activePaymentButton = $('.checkout-continue-btn');
+                }
+                checkout.toggleProcessingState(true);
                 checkout.validateAllFields(() => {
                     $('.payment-button').trigger('click');
                 });
@@ -633,7 +659,7 @@ var checkout = {
                 callback();
             },
             error: function (result) {
-                $('.checkout-continue-btn .spinner-border').addClass('d-none');
+                checkout.toggleProcessingState(false);
                 if(result.status === 500){
                     launchToast('danger',trans('Error'),result.responseJSON.message);
                 }
@@ -1036,6 +1062,46 @@ var checkout = {
 
     },
 
+    toggleProcessingState: function(isLoading){
+        let $button = checkout.activePaymentButton && checkout.activePaymentButton.length ? checkout.activePaymentButton : $('.checkout-continue-btn');
+        if (!$button || !$button.length) {
+            return;
+        }
+
+        if (isLoading) {
+            $button.addClass('is-processing').prop('disabled', true);
+        } else {
+            $button.removeClass('is-processing');
+            const $phone = $('#paymentPhone');
+            if ($phone.length) {
+                const digits = $phone.val().replace(/\D/g, '');
+                $button.prop('disabled', digits.length !== 11);
+            } else {
+                $button.prop('disabled', false);
+            }
+        }
+
+        const $spinner = $button.find('.spinner-border');
+        if ($spinner.length) {
+            $spinner.toggleClass('d-none', !isLoading);
+        }
+
+        if (!isLoading) {
+            checkout.activePaymentButton = null;
+        }
+    },
+
+    syncNoxpayButton: function(){
+        const $button = $('.checkout-noxpay-btn');
+        if (!$button.length) {
+            return;
+        }
+
+        const $method = $('.noxpay-payment-method');
+        const shouldShow = $method.length && !$method.hasClass('d-none');
+        $button.toggleClass('d-none', !shouldShow);
+    },
+
     togglePaymentProvider: function(toggle, paymentMethodClass){
         let paymentMethod = $(paymentMethodClass);
         if(toggle){
@@ -1046,6 +1112,10 @@ var checkout = {
             if(!paymentMethod.hasClass('d-none')){
                 paymentMethod.addClass('d-none');
             }
+        }
+
+        if (paymentMethodClass === '.noxpay-payment-method') {
+            checkout.syncNoxpayButton();
         }
 
     },
