@@ -279,6 +279,133 @@ class PaymentsController extends Controller
         return $this->paymentHandler->redirectByTransaction($transaction);
     }
 
+    public function generateStripePixSession(CreateTransactionRequest $request)
+    {
+        try {
+            $this->updateUserBillingDetails($request);
+
+            $currentUser = Auth::user();
+            if (!$currentUser) {
+                return response()->json(['message' => __('Authentication required.')], 401);
+            }
+
+            $transactionType = $request->get('transaction_type');
+            $transaction = new Transaction();
+            $transaction['sender_user_id'] = $currentUser->id;
+            $transaction['recipient_user_id'] = $request->get('recipient_user_id');
+            $transaction['post_id'] = $request->get('post_id');
+            $transaction['user_message_id'] = $request->get('user_message_id');
+            $transaction['type'] = $transactionType;
+            $transaction['status'] = Transaction::INITIATED_STATUS;
+            $transaction['amount'] = $request->get('amount');
+            $transaction['currency'] = config('app.site.currency_code');
+            $transaction['payment_provider'] = Transaction::STRIPE_PIX_PROVIDER;
+            $transaction['taxes'] = $request->get('taxes');
+            $transaction['stream_id'] = $request->get('stream');
+            $transaction['coupon'] = $request->get('coupon');
+
+            $recipientUser = null;
+            if ($transaction['recipient_user_id']) {
+                $recipientUser = User::query()->where('id', $transaction['recipient_user_id'])->first();
+            }
+
+            $errorMessage = __('Something went wrong with this transaction. Please try again');
+
+            if ($transaction['amount'] <= 0 || (!$recipientUser && $transactionType !== Transaction::DEPOSIT_TYPE)) {
+                return response()->json(['message' => $errorMessage], 422);
+            }
+
+            if(!$this->paymentHandler->validateTransaction($transaction, $recipientUser)) {
+                return response()->json(['message' => $errorMessage], 422);
+            }
+
+            $coupon = $request->get('coupon');
+            if ($coupon) {
+                $couponData = $this->paymentHandler->getCouponDetails($coupon);
+                if ($couponData && isset($couponData['discount'])) {
+                    $discount = $couponData['discount'];
+                    if ($discount['type'] === 'percent') {
+                        $transaction['amount'] = $transaction['amount'] - ($transaction['amount'] * $discount['value'] / 100);
+                    } elseif ($discount['type'] === 'fixed') {
+                        $transaction['amount'] = $transaction['amount'] - $discount['value'];
+                    }
+                }
+            }
+
+            if ($transaction['amount'] < 5) {
+                $transaction['amount'] = 5;
+            }
+
+            switch ($transactionType) {
+                case Transaction::TIP_TYPE:
+                case Transaction::CHAT_TIP_TYPE:
+                case Transaction::STREAM_ACCESS:
+                case Transaction::POST_UNLOCK:
+                case Transaction::MESSAGE_UNLOCK:
+                    $userId = $currentUser->id;
+                    $postId = $transaction['post_id'];
+                    $streamId = $transaction['stream_id'];
+                    $messageId = $transaction['user_message_id'];
+
+                    if($recipientUser && $recipientUser->id === $transaction['sender_user_id']) {
+                        return response()->json(['message' => __('Cannot pay to yourself.')], 422);
+                    }
+
+                    if($transactionType === Transaction::POST_UNLOCK && PostsHelperServiceProvider::userPaidForPost($userId, $postId)){
+                        return response()->json(['message' => __('You already unlocked this post.')], 422);
+                    }
+
+                    if($transactionType === Transaction::STREAM_ACCESS && PostsHelperServiceProvider::userPaidForStream($userId, $streamId)){
+                        return response()->json(['message' => __('You already paid for this streaming')], 422);
+                    }
+
+                    if($transactionType === Transaction::MESSAGE_UNLOCK && PostsHelperServiceProvider::userPaidForMessage($userId, $messageId)){
+                        return response()->json(['message' => __('You already paid access for this message')], 422);
+                    }
+                    break;
+                case Transaction::DEPOSIT_TYPE:
+                    $transaction['recipient_user_id'] = $currentUser->id;
+                    break;
+                case Transaction::ONE_MONTH_SUBSCRIPTION:
+                case Transaction::THREE_MONTHS_SUBSCRIPTION:
+                case Transaction::SIX_MONTHS_SUBSCRIPTION:
+                case Transaction::YEARLY_SUBSCRIPTION:
+                    return response()->json(['message' => __('Stripe Pix payments are not available for subscriptions.')], 422);
+                default:
+                    return response()->json(['message' => $errorMessage], 422);
+            }
+
+            $redirectLink = $this->paymentHandler->generateStripeSessionByTransaction($transaction);
+            if ($redirectLink == null) {
+                $transaction['status'] = Transaction::DECLINED_STATUS;
+                $transaction->save();
+
+                return response()->json(['message' => __('Failed generating stripe session')], 422);
+            }
+
+            $transaction->save();
+
+            if ($transaction != null) {
+                try {
+                    $invoice = InvoiceServiceProvider::createInvoiceByTransaction($transaction);
+                    if ($invoice != null) {
+                        $transaction->invoice_id = $invoice->id;
+                        $transaction->save();
+                    }
+                } catch (\Exception $exception) {
+                    Log::error("Failed generating invoice for transaction: ".$transaction->id." error: ".$exception->getMessage());
+                }
+            }
+
+            return response()->json(['redirect_url' => $redirectLink]);
+        } catch (\Exception $exception) {
+            Log::error("Stripe Pix session generation failed -> error message: " . $exception->getMessage());
+            Log::error("Payment failed", [$exception->getTraceAsString()]);
+
+            return response()->json(['message' => __('Payment failed.')], 500);
+        }
+    }
+
     /**
      * Handles the deposit request response.
      *

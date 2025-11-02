@@ -29,6 +29,7 @@ class Transaction extends Model
 
     const PAYPAL_PROVIDER = 'paypal';
     const STRIPE_PROVIDER = 'stripe';
+    const STRIPE_PIX_PROVIDER = 'stripe_pix';
     const MANUAL_PROVIDER = 'manual';
     const CREDIT_PROVIDER = 'credit';
     const COINBASE_PROVIDER = 'coinbase';
@@ -51,14 +52,16 @@ class Transaction extends Model
         self::PAYSTACK_PROVIDER,
         self::OXXO_PROVIDER,
         self::MERCADO_PROVIDER,
-        self::SUITPAY_PROVIDER
+        self::SUITPAY_PROVIDER,
+        self::STRIPE_PIX_PROVIDER
     ];
     const PENDING_PAYMENT_PROCESSORS = [
         self::COINBASE_PROVIDER,
         self::NOWPAYMENTS_PROVIDER,
         self::CCBILL_PROVIDER,
-        self::OXXO_PROVIDER.
+        self::OXXO_PROVIDER,
         self::SUITPAY_PROVIDER,
+        self::STRIPE_PIX_PROVIDER,
     ];
 
     const CCBILL_FLEX_FORM_BASE_PATH = 'https://api.ccbill.com/wap-frontflex/flexforms/';

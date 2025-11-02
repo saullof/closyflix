@@ -1021,6 +1021,13 @@
                                                         </div>
                                                     </div>
                                                 @endif
+                                                @if(getSetting('payments.stripe_secret_key') && getSetting('payments.stripe_public_key') && strtoupper(config('app.site.currency_code')) === 'BRL')
+                                                    <div class="p-1 col-6 col-md-3 d-none stripe-pix-payment-method payment-method" data-value="stripe_pix">
+                                                        <div class="radio mx-auto stripe-pix-payment-provider checkout-payment-provider d-flex align-items-center justify-content-center">
+                                                            <img src="{{asset('/img/logos/pix.png')}}">
+                                                        </div>
+                                                    </div>
+                                                @endif
                                                 <div class="credit-payment-method p-1 col-6 col-md-3 col-lg-3 payment-method" data-value="credit">
                                                     <div class="radio mx-auto credit-payment-provider checkout-payment-provider d-flex align-items-center justify-content-center">
                                                         <div class="credit-provider-text">

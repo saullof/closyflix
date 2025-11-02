@@ -108,6 +108,7 @@ function openCheckoutInline(button) {
         checkout.togglePaymentProviders(false, checkout.oneTimePaymentProcessorClasses);
         checkout.togglePaymentProvider(showCCBillProvider, '.ccbill-payment-method');
         checkout.togglePaymentProvider(showStripeProvider, '.stripe-payment-method');
+        checkout.togglePaymentProvider(showStripeProvider, '.stripe-pix-payment-method');
         checkout.togglePaymentProvider(showPaypalProvider, '.paypal-payment-method');
         checkout.togglePaymentProvider(showPaypalProvider, '.suitpay-payment-method');
         checkout.togglePaymentProvider(showCreditProvider, '.credit-payment-method');
@@ -266,6 +267,7 @@ $(function () {
             checkout.togglePaymentProviders(false, checkout.oneTimePaymentProcessorClasses);
             checkout.togglePaymentProvider(showCCBillProvider, '.ccbill-payment-method');
             checkout.togglePaymentProvider(showStripeProvider, '.stripe-payment-method');
+            checkout.togglePaymentProvider(showStripeProvider, '.stripe-pix-payment-method');
             checkout.togglePaymentProvider(showPaypalProvider, '.paypal-payment-method');
             checkout.togglePaymentProvider(showPaypalProvider, '.suitpay-payment-method');
             checkout.togglePaymentProvider(showCreditProvider, '.credit-payment-method');
@@ -410,6 +412,7 @@ $(function () {
             checkout.togglePaymentProviders(false, checkout.oneTimePaymentProcessorClasses);
             checkout.togglePaymentProvider(showCCBillProvider, '.ccbill-payment-method');
             checkout.togglePaymentProvider(showStripeProvider, '.stripe-payment-method');
+            checkout.togglePaymentProvider(showStripeProvider, '.stripe-pix-payment-method');
             checkout.togglePaymentProvider(showPaypalProvider, '.paypal-payment-method');
             checkout.togglePaymentProvider(showPaypalProvider, '.suitpay-payment-method');
             checkout.togglePaymentProvider(showCreditProvider, '.credit-payment-method');
@@ -491,13 +494,14 @@ $(function () {
  * Checkout class
  */
 var checkout = {
-    allowedPaymentProcessors: ['stripe', 'paypal', 'credit', 'coinbase', 'nowpayments', 'ccbill', 'paystack', 'oxxo', 'mercado', 'suitpay'],
+    allowedPaymentProcessors: ['stripe', 'stripe_pix', 'paypal', 'credit', 'coinbase', 'nowpayments', 'ccbill', 'paystack', 'oxxo', 'mercado', 'suitpay'],
     paymentData: {},
     oneTimePaymentProcessorClasses: [
         '.nowpayments-payment-method',
         '.coinbase-payment-method',
         '.ccbill-payment-method',
         '.stripe-payment-method',
+        '.stripe-pix-payment-method',
         '.paypal-payment-method',
         '.paystack-payment-method',
         '.oxxo-payment-method',
@@ -607,7 +611,11 @@ var checkout = {
                 checkout.updatePaymentForm();
                 $('.checkout-continue-btn .spinner-border').removeClass('d-none');
                 checkout.validateAllFields(() => {
-                    $('.payment-button').trigger('click');
+                    if (processor === 'stripe_pix') {
+                        checkout.createStripePixSession();
+                    } else {
+                        $('.payment-button').trigger('click');
+                    }
                 });
             }
         }
@@ -646,6 +654,30 @@ var checkout = {
         });
     },
 
+    createStripePixSession: function() {
+        $.ajax({
+            type: 'POST',
+            url: app.baseUrl + '/payment/stripe/pix/session',
+            data: $('#pp-buyItem').serialize(),
+            success: function (response) {
+                $('.checkout-continue-btn .spinner-border').addClass('d-none');
+                if (response && response.redirect_url) {
+                    window.location.href = response.redirect_url;
+                } else {
+                    launchToast('danger', trans('Error'), trans('Unable to initiate Stripe Pix payment.'));
+                }
+            },
+            error: function (result) {
+                $('.checkout-continue-btn .spinner-border').addClass('d-none');
+                let message = trans('Something went wrong with this transaction. Please try again');
+                if (result.responseJSON && result.responseJSON.message) {
+                    message = result.responseJSON.message;
+                }
+                launchToast('danger', trans('Error'), message);
+            }
+        });
+    },
+
 
     /**
      * Clears up dialog (all) form errors
@@ -670,6 +702,7 @@ var checkout = {
         const oxxoProvider = $('.oxxo-payment-provider').hasClass('selected');
         const mercadoProvider = $('.mercado-payment-provider').hasClass('selected');
         const suitpayProvider = $('.suitpay-payment-provider').hasClass('selected');
+        const stripePixProvider = $('.stripe-pix-payment-provider').hasClass('selected');
         let val = null;
         if (paypalProvider) {
             val = 'paypal';
@@ -691,6 +724,8 @@ var checkout = {
             val = 'mercado';
         } else if(suitpayProvider){
             val = 'suitpay';
+        } else if(stripePixProvider){
+            val = 'stripe_pix';
         }
         if (val) {
             checkout.paymentData.provider = val;

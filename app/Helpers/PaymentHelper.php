@@ -1005,7 +1005,16 @@ class PaymentHelper
 
         try {
             \Stripe\Stripe::setApiKey(getSetting('payments.stripe_secret_key'));
-            if ($this->isSubscriptionPayment($transactionType)) {
+            $isStripeSubscription = $this->isSubscriptionPayment($transactionType)
+                && $transaction->payment_provider === Transaction::STRIPE_PROVIDER;
+            $currencyCode = config('app.site.currency_code');
+            $stripeCurrency = strtolower($currencyCode);
+
+            if ($transaction->payment_provider === Transaction::STRIPE_PIX_PROVIDER && $stripeCurrency !== 'brl') {
+                throw new \Exception('Stripe Pix is only available for BRL transactions.');
+            }
+
+            if ($isStripeSubscription) {
                 // generate stripe product
                 $product = \Stripe\Product::create([
                     'name' => $this->getPaymentDescriptionByTransaction($transaction),
@@ -1015,7 +1024,7 @@ class PaymentHelper
                 $price = \Stripe\Price::create([
                     'product' => $product->id,
                     'unit_amount' => $transaction->amount * 100,
-                    'currency' => config('app.site.currency_code'),
+                    'currency' => $stripeCurrency,
                     'recurring' => [
                         'interval' => 'month',
                         'interval_count' => PaymentsServiceProvider::getSubscriptionMonthlyIntervalByTransactionType($transactionType),
@@ -1030,7 +1039,7 @@ class PaymentHelper
                 $stripeLineItems = [
                     'price_data' => [
                         # To accept `oxxo`, all line items must have currency: mxn
-                        'currency' => config('app.site.currency_code'),
+                        'currency' => $transaction->payment_provider === Transaction::OXXO_PROVIDER ? 'mxn' : $stripeCurrency,
                         'product_data' => [
                             'name' => $this->getPaymentDescriptionByTransaction($transaction),
                             'description' => $this->getPaymentDescriptionByTransaction($transaction),
@@ -1041,8 +1050,15 @@ class PaymentHelper
                 ];
             }
 
+            $paymentMethodTypes = ['card'];
+            if($transaction->payment_provider === Transaction::OXXO_PROVIDER) {
+                $paymentMethodTypes = ['oxxo'];
+            } elseif ($transaction->payment_provider === Transaction::STRIPE_PIX_PROVIDER) {
+                $paymentMethodTypes = ['pix'];
+            }
+
             $data = [
-                'payment_method_types' => ['card'],
+                'payment_method_types' => $paymentMethodTypes,
                 'line_items' => [$stripeLineItems],
                 'locale' => 'auto',
                 'customer_email' => Auth::user()->email,
@@ -1050,11 +1066,11 @@ class PaymentHelper
                     'transactionType' => $transaction->type,
                     'user_id' => Auth::user()->id,
                 ],
-                'mode' => $this->isSubscriptionPayment($transaction->type) ? 'subscription' : 'payment',
+                'mode' => $isStripeSubscription ? 'subscription' : 'payment',
                 'success_url' => route('payment.checkStripePaymentStatus').'?session_id={CHECKOUT_SESSION_ID}',
                 'cancel_url' => route('payment.checkStripePaymentStatus').'?session_id={CHECKOUT_SESSION_ID}',
             ];
-            
+
             // Se existir um cupom na transação, adiciona o desconto
             if (!empty($transaction->coupon)) {
                 $data['discounts'] = [
@@ -1063,8 +1079,12 @@ class PaymentHelper
                     ]
                 ];
             }
-            if($transaction->payment_provider === Transaction::OXXO_PROVIDER) {
-                $data['payment_method_types'] = ['oxxo'];
+            if ($transaction->payment_provider === Transaction::STRIPE_PIX_PROVIDER) {
+                $data['payment_method_options'] = [
+                    'pix' => [
+                        'expires_after_seconds' => 3600,
+                    ],
+                ];
             }
             $session = \Stripe\Checkout\Session::create($data);
 

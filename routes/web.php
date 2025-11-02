@@ -153,6 +153,7 @@ Route::group(['middleware' => ['auth','verified','2fa']], function () {
     Route::group(['prefix' => 'payment', 'as' => 'payment.'], function () {
         Route::post('/initiate', ['uses' => 'PaymentsController@initiatePayment', 'as'   => 'initiatePayment']);
         Route::post('/initiate/validate', ['uses' => 'PaymentsController@paymentInitiateValidator', 'as'   => 'initiatePaymentValidator']);
+        Route::post('/stripe/pix/session', ['uses' => 'PaymentsController@generateStripePixSession', 'as'   => 'generateStripePixSession']);
         Route::get('/paypal/status', ['uses' => 'PaymentsController@executePaypalPayment', 'as'   => 'executePaypalPayment']);
         Route::get('/stripe/status', ['uses' => 'PaymentsController@getStripePaymentStatus', 'as'   => 'checkStripePaymentStatus']);
         Route::get('/coinbase/status', ['uses' => 'PaymentsController@checkAndUpdateCoinbaseTransaction', 'as'   => 'checkCoinBasePaymentStatus']);
