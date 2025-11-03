@@ -20,7 +20,7 @@ class VoyagerSettingsController extends BaseVoyagerSettingsController
         $stripePixWebhookSetting = Voyager::model('Setting')->firstOrCreate(
             ['key' => 'payments.stripe_pix_webhook_secret'],
             [
-                'display_name' => 'Segredo Webhook',
+                'display_name' => 'Stripe PIX Segredo Webhook',
                 'value' => null,
                 'details' => json_encode([
                     'description' => 'Informe o segredo do webhook da conta Stripe Pix.',
@@ -32,7 +32,7 @@ class VoyagerSettingsController extends BaseVoyagerSettingsController
         );
 
         $stripePixWebhookSetting->forceFill([
-            'display_name' => 'Segredo Webhook',
+            'display_name' => 'Stripe PIX Segredo Webhook',
             'details' => json_encode([
                 'description' => 'Informe o segredo do webhook da conta Stripe Pix.',
             ]),

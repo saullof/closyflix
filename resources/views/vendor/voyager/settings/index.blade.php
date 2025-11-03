@@ -18,9 +18,9 @@
 
     @php
         $stripePixFieldLabels = [
-            'payments.pagarme_public_key' => __('Stripe Pix Public Key'),
-            'payments.pagarme_secret_key' => __('Stripe Pix Secret Key'),
-            'payments.stripe_pix_webhook_secret' => __('Segredo Webhook'),
+            'payments.pagarme_public_key' => __('Stripe PIX Public Key'),
+            'payments.pagarme_secret_key' => __('Stripe PIX Secret Key'),
+            'payments.stripe_pix_webhook_secret' => __('Stripe PIX Segredo Webhook'),
         ];
 
         $stripePixFieldDescriptions = [

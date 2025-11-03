@@ -9,7 +9,7 @@ return new class extends Migration {
         if (!DB::table('settings')->where('key', 'payments.stripe_pix_webhook_secret')->exists()) {
             DB::table('settings')->insert([
                 'key' => 'payments.stripe_pix_webhook_secret',
-                'display_name' => 'Segredo Webhook',
+                'display_name' => 'Stripe PIX Segredo Webhook',
                 'value' => null,
                 'details' => json_encode([
                     'description' => 'Informe o segredo do webhook da conta Stripe Pix.',
@@ -22,7 +22,7 @@ return new class extends Migration {
             DB::table('settings')
                 ->where('key', 'payments.stripe_pix_webhook_secret')
                 ->update([
-                    'display_name' => 'Segredo Webhook',
+                    'display_name' => 'Stripe PIX Segredo Webhook',
                     'details' => json_encode([
                         'description' => 'Informe o segredo do webhook da conta Stripe Pix.',
                     ]),
