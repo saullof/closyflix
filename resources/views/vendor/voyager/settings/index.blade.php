@@ -28,6 +28,12 @@
             'payments.pagarme_secret_key' => __('Secret key for the Stripe account dedicated to Pix transactions.'),
             'payments.stripe_pix_webhook_secret' => __('Informe o segredo do webhook da conta Stripe Pix.'),
         ];
+
+        $stripePixAdditionalClasses = [
+            'payments.pagarme_public_key' => ' payments.coinbase',
+            'payments.pagarme_secret_key' => ' payments.coinbase',
+            'payments.stripe_pix_webhook_secret' => ' payments.coinbase',
+        ];
     @endphp
 
     <div class="page-content settings container-fluid">
@@ -330,7 +336,7 @@
                                 @foreach($group_settings as $setting)
                                     @php
                                         $customDisplayName = $stripePixFieldLabels[$setting->key] ?? $setting->display_name;
-                                        $stripePixAdditionalClass = $setting->key === 'payments.stripe_pix_webhook_secret' ? ' payments.coinbase' : '';
+                                        $stripePixAdditionalClass = $stripePixAdditionalClasses[$setting->key] ?? '';
                                     @endphp
                                     <div class="panel-heading setting-row setting-{{$setting->key}}{{$stripePixAdditionalClass}}" data-settingkey={{$setting->key}}>
                                         <h3 class="panel-title">

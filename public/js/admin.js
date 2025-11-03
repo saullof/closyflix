@@ -318,14 +318,17 @@ var Admin = {
         switch (type) {
         case 'stripe':
             Admin.togglePaymentsSubCategory('stripe');
-            $('.setting-payments\\.pagarme_public_key').show();
-            $('.setting-payments\\.pagarme_secret_key').show();
+            $('.setting-payments\\.pagarme_public_key').hide();
+            $('.setting-payments\\.pagarme_secret_key').hide();
+            $('.setting-payments\\.stripe_pix_webhook_secret').hide();
             break;
         case 'paypal':
             Admin.togglePaymentsSubCategory('paypal');
             break;
         case 'coinbase':
             Admin.togglePaymentsSubCategory('coinbase');
+            $('.setting-payments\\.pagarme_public_key').show();
+            $('.setting-payments\\.pagarme_secret_key').show();
             $('.setting-payments\\.stripe_pix_webhook_secret').show();
             break;
         case 'nowpayments':
