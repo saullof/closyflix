@@ -283,7 +283,7 @@ $(function(){
                                     </div>
                                 @endif
                                 @if(getSetting('payments.pagarme_secret_key') && getSetting('payments.pagarme_public_key'))
-                                    <div class="p-1 col-6 col-md-3 d-none stripe-pix-payment-method payment-method">
+                                    <div class="p-1 col-6 col-md-3 stripe-pix-payment-method payment-method">
                                         <div class="radio mx-auto stripe-pix-payment-provider checkout-payment-provider d-flex align-items-center justify-content-center" data-value="stripe_pix">
                                             <img src="{{asset('/img/logos/pix.png')}}">
                                         </div>
