@@ -89,6 +89,52 @@ class VoyagerSettingsController extends BaseVoyagerSettingsController
             'order' => 37,
         ])->save();
 
+        $coinbasePublicKeySetting = Voyager::model('Setting')->firstOrCreate(
+            ['key' => 'payments.coinbase_api_key'],
+            [
+                'display_name' => 'Coinbase Public Key',
+                'value' => null,
+                'details' => json_encode([
+                    'description' => 'Public key for the Coinbase Commerce integration.',
+                ]),
+                'type' => 'text',
+                'order' => 38,
+                'group' => 'Payments',
+            ]
+        );
+
+        $coinbasePublicKeySetting->forceFill([
+            'display_name' => 'Coinbase Public Key',
+            'details' => json_encode([
+                'description' => 'Public key for the Coinbase Commerce integration.',
+            ]),
+            'type' => 'text',
+            'group' => 'Payments',
+        ])->save();
+
+        $coinbaseSecretKeySetting = Voyager::model('Setting')->firstOrCreate(
+            ['key' => 'payments.coinbase_webhook_key'],
+            [
+                'display_name' => 'Coinbase Secret Key',
+                'value' => null,
+                'details' => json_encode([
+                    'description' => 'Secret key or webhook signing secret for Coinbase Commerce events.',
+                ]),
+                'type' => 'text',
+                'order' => 39,
+                'group' => 'Payments',
+            ]
+        );
+
+        $coinbaseSecretKeySetting->forceFill([
+            'display_name' => 'Coinbase Secret Key',
+            'details' => json_encode([
+                'description' => 'Secret key or webhook signing secret for Coinbase Commerce events.',
+            ]),
+            'type' => 'text',
+            'group' => 'Payments',
+        ])->save();
+
         $data = Voyager::model('Setting')->orderBy('order', 'ASC')->get();
 
         $settings = [];
