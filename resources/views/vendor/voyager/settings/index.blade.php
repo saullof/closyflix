@@ -16,6 +16,19 @@
 @section('content')
 
 
+    @php
+        $stripePixFieldLabels = [
+            'payments.pagarme_public_key' => __('Stripe Pix Public Key'),
+            'payments.pagarme_secret_key' => __('Stripe Pix Secret Key'),
+        ];
+
+        $stripePixFieldDescriptions = [
+            'payments.pagarme_public_key' => __('Public key for the Stripe account dedicated to Pix transactions.'),
+            'payments.pagarme_secret_key' => __('Secret key for the Stripe account dedicated to Pix transactions.'),
+            'payments.stripe_pix_webhook_secret' => __('Webhook signing secret for the Stripe Pix account (found in the Stripe dashboard).'),
+        ];
+    @endphp
+
     <div class="page-content settings container-fluid">
 
         @if(isset($storageErrorMessage) && $storageErrorMessage !== false)
@@ -314,9 +327,12 @@
                                 @endif
 
                                 @foreach($group_settings as $setting)
+                                    @php
+                                        $customDisplayName = $stripePixFieldLabels[$setting->key] ?? $setting->display_name;
+                                    @endphp
                                     <div class="panel-heading setting-row setting-{{$setting->key}}" data-settingkey={{$setting->key}}>
                                         <h3 class="panel-title">
-                                            {{ $setting->display_name }} @if(config('voyager.show_dev_tips'))<code>getSetting('{{ $setting->key }}')</code>@endif
+                                            {{ $customDisplayName }} @if(config('voyager.show_dev_tips'))<code>getSetting('{{ $setting->key }}')</code>@endif
                                         </h3>
                                     </div>
 
@@ -399,17 +415,16 @@
                                         </div>
 
                                     </div>
-                                    <?php
-                                    $settingDetails = json_decode($setting->details);
-                                    $hasDescription = false;
-                                    if(isset($settingDetails->description)){
-                                        $hasDescription = true;
-                                    }
-                                    ?>
+                                    @php
+                                        $settingDetails = json_decode($setting->details);
+                                        $descriptionFromDetails = $settingDetails->description ?? null;
+                                        $customDescription = $stripePixFieldDescriptions[$setting->key] ?? null;
+                                        $hasDescription = $customDescription !== null || $descriptionFromDetails !== null;
+                                    @endphp
                                     @if($hasDescription)
                                         <div class="admin-setting-description setting-row setting-{{$setting->key}}" data-settingkey={{$setting->key}}>
                                             <code>
-                                                {{$settingDetails->description}}
+                                                {{ $customDescription ?? $descriptionFromDetails }}
                                             </code>
                                         </div>
                                     @endif

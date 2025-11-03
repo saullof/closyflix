@@ -749,7 +749,12 @@ class PaymentHelper
         $transaction = Transaction::query()->where(['stripe_session_id' => $sessionId])->first();
         if ($transaction != null) {
             try {
-                $stripeClient = new StripeClient(getSetting('payments.stripe_secret_key'));
+                $stripeClient = $this->buildStripeClientForProvider($transaction->payment_provider);
+                if ($stripeClient === null) {
+                    Log::error('Stripe secret key missing for provider '.$transaction->payment_provider.' when updating session '.$sessionId);
+
+                    return $transaction;
+                }
                 $stripeSession = $stripeClient->checkout->sessions->retrieve($sessionId);
                 if ($stripeSession != null) {
                     if (isset($stripeSession->payment_status)) {
@@ -905,7 +910,14 @@ class PaymentHelper
 
     public function cancelStripeSubscription($stripeSubscriptionId)
     {
-        $stripe = new \Stripe\StripeClient(getSetting('payments.stripe_secret_key'));
+        $stripeSecretKey = $this->resolveStripeSecretKey(Transaction::STRIPE_PROVIDER);
+        if (empty($stripeSecretKey)) {
+            Log::warning('Unable to cancel Stripe subscription because the Stripe secret key is missing.');
+
+            return;
+        }
+
+        $stripe = new \Stripe\StripeClient($stripeSecretKey);
 
         $stripe->subscriptions->cancel($stripeSubscriptionId);
     }
@@ -1049,7 +1061,12 @@ class PaymentHelper
         }
 
         try {
-            \Stripe\Stripe::setApiKey(getSetting('payments.stripe_secret_key'));
+            $stripeSecretKey = $this->resolveStripeSecretKey($transaction->payment_provider);
+            if (empty($stripeSecretKey)) {
+                throw new \Exception('Stripe credentials are not configured for the selected payment provider.');
+            }
+
+            \Stripe\Stripe::setApiKey($stripeSecretKey);
 
             if ($transaction->payment_provider === Transaction::STRIPE_PIX_PROVIDER) {
                 $this->ensureStripePixCapabilityIsActive();
@@ -1173,6 +1190,26 @@ class PaymentHelper
 
             throw new StripePixUnavailableException(__('Unable to confirm Stripe Pix availability. Please try again later.'));
         }
+    }
+
+    private function resolveStripeSecretKey(?string $paymentProvider = null): ?string
+    {
+        if ($paymentProvider === Transaction::STRIPE_PIX_PROVIDER) {
+            return getSetting('payments.pagarme_secret_key') ?: null;
+        }
+
+        return getSetting('payments.stripe_secret_key') ?: null;
+    }
+
+    private function buildStripeClientForProvider(?string $paymentProvider = null): ?StripeClient
+    {
+        $secretKey = $this->resolveStripeSecretKey($paymentProvider);
+
+        if (empty($secretKey)) {
+            return null;
+        }
+
+        return new StripeClient($secretKey);
     }
 
     /**

@@ -479,7 +479,6 @@ class PaymentsController extends Controller
     {
         app('debugbar')->disable();
 
-        $endpoint_secret = getSetting('payments.stripe_webhooks_secret');
         $payload = @file_get_contents('php://input');
         if (isset($_SERVER['HTTP_STRIPE_SIGNATURE'])) {
             $sig_header = $_SERVER['HTTP_STRIPE_SIGNATURE'];
@@ -490,21 +489,42 @@ class PaymentsController extends Controller
         }
 
         $event = null;
-        try {
-            $event = \Stripe\Webhook::constructEvent(
-                $payload,
-                $sig_header,
-                $endpoint_secret
-            );
-        } catch (\UnexpectedValueException $e) {
-            // Invalid payload
-            http_response_code(400);
-            exit();
-        } catch (\Stripe\Exception\SignatureVerificationException $e) {
-            // Invalid signature
+        $usedWebhookSecret = null;
+        $defaultStripeWebhookSecret = getSetting('payments.stripe_webhooks_secret');
+        $stripePixWebhookSecret = getSetting('payments.stripe_pix_webhook_secret');
+        $webhookSecrets = array_filter([
+            $defaultStripeWebhookSecret,
+            $stripePixWebhookSecret,
+        ]);
+
+        foreach ($webhookSecrets as $candidateSecret) {
+            try {
+                $event = \Stripe\Webhook::constructEvent(
+                    $payload,
+                    $sig_header,
+                    $candidateSecret
+                );
+                $usedWebhookSecret = $candidateSecret;
+                break;
+            } catch (\UnexpectedValueException $e) {
+                // Invalid payload
+                http_response_code(400);
+                exit();
+            } catch (\Stripe\Exception\SignatureVerificationException $e) {
+                // Invalid signature, attempt next secret
+                continue;
+            }
+        }
+
+        if ($event === null) {
+            Log::warning('Unable to verify Stripe webhook signature with the configured secrets.');
             http_response_code(400);
             exit();
         }
+
+        $webhookFromStripePixAccount = $stripePixWebhookSecret
+            && $usedWebhookSecret === $stripePixWebhookSecret;
+
         Log::info('Stripe payload received. Proceeding with completing the payment & fulfill the order.');
         Log::debug($event);
 
@@ -529,7 +549,17 @@ class PaymentsController extends Controller
                 }
             } elseif (($event->type === 'invoice.paid' || $event->type === 'invoice.payment_failed') && isset($event->data->object)) {
                 $paymentSucceeded = $event->type === 'invoice.paid' ? true : false;
-                $stripe = new StripeClient(getSetting('payments.stripe_secret_key'));
+                $stripeSecretForInvoices = $webhookFromStripePixAccount
+                    ? getSetting('payments.pagarme_secret_key')
+                    : getSetting('payments.stripe_secret_key');
+
+                if (empty($stripeSecretForInvoices)) {
+                    Log::warning('Stripe secret key missing when processing invoice webhook for provider '.($webhookFromStripePixAccount ? Transaction::STRIPE_PIX_PROVIDER : Transaction::STRIPE_PROVIDER).'.');
+
+                    return response()->json(['status' => 'ignored'], 200);
+                }
+
+                $stripe = new StripeClient($stripeSecretForInvoices);
                 $stripeInvoice = $stripe->invoices->retrieve($event->data->object->id);
                 if ($stripeInvoice != null && $stripeInvoice->subscription) {
                     $stripeSub = $stripe->subscriptions->retrieve($stripeInvoice->subscription);
