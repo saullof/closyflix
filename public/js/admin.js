@@ -366,7 +366,11 @@ var Admin = {
         var rowsLength = rows.length;
         for(let i = 0; i < rowsLength; i++){
             let element = rows[i];
-            if($(element).attr('class').indexOf('payments.'+pattern) >= 0){
+            let elementClass = $(element).attr('class');
+            if(elementClass.indexOf('payments.'+pattern) >= 0){
+                if(pattern !== 'coinbase' && elementClass.indexOf('payments.coinbase') >= 0){
+                    continue;
+                }
                 element.style.display = 'block';
             }
         }
