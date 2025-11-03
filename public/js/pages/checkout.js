@@ -89,6 +89,7 @@ function openCheckoutInline(button) {
         let numberOfMonths = 1;
         let showStripeProvider = !app.stripeRecurringDisabled;
         let showPaypalProvider = !app.paypalRecurringDisabled;
+        let showSuitpayProvider = !app.suitpayCheckoutDisabled;
         let showCCBillProvider = !app.ccBillRecurringDisabled;
         let showCreditProvider = !app.localWalletRecurringDisabled;
 
@@ -110,7 +111,7 @@ function openCheckoutInline(button) {
         checkout.togglePaymentProvider(showStripeProvider, '.stripe-payment-method');
         checkout.togglePaymentProvider(showStripeProvider, '.stripe-pix-payment-method');
         checkout.togglePaymentProvider(showPaypalProvider, '.paypal-payment-method');
-        checkout.togglePaymentProvider(showPaypalProvider, '.suitpay-payment-method');
+        checkout.togglePaymentProvider(showSuitpayProvider, '.suitpay-payment-method');
         checkout.togglePaymentProvider(showCreditProvider, '.credit-payment-method');
 
         $('.payment-body .checkout-amount-input').addClass('d-none');
@@ -248,6 +249,7 @@ $(function () {
             let numberOfMonths = 1;
             let showStripeProvider = !app.stripeRecurringDisabled;
             let showPaypalProvider = !app.paypalRecurringDisabled;
+            let showSuitpayProvider = !app.suitpayCheckoutDisabled;
             let showCCBillProvider = !app.ccBillRecurringDisabled;
             let showCreditProvider = !app.localWalletRecurringDisabled;
 
@@ -269,7 +271,7 @@ $(function () {
             checkout.togglePaymentProvider(showStripeProvider, '.stripe-payment-method');
             checkout.togglePaymentProvider(showStripeProvider, '.stripe-pix-payment-method');
             checkout.togglePaymentProvider(showPaypalProvider, '.paypal-payment-method');
-            checkout.togglePaymentProvider(showPaypalProvider, '.suitpay-payment-method');
+            checkout.togglePaymentProvider(showSuitpayProvider, '.suitpay-payment-method');
             checkout.togglePaymentProvider(showCreditProvider, '.credit-payment-method');
 
             $('.payment-body .checkout-amount-input').addClass('d-none');
@@ -393,6 +395,7 @@ $(function () {
             let numberOfMonths = 1;
             let showStripeProvider = !app.stripeRecurringDisabled;
             let showPaypalProvider = !app.paypalRecurringDisabled;
+            let showSuitpayProvider = !app.suitpayCheckoutDisabled;
             let showCCBillProvider = !app.ccBillRecurringDisabled;
             let showCreditProvider = !app.localWalletRecurringDisabled;
 
@@ -414,7 +417,7 @@ $(function () {
             checkout.togglePaymentProvider(showStripeProvider, '.stripe-payment-method');
             checkout.togglePaymentProvider(showStripeProvider, '.stripe-pix-payment-method');
             checkout.togglePaymentProvider(showPaypalProvider, '.paypal-payment-method');
-            checkout.togglePaymentProvider(showPaypalProvider, '.suitpay-payment-method');
+            checkout.togglePaymentProvider(showSuitpayProvider, '.suitpay-payment-method');
             checkout.togglePaymentProvider(showCreditProvider, '.credit-payment-method');
 
             $('.payment-body .checkout-amount-input').addClass('d-none');
@@ -1078,7 +1081,13 @@ var checkout = {
 
     togglePaymentProviders: function(toggle, paymentMethodClasses){
         paymentMethodClasses.forEach(function(paymentMethodClass){
-            checkout.togglePaymentProvider(toggle, paymentMethodClass);
+            let shouldToggle = toggle;
+
+            if (paymentMethodClass === '.suitpay-payment-method' && app.suitpayCheckoutDisabled) {
+                shouldToggle = false;
+            }
+
+            checkout.togglePaymentProvider(shouldToggle, paymentMethodClass);
         });
 
     },

@@ -47,6 +47,7 @@ class JavascriptVariables
             $jsData['paypalRecurringDisabled'] = getSetting('payments.paypal_recurring_disabled');
             $jsData['ccBillRecurringDisabled'] = getSetting('payments.ccbill_recurring_disabled');
             $jsData['localWalletRecurringDisabled'] = getSetting('payments.disable_local_wallet_for_subscriptions');
+            $jsData['suitpayCheckoutDisabled'] = getSetting('payments.nowpayments_checkout_disabled');
             $jsData['enable_age_verification_dialog'] = getSetting('compliance.enable_age_verification_dialog');
             $jsData['allow_profile_bio_markdown'] = getSetting('profiles.allow_profile_bio_markdown');
             $jsData['open_ai_enabled'] = getSetting('ai.open_ai_enabled');

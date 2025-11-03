@@ -1014,7 +1014,7 @@
                                                         </div>
                                                     </div>
                                                 @endif
-                                                @if (config('services.suitpay.enabled'))
+                                                @if (config('services.suitpay.enabled') && !getSetting('payments.nowpayments_checkout_disabled'))
                                                     <div class="p-1 col-6 col-md-3 d-none suitpay-payment-method payment-method" data-value="suitpay">
                                                         <div class="radio mx-auto suitpay-payment-provider checkout-payment-provider d-flex align-items-center justify-content-center">
                                                             <img src="{{asset('/img/logos/pix.png')}}">
