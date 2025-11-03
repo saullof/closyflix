@@ -370,7 +370,15 @@ class PaymentsController extends Controller
                 case Transaction::THREE_MONTHS_SUBSCRIPTION:
                 case Transaction::SIX_MONTHS_SUBSCRIPTION:
                 case Transaction::YEARLY_SUBSCRIPTION:
-                    return response()->json(['message' => __('Stripe Pix payments are not available for subscriptions.')], 422);
+                    if ($recipientUser && $recipientUser->id === $transaction['sender_user_id']) {
+                        return response()->json(['message' => __('Cannot subscribe to yourself.')], 422);
+                    }
+
+                    if ($recipientUser && PostsHelperServiceProvider::hasActiveSub($transaction['sender_user_id'], $recipientUser->id)) {
+                        return response()->json(['message' => __('You already have an active subscription for this user.')], 422);
+                    }
+
+                    break;
                 default:
                     return response()->json(['message' => $errorMessage], 422);
             }

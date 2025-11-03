@@ -754,29 +754,37 @@ class PaymentHelper
                             if ($transaction->status != Transaction::APPROVED_STATUS) {
                                 $transaction->status = Transaction::APPROVED_STATUS;
                                 $subscription = Subscription::query()->where('id', $transaction->subscription_id)->first();
+
+                                if ($this->isSubscriptionPayment($transaction->type)
+                                    && $transaction->payment_provider === Transaction::STRIPE_PIX_PROVIDER) {
+                                    $subscription = $this->generateStripePixSubscriptionByTransaction($transaction);
+                                }
+
                                 if ($subscription != null && $this->isSubscriptionPayment($transaction->type)) {
-                                    if ($stripeSession->subscription != null) {
-                                        $subscription->stripe_subscription_id = $stripeSession->subscription;
-                                        $stripeSubscription = $stripeClient->subscriptions->retrieve($stripeSession->subscription);
-                                        if($stripeSubscription != null){
-                                            $latestInvoiceForSubscription = $stripeClient->invoices->retrieve($stripeSubscription->latest_invoice);
-                                            if($latestInvoiceForSubscription != null){
-                                                $transaction->stripe_transaction_id = $latestInvoiceForSubscription->payment_intent;
+                                    if ($transaction->payment_provider === Transaction::STRIPE_PROVIDER) {
+                                        if ($stripeSession->subscription != null) {
+                                            $subscription->stripe_subscription_id = $stripeSession->subscription;
+                                            $stripeSubscription = $stripeClient->subscriptions->retrieve($stripeSession->subscription);
+                                            if($stripeSubscription != null){
+                                                $latestInvoiceForSubscription = $stripeClient->invoices->retrieve($stripeSubscription->latest_invoice);
+                                                if($latestInvoiceForSubscription != null){
+                                                    $transaction->stripe_transaction_id = $latestInvoiceForSubscription->payment_intent;
+                                                }
                                             }
                                         }
+
+                                        $expiresDate = new \DateTime('+'.PaymentsServiceProvider::getSubscriptionMonthlyIntervalByTransactionType($transaction->type).' month', new \DateTimeZone('UTC'));
+                                        if ($subscription->status != Subscription::ACTIVE_STATUS) {
+                                            $subscription->status = Subscription::ACTIVE_STATUS;
+                                            $subscription->expires_at = $expiresDate;
+
+                                            NotificationServiceProvider::createNewSubscriptionNotification($subscription);
+                                        } else {
+                                            $subscription->expires_at = $expiresDate;
+                                        }
+
+                                        $subscription->update();
                                     }
-
-                                    $expiresDate = new \DateTime('+'.PaymentsServiceProvider::getSubscriptionMonthlyIntervalByTransactionType($transaction->type).' month', new \DateTimeZone('UTC'));
-                                    if ($subscription->status != Subscription::ACTIVE_STATUS) {
-                                        $subscription->status = Subscription::ACTIVE_STATUS;
-                                        $subscription->expires_at = $expiresDate;
-
-                                        NotificationServiceProvider::createNewSubscriptionNotification($subscription);
-                                    } else {
-                                        $subscription->expires_at = $expiresDate;
-                                    }
-
-                                    $subscription->update();
 
                                     $this->creditReceiverForTransaction($transaction);
                                 } else {
@@ -980,6 +988,39 @@ class PaymentHelper
         if($existingSubscription === null){
             NotificationServiceProvider::createNewSubscriptionNotification($subscription);
         }
+        $transaction['subscription_id'] = $subscription['id'];
+
+        return $subscription;
+    }
+
+    public function generateStripePixSubscriptionByTransaction($transaction)
+    {
+        $existingSubscription = $this->getSubscriptionBySenderAndReceiverAndProvider(
+            $transaction['sender_user_id'],
+            $transaction['recipient_user_id'],
+            Transaction::STRIPE_PIX_PROVIDER
+        );
+
+        if ($existingSubscription != null) {
+            $subscription = $existingSubscription;
+        } else {
+            $subscription = $this->createSubscriptionFromTransaction($transaction);
+        }
+
+        $subscription['amount'] = $transaction['amount'];
+        $subscription['expires_at'] = new \DateTime(
+            '+' . PaymentsServiceProvider::getSubscriptionMonthlyIntervalByTransactionType($transaction->type) . ' months',
+            new \DateTimeZone('UTC')
+        );
+        $subscription['status'] = Subscription::ACTIVE_STATUS;
+        $transaction['status'] = Transaction::APPROVED_STATUS;
+
+        $subscription->save();
+
+        if ($existingSubscription === null) {
+            NotificationServiceProvider::createNewSubscriptionNotification($subscription);
+        }
+
         $transaction['subscription_id'] = $subscription['id'];
 
         return $subscription;
