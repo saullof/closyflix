@@ -9,15 +9,26 @@ return new class extends Migration {
         if (!DB::table('settings')->where('key', 'payments.stripe_pix_webhook_secret')->exists()) {
             DB::table('settings')->insert([
                 'key' => 'payments.stripe_pix_webhook_secret',
-                'display_name' => 'Stripe Pix Webhook Secret',
+                'display_name' => 'Segredo Webhook',
                 'value' => null,
                 'details' => json_encode([
-                    'description' => 'Webhook signing secret for the Stripe Pix account.',
+                    'description' => 'Informe o segredo do webhook da conta Stripe Pix.',
                 ]),
                 'type' => 'text',
                 'order' => 43,
                 'group' => 'Payments',
             ]);
+        } else {
+            DB::table('settings')
+                ->where('key', 'payments.stripe_pix_webhook_secret')
+                ->update([
+                    'display_name' => 'Segredo Webhook',
+                    'details' => json_encode([
+                        'description' => 'Informe o segredo do webhook da conta Stripe Pix.',
+                    ]),
+                    'type' => 'text',
+                    'group' => 'Payments',
+                ]);
         }
     }
 

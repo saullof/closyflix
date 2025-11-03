@@ -20,13 +20,13 @@
         $stripePixFieldLabels = [
             'payments.pagarme_public_key' => __('Stripe Pix Public Key'),
             'payments.pagarme_secret_key' => __('Stripe Pix Secret Key'),
-            'payments.stripe_pix_webhook_secret' => __('Stripe Pix Webhook Secret'),
+            'payments.stripe_pix_webhook_secret' => __('Segredo Webhook'),
         ];
 
         $stripePixFieldDescriptions = [
             'payments.pagarme_public_key' => __('Public key for the Stripe account dedicated to Pix transactions.'),
             'payments.pagarme_secret_key' => __('Secret key for the Stripe account dedicated to Pix transactions.'),
-            'payments.stripe_pix_webhook_secret' => __('Webhook signing secret for the Stripe Pix account (found in the Stripe dashboard).'),
+            'payments.stripe_pix_webhook_secret' => __('Informe o segredo do webhook da conta Stripe Pix.'),
         ];
     @endphp
 

@@ -17,19 +17,29 @@ class VoyagerSettingsController extends BaseVoyagerSettingsController
         // Check permission
         $this->authorize('browse', Voyager::model('Setting'));
 
-        Voyager::model('Setting')->firstOrCreate(
+        $stripePixWebhookSetting = Voyager::model('Setting')->firstOrCreate(
             ['key' => 'payments.stripe_pix_webhook_secret'],
             [
-                'display_name' => 'Stripe Pix Webhook Secret',
+                'display_name' => 'Segredo Webhook',
                 'value' => null,
                 'details' => json_encode([
-                    'description' => 'Webhook signing secret for the Stripe Pix account.',
+                    'description' => 'Informe o segredo do webhook da conta Stripe Pix.',
                 ]),
                 'type' => 'text',
                 'order' => 37,
                 'group' => 'Payments',
             ]
         );
+
+        $stripePixWebhookSetting->forceFill([
+            'display_name' => 'Segredo Webhook',
+            'details' => json_encode([
+                'description' => 'Informe o segredo do webhook da conta Stripe Pix.',
+            ]),
+            'type' => 'text',
+            'group' => 'Payments',
+            'order' => 37,
+        ])->save();
 
         $data = Voyager::model('Setting')->orderBy('order', 'ASC')->get();
 
