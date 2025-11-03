@@ -6,6 +6,7 @@ use App\Helpers\PaymentHelper;
 use App\Http\Requests\CreateTransactionRequest;
 use App\Model\Subscription;
 use App\Model\Transaction;
+use App\Exceptions\StripePixUnavailableException;
 use App\Providers\InvoiceServiceProvider;
 use App\Providers\NotificationServiceProvider;
 use App\Providers\PaymentRequestServiceProvider;
@@ -281,6 +282,8 @@ class PaymentsController extends Controller
 
     public function generateStripePixSession(CreateTransactionRequest $request)
     {
+        $transaction = null;
+
         try {
             $this->updateUserBillingDetails($request);
 
@@ -406,6 +409,15 @@ class PaymentsController extends Controller
             }
 
             return response()->json(['redirect_url' => $redirectLink]);
+        } catch (StripePixUnavailableException $exception) {
+            if ($transaction instanceof Transaction) {
+                $transaction['status'] = Transaction::DECLINED_STATUS;
+                $transaction->save();
+            }
+
+            Log::warning('Stripe Pix unavailable: '.$exception->getMessage());
+
+            return response()->json(['message' => $exception->getMessage()], 422);
         } catch (\Exception $exception) {
             Log::error("Stripe Pix session generation failed -> error message: " . $exception->getMessage());
             Log::error("Payment failed", [$exception->getTraceAsString()]);

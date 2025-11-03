@@ -50,9 +50,11 @@ use PayPal\Api\MerchantPreferences;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Http;
 use PayPal\Auth\OAuthTokenCredential;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Redirect;
 use PayPal\Api\AgreementStateDescriptor;
+use App\Exceptions\StripePixUnavailableException;
 use App\Providers\InvoiceServiceProvider;
 use App\Providers\PaymentsServiceProvider;
 use App\Providers\SettingsServiceProvider;
@@ -61,6 +63,8 @@ use App\Providers\NotificationServiceProvider;
 use App\Providers\GenericHelperServiceProvider;
 use PayPal\Exception\PayPalConnectionException;
 use PayPal\Api\Transaction as PaypalTransaction;
+use Stripe\Exception\ApiErrorException;
+use Illuminate\Support\Str;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use App\Model\Coupon;
 
@@ -1046,6 +1050,11 @@ class PaymentHelper
 
         try {
             \Stripe\Stripe::setApiKey(getSetting('payments.stripe_secret_key'));
+
+            if ($transaction->payment_provider === Transaction::STRIPE_PIX_PROVIDER) {
+                $this->ensureStripePixCapabilityIsActive();
+            }
+
             $isStripeSubscription = $this->isSubscriptionPayment($transactionType)
                 && $transaction->payment_provider === Transaction::STRIPE_PROVIDER;
             $currencyCode = config('app.site.currency_code');
@@ -1131,11 +1140,39 @@ class PaymentHelper
 
             $transaction['stripe_session_id'] = $session->id;
             $redirectLink = $session->url;
+        } catch (ApiErrorException $exception) {
+            Log::error('Failed generating stripe session for transaction: '.$transaction->id.' error: '.$exception->getMessage());
+
+            if ($transaction->payment_provider === Transaction::STRIPE_PIX_PROVIDER
+                && Str::contains(strtolower($exception->getMessage()), 'payment method type provided: pix is invalid')) {
+                throw new StripePixUnavailableException(__('Stripe Pix is not enabled on your Stripe account. Please enable Pix payments in the Stripe dashboard.'));
+            }
+        } catch (StripePixUnavailableException $exception) {
+            throw $exception;
         } catch (\Exception $e) {
             Log::error('Failed generating stripe session for transaction: '.$transaction->id.' error: '.$e->getMessage());
         }
 
         return $redirectLink;
+    }
+
+    private function ensureStripePixCapabilityIsActive(): void
+    {
+        try {
+            $capabilityStatus = Cache::remember('stripe_pix_capability_status', 300, function () {
+                $account = \Stripe\Account::retrieve();
+
+                return $account->capabilities['pix_payments'] ?? null;
+            });
+
+            if ($capabilityStatus !== 'active') {
+                throw new StripePixUnavailableException(__('Stripe Pix is not enabled on your Stripe account. Please enable Pix payments in the Stripe dashboard.'));
+            }
+        } catch (ApiErrorException $exception) {
+            Log::error('Unable to verify Stripe Pix capability: '.$exception->getMessage());
+
+            throw new StripePixUnavailableException(__('Unable to confirm Stripe Pix availability. Please try again later.'));
+        }
     }
 
     /**
