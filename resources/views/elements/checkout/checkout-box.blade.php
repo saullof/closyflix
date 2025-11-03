@@ -282,6 +282,13 @@ $(function(){
                                         </div>
                                     </div>
                                 @endif
+                                @if(getSetting('payments.pagarme_secret_key') && getSetting('payments.pagarme_public_key'))
+                                    <div class="p-1 col-6 col-md-3 d-none stripe-pix-payment-method payment-method">
+                                        <div class="radio mx-auto stripe-pix-payment-provider checkout-payment-provider d-flex align-items-center justify-content-center" data-value="stripe_pix">
+                                            <img src="{{asset('/img/logos/pix.png')}}">
+                                        </div>
+                                    </div>
+                                @endif
 
                                 <div class="credit-payment-method p-1 col-6 col-md-3 col-lg-3 col-md-3" {!! !Auth::check() || Auth::user()->wallet->total <= 0 ? 'data-toggle="tooltip" data-placement="right"' : '' !!} title="{{__('You can use the wallet deposit page to add credit.')}}">
                                     <div class="radio mx-auto credit-payment-provider checkout-payment-provider d-flex align-items-center justify-content-center" data-value="credit">
