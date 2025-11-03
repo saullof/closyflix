@@ -17,6 +17,54 @@ class VoyagerSettingsController extends BaseVoyagerSettingsController
         // Check permission
         $this->authorize('browse', Voyager::model('Setting'));
 
+        $stripePixPublicKeySetting = Voyager::model('Setting')->firstOrCreate(
+            ['key' => 'payments.pagarme_public_key'],
+            [
+                'display_name' => 'Stripe PIX Public Key',
+                'value' => null,
+                'details' => json_encode([
+                    'description' => 'Chave pública da conta Stripe exclusiva para pagamentos Pix.',
+                ]),
+                'type' => 'text',
+                'order' => 35,
+                'group' => 'Payments',
+            ]
+        );
+
+        $stripePixPublicKeySetting->forceFill([
+            'display_name' => 'Stripe PIX Public Key',
+            'details' => json_encode([
+                'description' => 'Chave pública da conta Stripe exclusiva para pagamentos Pix.',
+            ]),
+            'type' => 'text',
+            'group' => 'Payments',
+            'order' => 35,
+        ])->save();
+
+        $stripePixSecretKeySetting = Voyager::model('Setting')->firstOrCreate(
+            ['key' => 'payments.pagarme_secret_key'],
+            [
+                'display_name' => 'Stripe PIX Secret Key',
+                'value' => null,
+                'details' => json_encode([
+                    'description' => 'Chave secreta da conta Stripe exclusiva para pagamentos Pix.',
+                ]),
+                'type' => 'text',
+                'order' => 36,
+                'group' => 'Payments',
+            ]
+        );
+
+        $stripePixSecretKeySetting->forceFill([
+            'display_name' => 'Stripe PIX Secret Key',
+            'details' => json_encode([
+                'description' => 'Chave secreta da conta Stripe exclusiva para pagamentos Pix.',
+            ]),
+            'type' => 'text',
+            'group' => 'Payments',
+            'order' => 36,
+        ])->save();
+
         $stripePixWebhookSetting = Voyager::model('Setting')->firstOrCreate(
             ['key' => 'payments.stripe_pix_webhook_secret'],
             [
