@@ -5,6 +5,11 @@
 @section('css')
     <link href="{{ asset('css/admin-settings.css') }}" rel="stylesheet">
     <link rel="stylesheet" href="{{asset('/libs/@simonwep/pickr/dist/themes/nano.min.css')}}">
+    <style>
+        .stripe-pix-hidden {
+            display: none !important;
+        }
+    </style>
 @stop
 
 @section('page_header')
@@ -30,9 +35,9 @@
         ];
 
         $stripePixAdditionalClasses = [
-            'payments.pagarme_public_key' => ' payments.coinbase',
-            'payments.pagarme_secret_key' => ' payments.coinbase',
-            'payments.stripe_pix_webhook_secret' => ' payments.coinbase',
+            'payments.pagarme_public_key' => ' payments.coinbase stripe-pix-credential stripe-pix-hidden',
+            'payments.pagarme_secret_key' => ' payments.coinbase stripe-pix-credential stripe-pix-hidden',
+            'payments.stripe_pix_webhook_secret' => ' payments.coinbase stripe-pix-credential stripe-pix-hidden',
         ];
     @endphp
 
@@ -487,6 +492,21 @@
 
             // Initiliaze rich text editor
             tinymce.init(window.voyagerTinyMCE.getConfig());
+
+            function toggleStripePixAdminFields() {
+                var isCoinbaseSelected = $('#payments\\.driver').val() === 'coinbase';
+                $('.stripe-pix-credential').toggleClass('stripe-pix-hidden', !isCoinbaseSelected);
+            }
+
+            toggleStripePixAdminFields();
+
+            $('#payments\\.driver').on('change', function () {
+                toggleStripePixAdminFields();
+            });
+
+            $('a[href="#payments-processors"]').on('shown.bs.tab', function () {
+                toggleStripePixAdminFields();
+            });
         });
     </script>
     <script type="text/javascript">
