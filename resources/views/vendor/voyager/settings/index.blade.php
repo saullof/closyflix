@@ -329,14 +329,15 @@
                                 @foreach($group_settings as $setting)
                                     @php
                                         $customDisplayName = $stripePixFieldLabels[$setting->key] ?? $setting->display_name;
+                                        $stripePixAdditionalClass = $setting->key === 'payments.stripe_pix_webhook_secret' ? ' payments.coinbase' : '';
                                     @endphp
-                                    <div class="panel-heading setting-row setting-{{$setting->key}}" data-settingkey={{$setting->key}}>
+                                    <div class="panel-heading setting-row setting-{{$setting->key}}{{$stripePixAdditionalClass}}" data-settingkey={{$setting->key}}>
                                         <h3 class="panel-title">
                                             {{ $customDisplayName }} @if(config('voyager.show_dev_tips'))<code>getSetting('{{ $setting->key }}')</code>@endif
                                         </h3>
                                     </div>
 
-                                    <div class="panel-body no-padding-left-right setting-row setting-{{$setting->key}}" data-settingkey={{$setting->key}}>
+                                    <div class="panel-body no-padding-left-right setting-row setting-{{$setting->key}}{{$stripePixAdditionalClass}}" data-settingkey={{$setting->key}}>
                                         <div class="col-md-12 no-padding-left-right">
                                             @if ($setting->type == "text")
                                                 <input type="text" class="form-control" name="{{ $setting->key }}" value="{{ $setting->value }}">
@@ -422,14 +423,14 @@
                                         $hasDescription = $customDescription !== null || $descriptionFromDetails !== null;
                                     @endphp
                                     @if($hasDescription)
-                                        <div class="admin-setting-description setting-row setting-{{$setting->key}}" data-settingkey={{$setting->key}}>
+                                        <div class="admin-setting-description setting-row setting-{{$setting->key}}{{$stripePixAdditionalClass}}" data-settingkey={{$setting->key}}>
                                             <code>
                                                 {{ $customDescription ?? $descriptionFromDetails }}
                                             </code>
                                         </div>
                                     @endif
                                     @if(!$loop->last)
-                                        <hr class="setting-row setting-{{$setting->key}}" data-settingkey={{$setting->key}}>
+                                        <hr class="setting-row setting-{{$setting->key}}{{$stripePixAdditionalClass}}" data-settingkey={{$setting->key}}>
                                     @endif
                                 @endforeach
                             </div>
