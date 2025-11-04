@@ -2,7 +2,7 @@
     <div class="dz-preview ml-1 mr-2 dz-file-preview">
         
         <div class="loading-gif">
-            <img class="loading-gif" src="https://closyflix.com/public/img/loading.gif" alt="Loading" />
+            <img class="loading-gif" src="{{ asset('img/loading.gif') }}" alt="Loading" />
         </div>
 
         <div class="dz-progress-container">

@@ -34,7 +34,7 @@
 
 
         <li class="nav-item">
-            <a href="https://closyflix.com/search?query=&filter=people" class="nav-link h-pill h-pill-primary d-flex justify-content-between search-link">
+            <a href="{{ route('search.get', ['filter' => 'people']) }}" class="nav-link h-pill h-pill-primary d-flex justify-content-between search-link">
                 <div class="d-flex justify-content-center align-items-center">
                     <div class="icon-wrapper d-flex justify-content-center align-items-center">
                         <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0,0,256,256" width="32px" height="32px">
