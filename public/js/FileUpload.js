@@ -9,6 +9,8 @@
 // Disable dropzone uploader auto loading globally as we will instantiate it manually
 Dropzone.autoDiscover = false;
 
+var fallbackVideoSrc = (typeof app !== 'undefined' && app.baseUrl) ? app.baseUrl + '/img/video-loading-spinner.mp4' : '/img/video-loading-spinner.mp4';
+
 var FileUpload = {
 
     attachaments: [],
@@ -229,8 +231,9 @@ var FileUpload = {
             $(element).attr('type',file.type);
         }
 else {
-    $(element).attr('src', 'https://closyflix.com/public/js/closyflix.mp4');
-    $(element).attr('loop', true); 
+    $(element).attr('src', fallbackVideoSrc);
+    $(element).attr('loop', true);
+    $(element).attr('preload', 'none');
 }
 
     },
@@ -244,7 +247,7 @@ else {
     setPreviewSource: function (element, file, attachment) {
         if(attachment.coconut_id !== null && attachment.path.indexOf('videos/tmp/') >= 0){
             // TODO: Use some different video loop for the transcoding pahse
-            $(element).attr('src', 'https://closyflix.com/public/js/closyflix.mp4');
+            $(element).attr('src', fallbackVideoSrc);
         }
         else{
             $(element).attr('src', attachment.path);

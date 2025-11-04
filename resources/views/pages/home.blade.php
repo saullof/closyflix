@@ -44,7 +44,7 @@
                     </div>
                 </div>
                 <div class="col-12 col-md-6 d-none d-md-block p-5">
-                    <img src="{{asset('/img/home-header.svg')}}" alt="{{__('Make more money')}}"/>
+                    <img src="{{asset('/img/home-header.svg')}}" alt="{{__('Make more money')}}" decoding="async"/>
                 </div>
             </div>
         </div>
@@ -55,7 +55,7 @@
             <div class="row">
                 <div class="col-12 col-md-4 mb-5 mb-md-0">
                     <div class="d-flex justify-content-center">
-                        <img src="{{asset('/img/home-scene-1.svg')}}" class="img-fluid home-box-img" alt="{{__('Premium & Private content')}}">
+                        <img src="{{asset('/img/home-scene-1.svg')}}" class="img-fluid home-box-img" alt="{{__('Premium & Private content')}}" loading="lazy" decoding="async">
                     </div>
                     <div class="d-flex justify-content-center mt-4">
                         <div class="col-12 col-md-10 text-center">
@@ -66,7 +66,7 @@
                 </div>
                 <div class="col-12 col-md-4 mb-5 mb-md-0">
                     <div class="d-flex justify-content-center">
-                        <img src="{{asset('/img/home-scene-2.svg')}}" class="img-fluid home-box-img" alt="{{__('Private chat & Tips')}}">
+                        <img src="{{asset('/img/home-scene-2.svg')}}" class="img-fluid home-box-img" alt="{{__('Private chat & Tips')}}" loading="lazy" decoding="async">
                     </div>
                     <div class="d-flex justify-content-center mt-4">
                         <div class="col-12 col-md-10 text-center">
@@ -77,7 +77,7 @@
                 </div>
                 <div class="col-12 col-md-4 mb-5 mb-md-0">
                     <div class="d-flex justify-content-center">
-                        <img src="{{asset('/img/home-scene-3.svg')}}" class="img-fluid home-box-img" alt="{{__('Secured assets & Privacy focus')}}">
+                        <img src="{{asset('/img/home-scene-3.svg')}}" class="img-fluid home-box-img" alt="{{__('Secured assets & Privacy focus')}}" loading="lazy" decoding="async">
                     </div>
                     <div class="d-flex justify-content-center mt-4">
                         <div class="col-12 col-md-10 text-center">
@@ -95,7 +95,7 @@
         <div class="container">
             <div class="row">
                 <div class="col-12 col-md-6 d-none d-md-flex justify-content-center">
-                    <img src="{{asset('/img/home-creators.svg')}}" class="home-mid-img" alt="{{__('Make more money')}}">
+                    <img src="{{asset('/img/home-creators.svg')}}" class="home-mid-img" alt="{{__('Make more money')}}" loading="lazy" decoding="async">
                 </div>
                 <div class="col-12 col-md-6">
                     <div class="w-100 h-100 d-flex justify-content-center align-items-center">

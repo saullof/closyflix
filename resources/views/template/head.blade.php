@@ -160,8 +160,9 @@
 <link rel="shortcut icon" href="{{ getSetting('site.favicon') }}" type="image/x-icon">
 
 {{-- (Preloading) Fonts --}}
-<link href="https://fonts.googleapis.com/css?family=Roboto:400,300" rel="preload" as="style">
-<link href="https://fonts.googleapis.com/css?family=Open+Sans:300italic,400italic,700italic,400,300,500,600,700" rel="preload" as="style">
+<link rel="preload" href="{{ asset('fonts/OpenSans-Regular.ttf') }}" as="font" type="font/ttf" crossorigin>
+<link rel="preload" href="{{ asset('fonts/OpenSans-Semibold.ttf') }}" as="font" type="font/ttf" crossorigin>
+<link rel="stylesheet" href="{{ asset('css/fonts.css') }}">
 {{-- Global CSS Assets --}}
 {!!
     Minify::stylesheet(

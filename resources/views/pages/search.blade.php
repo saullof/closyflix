@@ -38,7 +38,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const profiles = document.querySelectorAll('.perfilCard .background-image');
         profiles.forEach(function(profile) {
             const backgroundImage = profile.style.backgroundImage;
-            if (backgroundImage.includes('https://closyflix.com//img/default-avatar.jpg')) {
+            if (backgroundImage.includes('default-avatar.jpg')) {
                 profile.closest('.perfilCard').style.display = 'none';
             }
         });
