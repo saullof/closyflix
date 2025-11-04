@@ -759,7 +759,24 @@ class PaymentHelper
                 if ($stripeSession != null) {
                     if (isset($stripeSession->payment_status)) {
                         $transaction->stripe_transaction_id = $stripeSession->payment_intent;
-                        if ($stripeSession->payment_status == 'paid') {
+                        $isStripePixProvider = $transaction->payment_provider === Transaction::STRIPE_PIX_PROVIDER;
+                        $paymentStatus = $stripeSession->payment_status;
+                        $paymentIntentStatus = null;
+                        $paymentMarkedAsPaid = $paymentStatus === 'paid';
+
+                        if (!$paymentMarkedAsPaid && $isStripePixProvider && !empty($stripeSession->payment_intent)) {
+                            try {
+                                $paymentIntent = $stripeClient->paymentIntents->retrieve($stripeSession->payment_intent);
+                                $paymentIntentStatus = $paymentIntent->status ?? null;
+                                if ($paymentIntentStatus === 'succeeded') {
+                                    $paymentMarkedAsPaid = true;
+                                }
+                            } catch (\Exception $intentException) {
+                                Log::warning('Unable to refresh Stripe Pix payment intent '.$stripeSession->payment_intent.' for session '.$sessionId.': '.$intentException->getMessage());
+                            }
+                        }
+
+                        if ($paymentMarkedAsPaid) {
                             if ($transaction->status != Transaction::APPROVED_STATUS) {
                                 $transaction->status = Transaction::APPROVED_STATUS;
                                 $subscription = Subscription::query()->where('id', $transaction->subscription_id)->first();
@@ -801,7 +818,11 @@ class PaymentHelper
                                 }
                             }
                         } else {
-                            $transaction->status = Transaction::CANCELED_STATUS;
+                            if ($isStripePixProvider) {
+                                $transaction->status = Transaction::PENDING_STATUS;
+                            } else {
+                                $transaction->status = Transaction::CANCELED_STATUS;
+                            }
 
                             $subscription = Subscription::query()->where('id', $transaction->subscription_id)->first();
 
