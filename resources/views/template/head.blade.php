@@ -67,7 +67,7 @@
 
         function captureAttribution() {
             var params = new URLSearchParams(window.location.search || '');
-            var hasNewParams = false;
+            var hasChanges = false;
             var stored = getStoredAttribution();
             var current = Object.assign({}, stored);
 
@@ -75,21 +75,25 @@
                 var value = params.get(key);
                 if (value) {
                     current[key] = value;
-                    hasNewParams = true;
+                    hasChanges = true;
                 }
             });
 
-            if (hasNewParams) {
-                if (!current.first_seen_at) {
-                    current.first_seen_at = new Date().toISOString();
-                }
+            if (!current.first_seen_at) {
+                current.first_seen_at = new Date().toISOString();
+                hasChanges = true;
+            }
 
+            if (!current.referrer && document.referrer) {
+                current.referrer = document.referrer;
+                hasChanges = true;
+            }
+
+            if (Object.keys(current).length) {
                 current.last_seen_at = new Date().toISOString();
+            }
 
-                if (document.referrer) {
-                    current.referrer = document.referrer;
-                }
-
+            if (hasChanges) {
                 persistAttribution(current);
             }
 

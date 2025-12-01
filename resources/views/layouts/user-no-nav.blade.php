@@ -36,13 +36,13 @@
                 @if( !empty($pixel_user['twitter-head']) )
                     twq('track','Purchase', {order_id: '{{$last_transaction->id}}', value: {{$last_transaction->amount}}, currency: "BRL", num_items: 1});
                 @endif
-
-                closyAbleTrack('Purchase', {
-                    transaction_id: "{{$last_transaction->id}}",
-                    value: {{$last_transaction->amount}},
-                    currency: "BRL",
-                });
             @endif
+
+            closyAbleTrack('Purchase', {
+                transaction_id: "{{$last_transaction->id}}",
+                value: {{$last_transaction->amount}},
+                currency: "BRL",
+            });
         }
         @endif
     @endif
