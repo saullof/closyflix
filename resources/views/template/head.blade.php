@@ -45,6 +45,44 @@
 
 {!! getSetting('pixels.tiktok_head') !!}
 
+<script>
+    (function() {
+        window.closyAbleQueue = window.closyAbleQueue || [];
+        window.closyAbleTrack = function(eventName, payload) {
+            if (typeof window.uipe === 'function') {
+                window.uipe('track', eventName, payload || {});
+                return;
+            }
+
+            window.closyAbleQueue.push({eventName: eventName, payload: payload || {}});
+        };
+
+        var el = document.createElement('script');
+        el.src = 'https://app.ablecdp.com/ue.js';
+        el.async = true;
+        el.addEventListener('load', function() {
+            uipe('init', 'b7f75d8f-b251-4e68-ac06-b0ccba8a2217');
+            uipe('track', 'PageView');
+
+            var registeredEmail = @json(optional(auth()->user())->email);
+            if (registeredEmail) {
+                uipe('track', 'CompleteRegistration', {keys: {email: registeredEmail}});
+            }
+
+            if (Array.isArray(window.closyAbleQueue)) {
+                while (window.closyAbleQueue.length > 0) {
+                    var queued = window.closyAbleQueue.shift();
+                    if (queued && queued.eventName) {
+                        uipe('track', queued.eventName, queued.payload || {});
+                    }
+                }
+            }
+        });
+
+        document.head.appendChild(el);
+    })();
+</script>
+
 <!-- user pixels -->
 
 @if(Route::is('profile') )
