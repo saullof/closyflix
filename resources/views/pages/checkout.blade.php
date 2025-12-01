@@ -140,14 +140,33 @@
         $(document).ready(function() {
             $('#inline-register-form').on('submit', function(e) {
                 e.preventDefault();
-                
+
                 $.ajax({
                     url: $(this).attr('action'),
                     type: 'POST',
                     data: $(this).serialize(),
                     success: function(response) {
                         if(response.success) {
-                            window.location.reload();
+                            var inlineForm = $('#inline-register-form');
+                            var ableLeadPayload = {};
+                            var inlineName = inlineForm.find('input[name="name"]').val();
+                            var inlineEmail = inlineForm.find('input[name="email"]').val();
+
+                            if (inlineName) {
+                                ableLeadPayload.name = inlineName;
+                            }
+
+                            if (inlineEmail) {
+                                ableLeadPayload.email = inlineEmail;
+                            }
+
+                            if (Object.keys(ableLeadPayload).length) {
+                                closyAbleTrack('Lead', ableLeadPayload);
+                            }
+
+                            setTimeout(function() {
+                                window.location.reload();
+                            }, 150);
                         }
                     },
                     error: function(xhr) {

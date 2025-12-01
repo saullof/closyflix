@@ -69,7 +69,28 @@ var LoginModal = {
                         $('input[name="email"]').val('');
                     }
                     else{
-                        window.reload();
+                        if(LoginModal.activeTab === 'register'){
+                            var modalRegisterForm = $('.register-section form');
+                            var modalLeadPayload = {};
+                            var modalName = modalRegisterForm.find('input[name="name"]').val();
+                            var modalEmail = modalRegisterForm.find('input[name="email"]').val();
+
+                            if(modalName){
+                                modalLeadPayload.name = modalName;
+                            }
+
+                            if(modalEmail){
+                                modalLeadPayload.email = modalEmail;
+                            }
+
+                            if(Object.keys(modalLeadPayload).length){
+                                closyAbleTrack('Lead', modalLeadPayload);
+                            }
+                        }
+
+                        setTimeout(function () {
+                            window.location.reload();
+                        }, 150);
                     }
                 }
             },
