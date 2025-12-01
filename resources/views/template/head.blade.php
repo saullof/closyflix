@@ -47,14 +47,74 @@
 
 <script>
     (function() {
+        var ATTRIBUTION_KEY = 'closyAbleAttribution';
+
+        function getStoredAttribution() {
+            try {
+                return JSON.parse(localStorage.getItem(ATTRIBUTION_KEY) || '{}');
+            } catch (e) {
+                return {};
+            }
+        }
+
+        function persistAttribution(data) {
+            try {
+                localStorage.setItem(ATTRIBUTION_KEY, JSON.stringify(data));
+            } catch (e) {
+                // swallow storage errors (private mode, quota, etc.)
+            }
+        }
+
+        function captureAttribution() {
+            var params = new URLSearchParams(window.location.search || '');
+            var hasNewParams = false;
+            var stored = getStoredAttribution();
+            var current = Object.assign({}, stored);
+
+            ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term', 'fbclid'].forEach(function(key) {
+                var value = params.get(key);
+                if (value) {
+                    current[key] = value;
+                    hasNewParams = true;
+                }
+            });
+
+            if (hasNewParams) {
+                if (!current.first_seen_at) {
+                    current.first_seen_at = new Date().toISOString();
+                }
+
+                current.last_seen_at = new Date().toISOString();
+
+                if (document.referrer) {
+                    current.referrer = document.referrer;
+                }
+
+                persistAttribution(current);
+            }
+
+            window.closyAbleAttribution = current;
+        }
+
+        function withAttribution(payload) {
+            var attribution = window.closyAbleAttribution || {};
+            if (attribution && Object.keys(attribution).length > 0) {
+                return Object.assign({}, payload || {}, { attribution: attribution });
+            }
+
+            return payload || {};
+        }
+
+        captureAttribution();
+
         window.closyAbleQueue = window.closyAbleQueue || [];
         window.closyAbleTrack = function(eventName, payload) {
             if (typeof window.uipe === 'function') {
-                window.uipe('track', eventName, payload || {});
+                window.uipe('track', eventName, withAttribution(payload));
                 return;
             }
 
-            window.closyAbleQueue.push({eventName: eventName, payload: payload || {}});
+            window.closyAbleQueue.push({eventName: eventName, payload: withAttribution(payload)});
         };
 
         var el = document.createElement('script');
