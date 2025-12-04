@@ -89,6 +89,7 @@ function openCheckoutInline(button) {
         let numberOfMonths = 1;
         let showStripeProvider = !app.stripeRecurringDisabled;
         let showPaypalProvider = !app.paypalRecurringDisabled;
+        let showSuitpayProvider = $('.suitpay-payment-method').length > 0;
         let showCCBillProvider = !app.ccBillRecurringDisabled;
         let showCreditProvider = !app.localWalletRecurringDisabled;
 
@@ -109,7 +110,7 @@ function openCheckoutInline(button) {
         checkout.togglePaymentProvider(showCCBillProvider, '.ccbill-payment-method');
         checkout.togglePaymentProvider(showStripeProvider, '.stripe-payment-method');
         checkout.togglePaymentProvider(showPaypalProvider, '.paypal-payment-method');
-        checkout.togglePaymentProvider(showPaypalProvider, '.suitpay-payment-method');
+        checkout.togglePaymentProvider(showSuitpayProvider, '.suitpay-payment-method');
         checkout.togglePaymentProvider(showCreditProvider, '.credit-payment-method');
 
         $('.payment-body .checkout-amount-input').addClass('d-none');
@@ -247,6 +248,7 @@ $(function () {
             let numberOfMonths = 1;
             let showStripeProvider = !app.stripeRecurringDisabled;
             let showPaypalProvider = !app.paypalRecurringDisabled;
+            let showSuitpayProvider = $('.suitpay-payment-method').length > 0;
             let showCCBillProvider = !app.ccBillRecurringDisabled;
             let showCreditProvider = !app.localWalletRecurringDisabled;
 
@@ -267,7 +269,7 @@ $(function () {
             checkout.togglePaymentProvider(showCCBillProvider, '.ccbill-payment-method');
             checkout.togglePaymentProvider(showStripeProvider, '.stripe-payment-method');
             checkout.togglePaymentProvider(showPaypalProvider, '.paypal-payment-method');
-            checkout.togglePaymentProvider(showPaypalProvider, '.suitpay-payment-method');
+            checkout.togglePaymentProvider(showSuitpayProvider, '.suitpay-payment-method');
             checkout.togglePaymentProvider(showCreditProvider, '.credit-payment-method');
 
             $('.payment-body .checkout-amount-input').addClass('d-none');
@@ -389,10 +391,11 @@ $(function () {
             || type === 'six-months-subscription'
             || type === 'yearly-subscription') {
             let numberOfMonths = 1;
-            let showStripeProvider = !app.stripeRecurringDisabled;
-            let showPaypalProvider = !app.paypalRecurringDisabled;
-            let showCCBillProvider = !app.ccBillRecurringDisabled;
-            let showCreditProvider = !app.localWalletRecurringDisabled;
+        let showStripeProvider = !app.stripeRecurringDisabled;
+        let showPaypalProvider = !app.paypalRecurringDisabled;
+        let showSuitpayProvider = $('.suitpay-payment-method').length > 0;
+        let showCCBillProvider = !app.ccBillRecurringDisabled;
+        let showCreditProvider = !app.localWalletRecurringDisabled;
 
             // handles ccbill provider as they only allow 30 or 90 days subscriptions
             if(showCCBillProvider){
@@ -410,9 +413,9 @@ $(function () {
             checkout.togglePaymentProviders(false, checkout.oneTimePaymentProcessorClasses);
             checkout.togglePaymentProvider(showCCBillProvider, '.ccbill-payment-method');
             checkout.togglePaymentProvider(showStripeProvider, '.stripe-payment-method');
-            checkout.togglePaymentProvider(showPaypalProvider, '.paypal-payment-method');
-            checkout.togglePaymentProvider(showPaypalProvider, '.suitpay-payment-method');
-            checkout.togglePaymentProvider(showCreditProvider, '.credit-payment-method');
+        checkout.togglePaymentProvider(showPaypalProvider, '.paypal-payment-method');
+        checkout.togglePaymentProvider(showSuitpayProvider, '.suitpay-payment-method');
+        checkout.togglePaymentProvider(showCreditProvider, '.credit-payment-method');
 
             $('.payment-body .checkout-amount-input').addClass('d-none');
             paymentTitle = trans(type);

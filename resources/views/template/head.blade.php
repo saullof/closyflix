@@ -45,6 +45,108 @@
 
 {!! getSetting('pixels.tiktok_head') !!}
 
+<script>
+    (function() {
+        var ATTRIBUTION_KEY = 'closyAbleAttribution';
+
+        function getStoredAttribution() {
+            try {
+                return JSON.parse(localStorage.getItem(ATTRIBUTION_KEY) || '{}');
+            } catch (e) {
+                return {};
+            }
+        }
+
+        function persistAttribution(data) {
+            try {
+                localStorage.setItem(ATTRIBUTION_KEY, JSON.stringify(data));
+            } catch (e) {
+                // swallow storage errors (private mode, quota, etc.)
+            }
+        }
+
+        function captureAttribution() {
+            var params = new URLSearchParams(window.location.search || '');
+            var hasChanges = false;
+            var stored = getStoredAttribution();
+            var current = Object.assign({}, stored);
+
+            ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term', 'fbclid'].forEach(function(key) {
+                var value = params.get(key);
+                if (value) {
+                    current[key] = value;
+                    hasChanges = true;
+                }
+            });
+
+            if (!current.first_seen_at) {
+                current.first_seen_at = new Date().toISOString();
+                hasChanges = true;
+            }
+
+            if (!current.referrer && document.referrer) {
+                current.referrer = document.referrer;
+                hasChanges = true;
+            }
+
+            if (Object.keys(current).length) {
+                current.last_seen_at = new Date().toISOString();
+            }
+
+            if (hasChanges) {
+                persistAttribution(current);
+            }
+
+            window.closyAbleAttribution = current;
+        }
+
+        function withAttribution(payload) {
+            var attribution = window.closyAbleAttribution || {};
+            if (attribution && Object.keys(attribution).length > 0) {
+                return Object.assign({}, payload || {}, { attribution: attribution });
+            }
+
+            return payload || {};
+        }
+
+        captureAttribution();
+
+        window.closyAbleQueue = window.closyAbleQueue || [];
+        window.closyAbleTrack = function(eventName, payload) {
+            if (typeof window.uipe === 'function') {
+                window.uipe('track', eventName, withAttribution(payload));
+                return;
+            }
+
+            window.closyAbleQueue.push({eventName: eventName, payload: withAttribution(payload)});
+        };
+
+        var el = document.createElement('script');
+        el.src = 'https://app.ablecdp.com/ue.js';
+        el.async = true;
+        el.addEventListener('load', function() {
+            uipe('init', 'b7f75d8f-b251-4e68-ac06-b0ccba8a2217');
+            uipe('track', 'PageView');
+
+            var registeredEmail = @json(optional(auth()->user())->email);
+            if (registeredEmail) {
+                uipe('track', 'CompleteRegistration', {keys: {email: registeredEmail}});
+            }
+
+            if (Array.isArray(window.closyAbleQueue)) {
+                while (window.closyAbleQueue.length > 0) {
+                    var queued = window.closyAbleQueue.shift();
+                    if (queued && queued.eventName) {
+                        uipe('track', queued.eventName, queued.payload || {});
+                    }
+                }
+            }
+        });
+
+        document.head.appendChild(el);
+    })();
+</script>
+
 <!-- user pixels -->
 
 @if(Route::is('profile') )

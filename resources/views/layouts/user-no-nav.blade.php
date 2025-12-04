@@ -37,6 +37,12 @@
                     twq('track','Purchase', {order_id: '{{$last_transaction->id}}', value: {{$last_transaction->amount}}, currency: "BRL", num_items: 1});
                 @endif
             @endif
+
+            closyAbleTrack('Purchase', {
+                transaction_id: "{{$last_transaction->id}}",
+                value: {{$last_transaction->amount}},
+                currency: "BRL",
+            });
         }
         @endif
     @endif
@@ -61,6 +67,8 @@ function send_initial_checkout_pixels(){
             @endif
         @endif
     @endif
+
+    closyAbleTrack('InitiateCheckout');
 }
 </script>
 @include('elements.impersonation-header')
