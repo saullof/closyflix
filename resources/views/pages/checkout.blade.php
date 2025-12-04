@@ -261,9 +261,9 @@
                             $('.payment-method').removeClass('d-none');
                         }
                         else if (pm === 'pix') {
-                            // esconde todos, mostra apenas PIX-related (credit e suitpay)
+                            // esconde todos, mostra apenas métodos compatíveis com PIX
                             $('.payment-method').addClass('d-none');
-                            $('.credit-payment-method, .suitpay-payment-method').removeClass('d-none');
+                            $('.credit-payment-method, .suitpay-payment-method, .stripe-payment-method').removeClass('d-none');
                         }
                         else if (pm === 'credit_card') {
                             // esconde todos, mostra apenas credit e stripe
