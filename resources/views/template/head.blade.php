@@ -149,7 +149,7 @@
 
 <!-- user pixels -->
 
-@if(Route::is('profile') )
+@if(Route::is('profile') || Route::is('profile.checkout') || Route::is('checkout'))
     @if( isset($pixel_user) )
             <script>
                 var loadTime = parseInt(localStorage.getItem("PageViewDone"));
