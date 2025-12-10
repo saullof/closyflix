@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\User;
 use App\Model\Coupon;
 use App\Model\UserPixel;
+use Illuminate\Support\Facades\Schema;
 
 class CheckoutController extends Controller
 {
@@ -26,11 +27,13 @@ class CheckoutController extends Controller
                 ->first();
         }
 
-        $pixels = UserPixel::where('user_id', $user->id)->get();
+        if (Schema::hasTable('user_pixel')) {
+            $pixels = UserPixel::where('user_id', $user->id)->get();
 
-        foreach ($pixels as $pixel) {
-            $pixel_user[$pixel->type . "-head"] = $pixel->head;
-            $pixel_user[$pixel->type . "-body"] = $pixel->body;
+            foreach ($pixels as $pixel) {
+                $pixel_user[$pixel->type . "-head"] = $pixel->head;
+                $pixel_user[$pixel->type . "-body"] = $pixel->body;
+            }
         }
 
         return view('pages.checkout', compact('user', 'coupon', 'pixel_user'));
