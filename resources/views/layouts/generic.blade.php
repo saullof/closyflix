@@ -7,8 +7,7 @@
 <script>
 function send_initial_checkout_pixels(){
     console.log("tracking InitiateCheckout...");
-    @if(Route::is('profile') || Route::is('profile.checkout') || Route::is('checkout'))
-        @if( isset($pixel_user) )
+    @if(isset($pixel_user))
             @if( !empty($pixel_user['meta-head']) )
                 fbq('track', 'InitiateCheckout');
             @endif
@@ -26,8 +25,7 @@ function send_initial_checkout_pixels(){
             @endif
 
 
-            
-        @endif
+
     @endif
 }
 </script>

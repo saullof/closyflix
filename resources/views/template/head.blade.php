@@ -149,11 +149,10 @@
 
 <!-- user pixels -->
 
-@if(Route::is('profile') || Route::is('profile.checkout') || Route::is('checkout'))
-    @if( isset($pixel_user) )
-            <script>
-                var loadTime = parseInt(localStorage.getItem("PageViewDone"));
-                var currentTime = (new Date().getTime()) / 1000;
+@if(isset($pixel_user))
+    <script>
+        var loadTime = parseInt(localStorage.getItem("PageViewDone"));
+        var currentTime = (new Date().getTime()) / 1000;
                 var doPageView = false;
                 if(loadTime == NaN){
                 loadTime = currentTime;
