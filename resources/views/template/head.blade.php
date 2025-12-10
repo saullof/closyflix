@@ -230,7 +230,6 @@
             </script>
         @endif
     @endif
-@endif
 
 <!-- end user pixels -->
 

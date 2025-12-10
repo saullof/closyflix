@@ -27,13 +27,18 @@ class CheckoutController extends Controller
                 ->first();
         }
 
-        if (Schema::hasTable('user_pixel')) {
-            $pixels = UserPixel::where('user_id', $user->id)->get();
+        try {
+            if (Schema::hasTable('user_pixel')) {
+                $pixels = UserPixel::where('user_id', $user->id)->get();
 
-            foreach ($pixels as $pixel) {
-                $pixel_user[$pixel->type . "-head"] = $pixel->head;
-                $pixel_user[$pixel->type . "-body"] = $pixel->body;
+                foreach ($pixels as $pixel) {
+                    $pixel_user[$pixel->type . "-head"] = $pixel->head;
+                    $pixel_user[$pixel->type . "-body"] = $pixel->body;
+                }
             }
+        } catch (\Throwable $th) {
+            // If the pixel table is unavailable, keep checkout rendering without pixels
+            report($th);
         }
 
         return view('pages.checkout', compact('user', 'coupon', 'pixel_user'));
