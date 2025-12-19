@@ -1,0 +1,333 @@
+<link href="https://vjs.zencdn.net/7.14.3/video-js.css" rel="stylesheet" />
+<script src="https://vjs.zencdn.net/7.14.3/video.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+
+@php
+    // Define o domínio do CDN e do link direto
+    $cdnUrl = 'https://closyflix.nyc3.cdn.digitaloceanspaces.com';
+    $directUrl = 'https://closyflix.nyc3.digitaloceanspaces.com';
+
+    // Substitui o domínio direto pelo CDN
+    $videoPath = str_replace($directUrl, $cdnUrl, $attachment->path);
+
+    // Verifica se o vídeo é no formato HLS (.m3u8)
+    $isHls = strpos($videoPath, '.m3u8') !== false;
+    if ($isHls) {
+        $videoPath = str_replace('/hls.m3u8', '/hls.m3u8/master.m3u8', $videoPath);
+    }
+
+    // Caminho para a thumbnail
+    $thumbnailPath = pathinfo($attachment->path, PATHINFO_FILENAME);
+@endphp
+ 
+ @if($isGallery)
+    @if(AttachmentHelper::getAttachmentType($attachment->type) == 'image')
+        <div class="position-relative w-100 h-100 d-flex justify-content-center align-items-center">
+            <div class="image-background-{{$attachment->id}}" style="background-size: cover; background-position: center; filter: blur(10px) brightness(0.6);"></div>
+            <div style="overflow: hidden" class="image-container position-relative overflow-hidden w-100 h-100 rounded-0">
+                <img src="{{$videoPath}}" draggable="false" alt="">
+            </div>
+        </div>
+
+    @elseif(AttachmentHelper::getAttachmentType($attachment->type) == 'video')
+        <div class="video-container position-relative w-100 h-100 d-flex justify-content-center align-items-center">
+            <!-- Fundo desfocado -->
+            <div class="video-background-{{$attachment->id}} teste1" style="background-image: url('{{ Storage::url('posts/videos/thumbnails/' . $thumbnailPath . '.jpg') }}'); background-size: cover; background-position: center; filter: blur(10px) brightness(0.6);"></div>
+
+            @if($isHls)
+                <!-- Thumbnail e Vídeo HLS -->
+                <div id="thumbnail-wrapper-{{$attachment->id}}" class="image-container position-relative overflow-hidden w-100 h-100 image-containerCss">
+                    <img id="thumbnail-{{$attachment->id}}" src="{{ Storage::url('posts/videos/thumbnails/' . $thumbnailPath . '.jpg') }}" alt="thumbnail" loading="lazy">
+                    <div class="play-button position-absolute top-50 left-50 translate-middle">
+                        <img src="{{ asset('img/IconeRep.png') }}" alt="Play" style="width: 50px; height: 50px;">
+                    </div>
+                </div>
+
+                <video id="hls-player-{{$attachment->id}}" class="video-js vjs-default-skin w-100" controls style="display: none;" poster="{{ Storage::url('posts/videos/thumbnails/' . $thumbnailPath . '.jpg') }}">
+                    <!-- Nenhuma fonte é definida inicialmente para o vídeo -->
+                </video>
+
+                <script>
+                    document.getElementById('thumbnail-wrapper-{{$attachment->id}}').addEventListener('click', function() {
+                        var thumbnailWrapper = document.getElementById('thumbnail-wrapper-{{$attachment->id}}');
+                        var video = document.getElementById('hls-player-{{$attachment->id}}');
+
+                        // Esconde a thumbnail e mostra o vídeo
+                        thumbnailWrapper.style.display = 'none';
+                        video.style.display = 'block';
+
+                        // Atribui o src do vídeo somente após o clique
+                        if (video.canPlayType('application/vnd.apple.mpegurl')) {
+                            video.src = "{{$videoPath}}";
+                        } else if (Hls.isSupported()) {
+                            var hls = new Hls();
+                            hls.loadSource("{{$videoPath}}");
+                            hls.attachMedia(video);
+                        } else {
+                            console.error('HLS não suportado neste navegador.');
+                        }
+
+                        // Reproduz o vídeo após o carregamento
+                        video.play();
+                    });
+                </script>
+            @else
+                {{-- Fallback para MP4 --}}
+                <div id="thumbnail-wrapper-{{$attachment->id}}" class="image-container position-relative overflow-hidden w-100 h-100 image-containerCss">
+                    <img id="thumbnail-{{$attachment->id}}" src="{{ Storage::url('posts/videos/thumbnails/' . $thumbnailPath . '.jpg') }}" alt="thumbnail" loading="lazy">
+                    <div class="play-button position-absolute top-50 left-50 translate-middle">
+                        <img src="{{ asset('img/IconeRep.png') }}" alt="Play" style="width: 50px; height: 50px;">
+                    </div>
+                </div>
+
+                <!-- O vídeo inicialmente fica escondido -->
+                <video id="mp4-player-{{$attachment->id}}" class="video-preview w-100" controls controlsList="nodownload" style="display: none;" poster="{{ Storage::url('posts/videos/thumbnails/' . $thumbnailPath . '.jpg') }}">
+                    <source src="{{$videoPath}}#t=0.001" type="video/mp4">
+                </video>
+
+                <script>
+                    document.getElementById('thumbnail-wrapper-{{$attachment->id}}').addEventListener('click', function() {
+                        var thumbnailWrapper = document.getElementById('thumbnail-wrapper-{{$attachment->id}}');
+                        var video = document.getElementById('mp4-player-{{$attachment->id}}');
+
+                        // Esconde a thumbnail e mostra o vídeo
+                        thumbnailWrapper.style.display = 'none';
+                        video.style.display = 'block';
+
+                        // Reproduz o vídeo
+                        video.play();
+                    });
+                </script>
+            @endif
+        </div>
+    @elseif(AttachmentHelper::getAttachmentType($attachment->type) == 'audio')
+        <div class="audio-wrapper h-100 w-100 d-flex justify-content-center align-items-center">
+            <audio class="audio-preview w-75" src="{{$videoPath}}#t=0.001" controls controlsList="nodownload"></audio>
+        </div>
+    @endif
+@else
+    @if(AttachmentHelper::getAttachmentType($attachment->type) == 'image')
+        <div class="position-relative w-100 d-flex justify-content-center align-items-center">
+            <div style="overflow: hidden" class="image-container position-relative overflow-hidden w-100 h-100 rounded-0">
+                <img src="{{$videoPath}}" draggable="false" alt="">
+            </div>
+        </div>
+        {{--  <img src="{{$videoPath}}" draggable="false" alt="" class="img-fluid rounded-0 w-100">  --}}
+    @elseif(AttachmentHelper::getAttachmentType($attachment->type) == 'video')
+    
+        <div class="video-wrapper h-100 w-100 d-flex justify-content-center align-items-center">
+        <div class="video-container position-relative w-100 h-100 d-flex justify-content-center align-items-center">
+            <div class="image-background removebackgroundimg2 backgroundimg2" style="background-image: url('{{ Storage::url('posts/videos/thumbnails/' . $thumbnailPath . '.jpg') }}'); background-size: cover; background-position: center; filter: blur(10px) brightness(0.6);"></div>
+            
+            @if($isHls)
+                {{-- Prioriza HLS --}}
+                <div id="thumbnail-wrapper-{{$attachment->id}}" class="image-container position-relative overflow-hidden w-100 h-100 image-containerCss">
+                    <img id="thumbnail-{{$attachment->id}}" src="{{ Storage::url('posts/videos/thumbnails/' . $thumbnailPath . '.jpg') }}" class="img-fluid h-100 w-100 object-cover" alt="thumbnail" loading="lazy">
+                    <div class="play-button position-absolute top-50 left-50 translate-middle">
+                        <img src="{{ asset('img/IconeRep.png') }}" alt="Play" style="width: 50px; height: 50px;">
+                    </div>
+                </div>
+
+                <video id="hls-player-{{$attachment->id}}" class="video-js vjs-default-skin w-100" controls style="display: none;"></video>
+                <script>
+                    document.getElementById('thumbnail-wrapper-{{$attachment->id}}').addEventListener('click', function() {
+                        var thumbnailWrapper = document.getElementById('thumbnail-wrapper-{{$attachment->id}}');
+                        var video = document.getElementById('hls-player-{{$attachment->id}}');
+
+                        thumbnailWrapper.style.display = 'none';
+                        video.style.display = 'block';
+
+                        if (video.canPlayType('application/vnd.apple.mpegurl')) {
+                            video.src = "{{$videoPath}}";
+                        } else if (Hls.isSupported()) {
+                            var hls = new Hls();
+                            hls.loadSource("{{$videoPath}}");
+                            hls.attachMedia(video);
+                        }
+
+                        video.play();
+                    });
+                </script>
+            @else
+                {{-- Fallback para MP4 --}}
+                <div id="thumbnail-wrapper-{{$attachment->id}}" class="image-container position-relative overflow-hidden w-100 h-100 image-containerCss">
+                    <img id="thumbnail-{{$attachment->id}}" src="{{ Storage::url('posts/videos/thumbnails/' . $thumbnailPath . '.jpg') }}" class="img-fluid h-100 w-100 object-cover" alt="thumbnail" loading="lazy">
+                    <div class="play-button position-absolute top-50 left-50 translate-middle">
+                        <img src="{{ asset('img/IconeRep.png') }}" alt="Play" style="width: 50px; height: 50px;">
+                    </div>
+                </div>
+
+                <video id="mp4-player-{{$attachment->id}}" class="video-preview w-100 backgroundvideo2" controls controlsList="nodownload" style="display: none;">
+                    <source src="{{$videoPath}}#t=0.001" type="video/mp4">
+                </video>
+
+                <script>
+                    document.getElementById('thumbnail-wrapper-{{$attachment->id}}').addEventListener('click', function() {
+                        var thumbnailWrapper = document.getElementById('thumbnail-wrapper-{{$attachment->id}}');
+                        var video = document.getElementById('mp4-player-{{$attachment->id}}');
+
+                        thumbnailWrapper.style.display = 'none';
+                        video.style.display = 'block';
+
+                        video.play();
+                    });
+                </script>
+            @endif
+        </div>
+        </div>
+    @elseif(AttachmentHelper::getAttachmentType($attachment->type) == 'audio')
+        <div class="audio-wrapper h-100 w-100 d-flex justify-content-center align-items-center">
+            <audio class="audio-preview w-75" src="{{$videoPath}}#t=0.001" controls controlsList="nodownload"></audio>
+        </div>
+    @endif
+@endif
+
+
+
+<style>
+    .video-wrapper {
+        max-height: 80vh;
+        overflow: hidden;
+        display: flex;
+        align-items: center; /* Centraliza o conteúdo verticalmente */
+        justify-content: center; /* Centraliza o conteúdo horizontalmente */
+        background-color: black; /* Adiciona um fundo para contraste */
+    }
+
+    .image-container {
+        position: relative;
+        overflow: hidden;
+        width: 100%;
+        height: 100%;
+        display: flex;
+        align-items: center; /* Centraliza verticalmente */
+        justify-content: center; /* Centraliza horizontalmente */
+    }
+
+    .image-background-{{$attachment->id}} {
+        background-image: url('{{$videoPath}}');
+        background-size: cover;
+        background-position: center;
+        filter: blur(10px) brightness(0.6);
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: 1;
+    }
+
+    .image-background {
+        background-image: url('{{$videoPath}}');
+        background-size: cover;
+        background-position: center;
+        filter: blur(10px) brightness(0.6);
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: 1;
+    }
+
+    .image-container img {
+        z-index: 2;
+        width: 100%;
+        height: 100%;
+        object-fit: contain; /* Garante que a imagem se ajuste sem cortar */
+    }
+
+    .video-container {
+        position: relative;
+        overflow: hidden;
+        width: 100%;
+        height: 100%;
+        display: flex;
+        align-items: center; /* Centraliza verticalmente */
+        justify-content: center; /* Centraliza horizontalmente */
+    }
+
+    .video-thumbnail-container {
+        position: relative;
+        z-index: 2;
+    }
+
+    .video-element {
+        width: 100%;
+        height: 100%;
+        object-fit: contain; /* Ajusta o vídeo ao container sem cortar */
+        z-index: 2;
+    }
+
+    .video-background-{{$attachment->id}} {
+        background-image: url('{{ Storage::url("posts/videos/thumbnails/" . $thumbnailPath . ".jpg") }}');
+        background-size: cover;
+        background-position: center;
+        filter: blur(10px) brightness(0.6);
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: -1;
+    }
+
+    .video-preview {
+        width: 100%;
+        height: auto;
+        max-height: 100%; /* Limita a altura para evitar cortes verticais */
+        object-fit: contain; /* Ajusta o vídeo sem cortar, mantendo a proporção */
+    }
+
+    .video-thumbnail {
+        object-fit: contain; /* Ajusta a imagem da miniatura sem cortar */
+        max-width: 100%;
+        max-height: 100%;
+        width: auto;
+        height: auto;
+    }
+
+    .thumb-wrapper {
+        max-height: 80vh;
+        overflow: hidden;
+        display: flex;
+        align-items: center; /* Centraliza verticalmente */
+        justify-content: center; /* Centraliza horizontalmente */
+        background-color: black; /* Fundo para contraste */
+    }
+
+    .thumb-preview {
+        width: 100%;
+        height: auto;
+        max-height: 100%; /* Limita a altura para evitar cortes verticais */
+        object-fit: contain; /* Ajusta a thumb sem cortar, mantendo a proporção */
+    }
+
+    /* Estilo adicional para a play button */
+    .play-button {
+        background-color: rgba(0, 0, 0, 0.6);
+        padding: 10px;
+        border-radius: 50%;
+        z-index: 3;
+    }
+
+    .play-button img {
+        width: 50px;
+        height: 50px;
+    }
+
+    /* Adiciona bordas arredondadas ao redor das imagens */
+    .img-fluid {
+        border-radius: 8px;
+    }
+
+    .backgroundimg2 {
+        z-index: 1;
+    }
+
+    .backgroundvideo2 {
+        z-index: 2;
+    }
+
+</style>
+

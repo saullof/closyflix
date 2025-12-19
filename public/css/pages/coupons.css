@@ -1,0 +1,76 @@
+.coupons-list {
+  margin-top: 1.5rem;
+}
+
+.coupon-item {
+  background-color: var(--card-bg);
+  border: 1px solid var(--border-color);
+  transition: all 0.2s ease;
+}
+
+.coupon-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.coupon-details {
+  color: var(--text-muted);
+}
+
+.coupon-details small {
+  font-size: 0.875rem;
+}
+
+.coupon-details div {
+  font-size: 1rem;
+  font-weight: 500;
+}
+
+#expires_at_group, #usage_limit_group {
+  display: none;
+}
+
+.coupon-status {
+  font-size: 0.875rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.25rem;
+}
+
+.btn-coupon-action {
+  margin: 0 0.25rem;
+  padding: 0.25rem 0.5rem;
+  font-size: 0.875rem;
+}
+
+/* Estilo adicional para campos condicionais */
+.hidden-field {
+  display: none;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.visible-field {
+  display: block;
+  opacity: 1;
+}
+
+/* Validação de código */
+input:invalid {
+  border-color: #dc3545;
+}
+
+.invalid-feedback {
+  display: block;
+  color: #dc3545;
+}
+
+.btn-link.text-danger.p-0 {
+  border: none;
+  background: none;
+  padding: 0!important;
+  cursor: pointer;
+}
+
+.btn-link.text-danger.p-0:hover {
+  opacity: 0.8;
+}
