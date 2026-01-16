@@ -23,6 +23,7 @@ use App\Observers\UserVerifyObserver;
 use App\Observers\WithdrawalsObserver;
 use App\User;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Pagination\Paginator;
 
@@ -68,7 +69,9 @@ class AppServiceProvider extends ServiceProvider
     
         Schema::defaultStringLength(191); // TODO: Maybe move it as the first line
         if(!InstallerServiceProvider::glck()) {
-            dd(base64_decode('SW52YWxpZCBzY3JpcHQgc2lnbmF0dXJl'));
+            $message = base64_decode('SW52YWxpZCBzY3JpcHQgc2lnbmF0dXJl');
+            Log::error($message);
+            throw new \RuntimeException($message);
         }
     
         // Timezone settings

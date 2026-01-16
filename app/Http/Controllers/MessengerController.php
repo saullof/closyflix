@@ -178,19 +178,7 @@ class MessengerController extends Controller
 
         // Filtering unique contactIDs
         // TODO: This could have been done within the initial query - can be inspected for later on, was causing dupe on mass messages
-        $filteredContacts = [];
-        $uniqueContacts = array_unique(array_map(function ($v){
-            return $v->contactID;
-        },$contacts));
-        foreach($uniqueContacts as $uniqueContact){
-            foreach($contacts as $contact){
-                if($contact->contactID === $uniqueContact){
-                    $filteredContacts[] = $contact;
-                    break;
-                }
-            }
-        }
-        $contacts = $filteredContacts;
+        $contacts = collect($contacts)->unique('contactID')->values()->all();
 
         if ($limit) {
             return $contacts;
@@ -239,24 +227,22 @@ class MessengerController extends Controller
                     ->where('transactions.status', '=', 'approved')  // Ajuste conforme necessário
                     ->where('transactions.sender_user_id', '=', Auth::user()->id);
             })
+            ->leftJoin('transactions as recipient_transactions', function ($join) use ($senderID) {
+                $join->on('recipient_transactions.user_message_id', '=', 'user_messages.id')
+                    ->where('recipient_transactions.type', '=', 'message-unlock')  // Ajuste conforme necessário
+                    ->where('recipient_transactions.status', '=', 'approved')  // Ajuste conforme necessário
+                    ->where('recipient_transactions.recipient_user_id', '=', $senderID);
+            })
             ->orderBy('user_messages.created_at')
             ->select([
                 'user_messages.*',
-                DB::raw('COALESCE(transactions.id, NULL) as hasUserUnlockedMessage')
+                DB::raw('COALESCE(transactions.id, NULL) as hasUserUnlockedMessage'),
+                DB::raw('COALESCE(recipient_transactions.id, NULL) as isUnlockedByRecipient')
             ])
             ->get()
             ->map(function ($message) use ($senderID) {
                 $message->hasUserUnlockedMessage = $message->hasUserUnlockedMessage ? true : false;
-    
-                // Realiza a consulta separada para verificar se a mensagem foi desbloqueada pelo destinatário
-                $isUnlocked = DB::table('transactions')
-                    ->where('user_message_id', $message->id)
-                    ->where('recipient_user_id', $senderID)
-                    ->where('type', 'message-unlock')  // Ajuste conforme necessário
-                    ->where('status', 'approved')  // Ajuste conforme necessário
-                    ->exists();
-    
-                $message->isUnlockedByRecipient = $isUnlocked ? true : false;
+                $message->isUnlockedByRecipient = $message->isUnlockedByRecipient ? true : false;
     
                 $message->sender->profileUrl = route('profile', ['username' => $message->sender->username]);
                 $message->receiver->profileUrl = route('profile', ['username' => $message->receiver->username]);

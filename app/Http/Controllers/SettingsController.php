@@ -642,12 +642,20 @@ class SettingsController extends Controller
     {
         try {
             $attachmentId = $request->get('assetSrc');
-            $data = json_decode($request->session()->get('verifyAssets'));
+            $data = json_decode($request->session()->get('verifyAssets'), true) ?? [];
+            if (!is_array($data)) {
+                $data = [];
+            }
             $file = Attachment::where('user_id',Auth::user()->id)->where('id', $attachmentId)->first();
-            $newData = array_diff($data, [$attachmentId]);
+            if (!$file) {
+                return response()->json(['success' => false, 'errors' => ['file' => __('File not found.')]], 404);
+            }
+            $newData = array_values(array_diff($data, [$attachmentId]));
             session(['verifyAssets' => json_encode($newData)]);
             $storage = Storage::disk(config('filesystems.defaultFilesystemDriver'));
-            $storage->delete($file->filename);
+            if ($storage->exists($file->filename)) {
+                $storage->delete($file->filename);
+            }
             return response()->json(['success' => true]);
         } catch (\Exception $exception) {
             return response()->json(['success' => false, 'errors' => ['file'=>$exception->getMessage()]]);

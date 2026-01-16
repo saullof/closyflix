@@ -25,6 +25,10 @@ use View;
 
 class StreamsController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('auth');
+    }
 
     /**
      * Streams management endpoint
