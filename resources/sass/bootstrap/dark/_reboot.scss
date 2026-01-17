@@ -5,6 +5,11 @@
 body {
   color: $body-color-alt;
   background-color: $body-bg-alt;
+  background-image: linear-gradient(
+    180deg,
+    $body-bg-alt 0%,
+    darken($body-bg-alt, 8%) 100%
+  );
 }
 
 // Links
