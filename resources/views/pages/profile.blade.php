@@ -856,7 +856,6 @@ function toggleDrawer() {
 
 /* Estilos para o drawer */
 .drawer {
-    background-color: #050506;
     border-radius: 12px 12px 0 0;
     max-width: 548px;
     margin: 0 auto;
@@ -867,16 +866,25 @@ function toggleDrawer() {
     right: 0;
     z-index: 1200;
     padding: 20px;
-    color: #ffffff;
     display: flex;
     flex-direction: column;
+}
+
+.drawer.bg-dark {
+    background-color: #020203;
+    color: #ffffff;
+}
+
+.drawer.bg-light {
+    background-color: #ffffff;
+    color: #1c1c1c;
 }
 
 .icon-close {
     cursor: pointer;
     width: 24px;
     height: 24px;
-    fill: #ffffff;
+    fill: currentColor;
 }
 
 .drawer-content {
@@ -1001,6 +1009,5 @@ function toggleDrawer() {
     height: 100%;
 }
 </style>
-
 
 
