@@ -202,10 +202,16 @@
     margin-left: auto;
     margin-top: 0;
     display: none;
+    text-align: left;
+    justify-content: flex-start;
 }
 
 .profile-meta-row .profile-stats-inline {
     display: flex;
+}
+
+.profile-stats {
+    display: none;
 }
 
 .profile-stats-inline span + span {
@@ -997,6 +1003,7 @@ function toggleDrawer() {
     .profile-stats-inline {
         margin-left: 0;
         margin-top: 8px;
+        width: 100%;
     }
 }
 </style>
