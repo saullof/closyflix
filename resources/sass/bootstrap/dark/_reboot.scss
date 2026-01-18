@@ -10,6 +10,9 @@ body {
     $body-bg-alt 0%,
     darken($body-bg-alt, 8%) 100%
   );
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+  background-size: cover;
 }
 
 // Links
