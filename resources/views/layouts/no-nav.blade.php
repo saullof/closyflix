@@ -3,7 +3,7 @@
 <head>
     @include('template.head')
 </head>
-<body class="d-flex flex-column {{(Cookie::get('app_theme') == null ? (getSetting('site.default_user_theme') == 'dark' ? 'theme-dark' : 'theme-light') : (Cookie::get('app_theme') == 'dark' ? 'theme-dark' : 'theme-light'))}}">
+<body class="d-flex flex-column">
 @include('elements.impersonation-header')
 <div class="flex-fill">
     @yield('content')
