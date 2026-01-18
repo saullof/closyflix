@@ -196,18 +196,19 @@
 }
 
 .profile-stats-inline {
-    flex-wrap: wrap;
-    gap: 12px;
-    font-size: 0.95rem;
-    margin-left: auto;
-    margin-top: 0;
     display: none;
-    text-align: right;
-    justify-content: flex-end;
+    font-size: 0.95rem;
 }
 
 .profile-meta-row .profile-stats-inline {
     display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    width: 100%;
+    margin-left: 0;
+    margin-top: 0;
+    justify-content: flex-start;
+    text-align: left;
 }
 
 .profile-stats {
@@ -224,8 +225,11 @@
         flex: 0 0 auto;
     }
 
-    .profile-stats-inline {
+    .profile-meta-row .profile-stats-inline {
+        width: auto;
         margin-left: auto;
+        justify-content: flex-end;
+        text-align: right;
     }
 }
 
