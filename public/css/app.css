@@ -2,6 +2,18 @@ body {
     font-family: 'Open Sans', sans-serif;
     min-height: 100%!important;
 }
+body.theme-dark {
+    background-color: #222222;
+    background-image: linear-gradient(180deg, #222222 0%, #111111 100%);
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+    background-size: cover;
+}
+
+body.theme-light {
+    background-color: #ffffff;
+    background-image: none;
+}
 /* Top Navbar Menu */
 .navbar{
     padding:1rem;

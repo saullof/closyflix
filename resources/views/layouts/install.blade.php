@@ -28,7 +28,7 @@
     {{-- Page specific CSS --}}
     @yield('styles')
 </head>
-<body class="d-flex flex-column">
+<body class="d-flex flex-column {{(Cookie::get('app_theme') == null ? (getSetting('site.default_user_theme') == 'dark' ? 'theme-dark' : 'theme-light') : (Cookie::get('app_theme') == 'dark' ? 'theme-dark' : 'theme-light'))}}">
 
 <div class="flex-fill">
     @yield('content')

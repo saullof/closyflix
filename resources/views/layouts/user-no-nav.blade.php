@@ -7,7 +7,7 @@
                 '/css/side-menu.css',
              ]])
 </head>
-<body class="d-flex flex-column">
+<body class="d-flex flex-column {{(Cookie::get('app_theme') == null ? (getSetting('site.default_user_theme') == 'dark' ? 'theme-dark' : 'theme-light') : (Cookie::get('app_theme') == 'dark' ? 'theme-dark' : 'theme-light'))}}">
 <script>
     @if(Route::is('profile') )
         @if( isset($last_transaction) )

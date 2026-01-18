@@ -3,7 +3,7 @@
 <head>
     @include('template.head')
 </head>
-<body class="d-flex flex-column">
+<body class="d-flex flex-column {{(Cookie::get('app_theme') == null ? (getSetting('site.default_user_theme') == 'dark' ? 'theme-dark' : 'theme-light') : (Cookie::get('app_theme') == 'dark' ? 'theme-dark' : 'theme-light'))}}">
 <script>
 function send_initial_checkout_pixels(){
     console.log("tracking InitiateCheckout...");
@@ -43,5 +43,4 @@ function send_initial_checkout_pixels(){
 @include('elements.language-selector-box')
 </body>
 </html>
-
 
