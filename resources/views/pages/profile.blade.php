@@ -195,6 +195,24 @@
     display: none;
 }
 
+.profile-stats {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    font-size: 0.95rem;
+}
+
+.profile-stats span {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.profile-stats span + span {
+    padding-left: 12px;
+    border-left: 1px solid rgba(128, 128, 128, 0.4);
+}
+
 
 </style>
 
@@ -549,6 +567,11 @@ function observeRemovelinhaClass() {
                         @endif
                     </h5>
                     <h6 class="text-muted"><span class="text-bold"><span>@</span>{{$user->username}}</span> {{--- Last seen X time ago--}}</h6>
+                    <div class="profile-stats text-muted mt-2">
+                        <span><strong>{{ $posts->total() }}</strong> posts</span>
+                        <span><strong>{{ $filterTypeCounts['image'] ?? 0 }}</strong> fotos</span>
+                        <span><strong>{{ $filterTypeCounts['video'] ?? 0 }}</strong> videos</span>
+                    </div>
                 </div>
 
                 <div class="pt-2 pb-2 pl-4 pr-4 profile-description-holder">
@@ -800,13 +823,9 @@ function observeRemovelinhaClass() {
 @stop
 
 @php
-    $appTheme = isset($_COOKIE['app_theme']) && $_COOKIE['app_theme'] === 'dark' ? 'dark' : 'light';
-@endphp
-
-
-@php
-    // Verifica o tema do cookie e define a variável $appTheme
-    $appTheme = isset($_COOKIE['app_theme']) && $_COOKIE['app_theme'] === 'dark' ? 'dark' : 'light';
+    $appTheme = Cookie::get('app_theme') == null
+        ? (getSetting('site.default_user_theme') == 'dark' ? 'dark' : 'light')
+        : (Cookie::get('app_theme') == 'dark' ? 'dark' : 'light');
 @endphp
 
 
@@ -856,7 +875,6 @@ function toggleDrawer() {
 
 /* Estilos para o drawer */
 .drawer {
-    background-color: #050506;
     border-radius: 12px 12px 0 0;
     max-width: 548px;
     margin: 0 auto;
@@ -867,16 +885,45 @@ function toggleDrawer() {
     right: 0;
     z-index: 1200;
     padding: 20px;
-    color: #ffffff;
     display: flex;
     flex-direction: column;
+}
+
+.drawer.bg-dark {
+    background: linear-gradient(
+        135deg,
+        rgba(20, 20, 20, 0.88),
+        rgba(45, 45, 45, 0.88)
+    );
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow:
+        0 20px 50px rgba(0, 0, 0, 0.7),
+        inset 0 1px 0 rgba(255, 255, 255, 0.04);
+    color: #ffffff;
+}
+
+.drawer.bg-light {
+    background: linear-gradient(
+        135deg,
+        rgba(255, 255, 255, 0.75),
+        rgba(245, 245, 245, 0.75)
+    );
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid rgba(0, 0, 0, 0.06);
+    box-shadow:
+        0 20px 40px rgba(0, 0, 0, 0.15),
+        inset 0 1px 0 rgba(255, 255, 255, 0.6);
+    color: #1c1c1c;
 }
 
 .icon-close {
     cursor: pointer;
     width: 24px;
     height: 24px;
-    fill: #ffffff;
+    fill: currentColor;
 }
 
 .drawer-content {
@@ -1001,6 +1048,3 @@ function toggleDrawer() {
     height: 100%;
 }
 </style>
-
-
-
