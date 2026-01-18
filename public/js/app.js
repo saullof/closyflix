@@ -315,12 +315,22 @@ function getCookie(key) {
 function applyBodyThemeClass() {
     let currentTheme = getCookie('app_theme');
     if (!currentTheme) {
+        let bodyTheme = $('body').data('theme');
+        if (bodyTheme) {
+            currentTheme = bodyTheme;
+        }
+    }
+    if (!currentTheme) {
+        if ($('body').hasClass('theme-dark') || $('body').hasClass('theme-light')) {
+            return;
+        }
         let themeHref = $('#app-theme').attr('href');
         currentTheme = (themeHref && themeHref.indexOf('.dark') !== -1) ? 'dark' : 'light';
     }
     $('body')
         .removeClass('theme-dark theme-light')
-        .addClass(currentTheme === 'dark' ? 'theme-dark' : 'theme-light');
+        .addClass(currentTheme === 'dark' ? 'theme-dark' : 'theme-light')
+        .attr('data-theme', currentTheme);
 }
 
 /**

@@ -10,7 +10,7 @@
 @import "./variables";  // Base theme variables
 @import "../../node_modules/bootstrap/scss/variables";
 @import "./variables-dark";  // Dark theme colors override | only the dark colors mapped as `-alt`
-$color-scheme-alt: light;
+$color-scheme-alt: dark;
 $isRTL : true;
 
 @import "../../node_modules/bootstrap/scss/mixins";
