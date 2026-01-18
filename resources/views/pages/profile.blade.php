@@ -202,6 +202,15 @@
     font-size: 0.95rem;
 }
 
+.profile-stats-inline {
+    margin-left: auto;
+    margin-top: 0;
+}
+
+.profile-stats-inline span + span {
+    margin-left: 12px;
+}
+
 .profile-stats span {
     display: inline-flex;
     align-items: center;
@@ -567,11 +576,6 @@ function observeRemovelinhaClass() {
                         @endif
                     </h5>
                     <h6 class="text-muted"><span class="text-bold"><span>@</span>{{$user->username}}</span> {{--- Last seen X time ago--}}</h6>
-                    <div class="profile-stats text-muted mt-2">
-                        <span><strong>{{ $posts->total() }}</strong> posts</span>
-                        <span><strong>{{ $filterTypeCounts['image'] ?? 0 }}</strong> fotos</span>
-                        <span><strong>{{ $filterTypeCounts['video'] ?? 0 }}</strong> videos</span>
-                    </div>
                 </div>
 
                 <div class="pt-2 pb-2 pl-4 pr-4 profile-description-holder">
@@ -602,13 +606,18 @@ function observeRemovelinhaClass() {
                         </div>
                     @endif
                 @endif
-                <div class="d-flex flex-column flex-md-row justify-content-md-between pb-2 pl-4 pr-4 mb-3 mt-1">
+                <div class="d-flex flex-column flex-md-row align-items-md-center pb-2 pl-4 pr-4 mb-3 mt-1">
 
                     <div class="d-flex align-items-center mr-2 text-truncate mb-0 mb-md-0">
                         @include('elements.icon',['icon'=>'calendar-clear-outline','centered'=>false,'classes'=>'mr-1'])
                         <div class="text-truncate ml-1">
                             {{ucfirst($user->created_at->translatedFormat('F d'))}}
                         </div>
+                    </div>
+                    <div class="profile-stats profile-stats-inline text-muted">
+                        <span><strong>{{ $posts->total() }}</strong> posts</span>
+                        <span><strong>{{ $filterTypeCounts['image'] ?? 0 }}</strong> fotos</span>
+                        <span><strong>{{ $filterTypeCounts['video'] ?? 0 }}</strong> videos</span>
                     </div>
                     @if($user->location)
                         <div class="d-flex align-items-center mr-2 text-truncate mb-0 mb-md-0">
@@ -983,6 +992,10 @@ function toggleDrawer() {
     .copy-button {
         font-size: 0.75rem;
         padding: 4px 8px;
+    }
+    .profile-stats-inline {
+        margin-left: 0;
+        margin-top: 8px;
     }
 }
 </style>
