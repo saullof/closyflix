@@ -202,8 +202,8 @@
     margin-left: auto;
     margin-top: 0;
     display: none;
-    text-align: left;
-    justify-content: flex-start;
+    text-align: right;
+    justify-content: flex-end;
 }
 
 .profile-meta-row .profile-stats-inline {
@@ -226,7 +226,7 @@
 
 .profile-stats-inline span + span {
     padding-left: 12px;
-    border-left: 1px solid rgba(128, 128, 128, 0.4);
+    border-left: 1px solid #e03131;
 }
 
 
@@ -1004,6 +1004,8 @@ function toggleDrawer() {
         margin-left: 0;
         margin-top: 8px;
         width: 100%;
+        text-align: left;
+        justify-content: flex-start;
     }
 }
 </style>
