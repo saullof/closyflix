@@ -214,8 +214,19 @@
     display: none;
 }
 
-.profile-stats-inline span + span {
-    margin-left: 12px;
+@media (min-width: 769px) {
+    .profile-meta-row {
+        flex-wrap: nowrap;
+    }
+
+    .profile-join-date {
+        white-space: nowrap;
+        flex: 0 0 auto;
+    }
+
+    .profile-stats-inline {
+        margin-left: auto;
+    }
 }
 
 .profile-stats-inline span {
@@ -225,6 +236,7 @@
 }
 
 .profile-stats-inline span + span {
+    margin-left: 12px;
     padding-left: 12px;
     border-left: 1px solid #e03131;
 }
@@ -615,7 +627,7 @@ function observeRemovelinhaClass() {
                 @endif
                 <div class="profile-meta-row d-flex flex-column flex-md-row align-items-md-center pb-2 pl-4 pr-4 mb-3 mt-1">
 
-                    <div class="d-flex align-items-center mr-2 text-truncate mb-0 mb-md-0">
+                    <div class="d-flex align-items-center mr-2 text-truncate mb-0 mb-md-0 profile-join-date">
                         @include('elements.icon',['icon'=>'calendar-clear-outline','centered'=>false,'classes'=>'mr-1'])
                         <div class="text-truncate ml-1">
                             {{ucfirst($user->created_at->translatedFormat('F d'))}}
