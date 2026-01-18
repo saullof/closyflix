@@ -871,12 +871,32 @@ function toggleDrawer() {
 }
 
 .drawer.bg-dark {
-    background-color: #020203;
+    background: linear-gradient(
+        135deg,
+        rgba(20, 20, 20, 0.88),
+        rgba(45, 45, 45, 0.88)
+    );
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow:
+        0 20px 50px rgba(0, 0, 0, 0.7),
+        inset 0 1px 0 rgba(255, 255, 255, 0.04);
     color: #ffffff;
 }
 
 .drawer.bg-light {
-    background-color: #ffffff;
+    background: linear-gradient(
+        135deg,
+        rgba(255, 255, 255, 0.75),
+        rgba(245, 245, 245, 0.75)
+    );
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid rgba(0, 0, 0, 0.06);
+    box-shadow:
+        0 20px 40px rgba(0, 0, 0, 0.15),
+        inset 0 1px 0 rgba(255, 255, 255, 0.6);
     color: #1c1c1c;
 }
 
@@ -1009,5 +1029,4 @@ function toggleDrawer() {
     height: 100%;
 }
 </style>
-
 
