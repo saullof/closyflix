@@ -196,12 +196,16 @@
 }
 
 .profile-stats-inline {
-    display: flex;
     flex-wrap: wrap;
     gap: 12px;
     font-size: 0.95rem;
     margin-left: auto;
     margin-top: 0;
+    display: none;
+}
+
+.profile-meta-row .profile-stats-inline {
+    display: flex;
 }
 
 .profile-stats-inline span + span {
@@ -603,7 +607,7 @@ function observeRemovelinhaClass() {
                         </div>
                     @endif
                 @endif
-                <div class="d-flex flex-column flex-md-row align-items-md-center pb-2 pl-4 pr-4 mb-3 mt-1">
+                <div class="profile-meta-row d-flex flex-column flex-md-row align-items-md-center pb-2 pl-4 pr-4 mb-3 mt-1">
 
                     <div class="d-flex align-items-center mr-2 text-truncate mb-0 mb-md-0">
                         @include('elements.icon',['icon'=>'calendar-clear-outline','centered'=>false,'classes'=>'mr-1'])
