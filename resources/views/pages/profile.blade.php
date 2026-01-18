@@ -195,14 +195,11 @@
     display: none;
 }
 
-.profile-stats {
+.profile-stats-inline {
     display: flex;
     flex-wrap: wrap;
     gap: 12px;
     font-size: 0.95rem;
-}
-
-.profile-stats-inline {
     margin-left: auto;
     margin-top: 0;
 }
@@ -211,13 +208,13 @@
     margin-left: 12px;
 }
 
-.profile-stats span {
+.profile-stats-inline span {
     display: inline-flex;
     align-items: center;
     gap: 6px;
 }
 
-.profile-stats span + span {
+.profile-stats-inline span + span {
     padding-left: 12px;
     border-left: 1px solid rgba(128, 128, 128, 0.4);
 }
@@ -614,7 +611,7 @@ function observeRemovelinhaClass() {
                             {{ucfirst($user->created_at->translatedFormat('F d'))}}
                         </div>
                     </div>
-                    <div class="profile-stats profile-stats-inline text-muted">
+                    <div class="profile-stats-inline text-muted">
                         <span><strong>{{ $posts->total() }}</strong> posts</span>
                         <span><strong>{{ $filterTypeCounts['image'] ?? 0 }}</strong> fotos</span>
                         <span><strong>{{ $filterTypeCounts['video'] ?? 0 }}</strong> videos</span>
