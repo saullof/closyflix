@@ -11,6 +11,8 @@ $(function () {
 
     log('🚀 © JustFans Loaded © 🚀');
 
+    applyBodyThemeClass();
+
     if(app.showCookiesBox !== null){
         var br = bootstrapDetectBreakpoint();
         if(br === null){
@@ -308,6 +310,20 @@ function getCookie(key) {
 }
 
 /**
+ * Applies body theme class based on cookie or loaded theme stylesheet.
+ */
+function applyBodyThemeClass() {
+    let currentTheme = getCookie('app_theme');
+    if (!currentTheme) {
+        let themeHref = $('#app-theme').attr('href');
+        currentTheme = (themeHref && themeHref.indexOf('.dark') !== -1) ? 'dark' : 'light';
+    }
+    $('body')
+        .removeClass('theme-dark theme-light')
+        .addClass(currentTheme === 'dark' ? 'theme-dark' : 'theme-light');
+}
+
+/**
  * Delete cookie
  * @param key
  */
@@ -334,6 +350,7 @@ function reloadTheme() {
     }
     appTheme += ".css";
     $('#app-theme').attr('href', appTheme);
+    applyBodyThemeClass();
 }
 
 /**
@@ -596,4 +613,3 @@ function getWebsiteFormattedAmount(amount){
 
     return currencyPosition === 'left' ? currency + amount : amount + currency;
 }
-

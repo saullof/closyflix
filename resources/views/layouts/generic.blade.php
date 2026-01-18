@@ -43,5 +43,3 @@ function send_initial_checkout_pixels(){
 @include('elements.language-selector-box')
 </body>
 </html>
-
-
