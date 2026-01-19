@@ -719,6 +719,130 @@ function observeRemovelinhaClass() {
 
 
 
+                <style>
+                    .content-menu {
+                        width: 100%;
+                        margin-bottom: 20px;
+                    }
+
+                    .content-menu .menu-tabs {
+                        display: flex;
+                        justify-content: space-between;
+                        gap: 1.25rem;
+                        border-bottom: 1px solid rgba(200, 200, 200, 0.2);
+                        padding-bottom: 10px;
+                    }
+
+                    .content-menu .menu-tabs .tab {
+                        background: none;
+                        border: none;
+                        color: rgba(240, 240, 240, 0.7);
+                        font-size: 14px;
+                        font-weight: 500;
+                        padding-bottom: 10px;
+                        position: relative;
+                        cursor: pointer;
+                        text-decoration: none;
+                    }
+
+                    .content-menu .menu-tabs .tab:hover {
+                        color: rgba(240, 240, 240, 0.9);
+                    }
+
+                    .content-menu .menu-tabs .tab.active {
+                        color: #b28bff;
+                    }
+
+                    .content-menu .menu-tabs .tab.active::after {
+                        content: "";
+                        position: absolute;
+                        left: 0;
+                        bottom: -11px;
+                        width: 100%;
+                        height: 2px;
+                        background: #b28bff;
+                        box-shadow: 0 0 10px rgba(178, 139, 255, 0.55);
+                    }
+
+                    .content-menu .menu-filters {
+                        display: flex;
+                        justify-content: space-between;
+                        align-items: center;
+                        margin-top: 14px;
+                    }
+
+                    .content-menu .filter-pill-container {
+                        display: flex;
+                        align-items: center;
+                        background: rgba(60, 60, 60, 0.55);
+                        border-radius: 999px;
+                        padding: 6px;
+                        box-shadow: inset 0 0 0 1px rgba(220, 220, 220, 0.15),
+                            0 6px 20px rgba(0, 0, 0, 0.35);
+                    }
+
+                    .content-menu .filter-pill {
+                        display: flex;
+                        gap: 0.5rem;
+                        align-items: center;
+                    }
+
+                    .content-menu .filter-pill .pill {
+                        background: none;
+                        border: none;
+                        padding: 6px 16px;
+                        border-radius: 999px;
+                        color: rgba(220, 220, 220, 0.85);
+                        font-size: 13px;
+                        cursor: pointer;
+                        text-decoration: none;
+                    }
+
+                    .content-menu .filter-pill .pill:hover {
+                        color: rgba(255, 255, 255, 0.95);
+                    }
+
+                    .content-menu .filter-pill .pill.active {
+                        background: linear-gradient(180deg, #9b5bff, #6f36e8);
+                        color: #fff;
+                        box-shadow: 0 0 14px rgba(178, 139, 255, 0.55);
+                    }
+
+                    .content-menu .view-buttons {
+                        display: flex;
+                        gap: 8px;
+                    }
+
+                    .content-menu .view-buttons .view-btn {
+                        width: 36px;
+                        height: 36px;
+                        border-radius: 50%;
+                        border: none;
+                        background: rgba(60, 60, 60, 0.55);
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        cursor: pointer;
+                        box-shadow: inset 0 0 0 1px rgba(220, 220, 220, 0.15),
+                            0 6px 20px rgba(0, 0, 0, 0.35);
+                    }
+
+                    .content-menu .view-buttons .view-btn:hover {
+                        box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.25),
+                            0 6px 20px rgba(0, 0, 0, 0.45);
+                    }
+
+                    .content-menu .view-buttons .view-btn.active {
+                        background: linear-gradient(180deg, #9b5bff, #6f36e8);
+                        box-shadow: 0 0 14px rgba(178, 139, 255, 0.55);
+                    }
+
+                    .content-menu .view-buttons img,
+                    .content-menu .view-buttons svg {
+                        filter: brightness(0) saturate(100%) invert(100%);
+                    }
+                </style>
+
                 <div class="mt-3 content-menu">
                     @php
                         $baseQuery = collect(request()->query());
