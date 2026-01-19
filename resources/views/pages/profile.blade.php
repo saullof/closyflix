@@ -720,97 +720,45 @@ function observeRemovelinhaClass() {
 
 
                 <div class="mt-3 inline-border-tabs profile-menu-filters">
-
-                    <!-- Novo dropdown para tipo de postagem (paga ou gratuita) -->
-                    <div class="dropdown d-inline-block ms-2 profile-menu-dropdown-wrapper">
-                        <button class="p-pill p-pill-text ml-2 pointer-cursor dropdown-toggle profile-menu-pill" type="button" id="paidFilterDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-                            {{ $paidFilter == 'all' ? 'Pagos / Packs' : ($paidFilter == 'paid' ? 'Packs' : 'Pagos') }}
-                        </button>
-                        <ul class="dropdown-menu profile-menu-dropdown" aria-labelledby="paidFilterDropdown">
-                            <!-- Opção Todos -->
-                            <li>
-                                <a class="dropdown-item profile-menu-item {{ $paidFilter == 'all' ? 'active' : '' }}" href="{{ route('profile', ['username' => $user->username]) . '?paidFilter=all' }}">
-                                    Pagos / Packs
-                                </a>
-                            </li>
-                            <!-- Opção Pagos -->
-                            <li>
-                                <a class="dropdown-item profile-menu-item {{ $paidFilter == 'paid' ? 'active' : '' }}" href="{{ route('profile', ['username' => $user->username]) . '?paidFilter=paid' }}">
-                                    Packs
-                                </a>
-                            </li>
-                            <!-- Opção Gratuitos -->
-                            <li>
-                                <a class="dropdown-item profile-menu-item {{ $paidFilter == 'free' ? 'active' : '' }}" href="{{ route('profile', ['username' => $user->username]) . '?paidFilter=free' }}">
-                                    Pagos
-                                </a>
-                            </li>
-                        </ul>
+                    <div class="profile-menu-row">
+                        <a class="profile-menu-button {{ $activeFilter == false && $paidFilter == 'all' ? 'active' : '' }}" href="{{ route('profile', ['username'=> $user->username]) }}">
+                            Todos
+                        </a>
+                        <a class="profile-menu-button {{ $paidFilter == 'paid' ? 'active' : '' }}" href="{{ route('profile', ['username'=> $user->username, 'paidFilter' => 'paid']) }}">
+                            Packs
+                        </a>
+                        <a class="profile-menu-button {{ $activeFilter == 'image' ? 'active' : '' }}" href="{{ route('profile', ['username'=> $user->username, 'filter' => 'image']) }}">
+                            Fotos
+                        </a>
+                        <a class="profile-menu-button {{ $activeFilter == 'video' ? 'active' : '' }}" href="{{ route('profile', ['username'=> $user->username, 'filter' => 'video']) }}">
+                            Videos
+                        </a>
                     </div>
 
-                    <!-- Dropdown para filtro -->
-                    <div class="dropdown d-inline-block">
-                        <button class="p-pill p-pill-text ml-2 pointer-cursor dropdown-toggle profile-menu-pill" type="button" id="filterDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-                            {{ $activeFilter == false ? 'Todos' : ucfirst(trans_choice($activeFilter, 2)) }} ({{ $filterTypeCounts[$activeFilter] ?? $posts->total() }})
-                        </button>
-                        <ul class="dropdown-menu profile-menu-dropdown" aria-labelledby="filterDropdown">
-                            <!-- Todos -->
-                            <li>
-                                <a class="dropdown-item profile-menu-item {{ $activeFilter == false ? 'active' : '' }}" href="{{ route('profile', ['username'=> $user->username]) }}">
-                                    Todos ({{ $posts->total() }})
-                                </a>
-                            </li>
+                    <div class="profile-menu-row">
+                        <a class="profile-menu-button {{ $paidFilter == 'all' ? 'active' : '' }}" href="{{ route('profile', ['username'=> $user->username, 'paidFilter' => 'all']) }}">
+                            Ver tudo
+                        </a>
+                        <a class="profile-menu-button {{ $paidFilter == 'free' ? 'active' : '' }}" href="{{ route('profile', ['username'=> $user->username, 'paidFilter' => 'free']) }}">
+                            Gratuito
+                        </a>
+                        <a class="profile-menu-button {{ $paidFilter == 'paid' ? 'active' : '' }}" href="{{ route('profile', ['username'=> $user->username, 'paidFilter' => 'paid']) }}">
+                            Pago
+                        </a>
 
-                            <!-- Imagens -->
-                            @if($filterTypeCounts['image'] > 0)
-                                <li>
-                                    <a class="dropdown-item profile-menu-item {{ $activeFilter == 'image' ? 'active' : '' }}" href="{{ route('profile', ['username' => $user->username]) . '?filter=image' }}">
-                                        Imagens ({{ $filterTypeCounts['image'] }})
-                                    </a>
-                                </li>
-                            @endif
-
-                            <!-- Vídeos -->
-                            @if($filterTypeCounts['video'] > 0)
-                                <li>
-                                    <a class="dropdown-item profile-menu-item {{ $activeFilter == 'video' ? 'active' : '' }}" href="{{ route('profile', ['username' => $user->username]) . '?filter=video' }}">
-                                        Vídeos ({{ $filterTypeCounts['video'] }})
-                                    </a>
-                                </li>
-                            @endif
-
-                            <!-- Áudio -->
-                            @if($filterTypeCounts['audio'] > 0)
-                                <li>
-                                    <a class="dropdown-item profile-menu-item {{ $activeFilter == 'audio' ? 'active' : '' }}" href="{{ route('profile', ['username' => $user->username]) . '?filter=audio' }}">
-                                        Áudio ({{ $filterTypeCounts['audio'] }})
-                                    </a>
-                                </li>
-                            @endif
-
-                            <!-- Streams -->
-                            @if(getSetting('streams.allow_streams') && isset($filterTypeCounts['streams']) && $filterTypeCounts['streams'] > 0)
-                                <li>
-                                    <a class="dropdown-item profile-menu-item {{ $activeFilter == 'streams' ? 'active' : '' }}" href="{{ route('profile', ['username' => $user->username]) . '?filter=streams' }}">
-                                        Streams ({{ $filterTypeCounts['streams'] }})
-                                    </a>
-                                </li>
-                            @endif
-                        </ul>
-                    </div>
-
-                    <!-- Ícones de Grid e List -->
-                    <div class="d-inline-block ms-3">
-                        <button onclick="changeView('grid')" class="btn btn-transparent p-1 order-thick border-thick profile-menu-icon-btn" title="Grid View">
-                            <img class="profile-menu-icon" src="{{ asset('img/IconeGrid.png') }}" alt="Grid View" width="24" height="24">
-                        </button>
-                        <button onclick="changeView('list')" class="btn btn-transparent p-1 ms-2 border-thick profile-menu-icon-btn" title="List View">
-                            <svg class="profile-menu-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0,0,256,256">
-                                <g transform="scale(10.66667,10.66667)">
-                                    <path d="M20,2h-16c-1.10457,0 -2,0.89543 -2,2v8c0,1.10457 0.89543,2 2,2h16c1.10457,0 2,-0.89543 2,-2v-8c0,-1.10457 -0.89543,-2 -2,-2zM4,12v-8h16v8zM22,16v2h-20v-2zM22,20v2h-20v-2z"></path>
-                                </g>
-                            </svg>
-                        </button>
+                        <!-- Ícones de Grid e List -->
+                        <div class="profile-menu-icons">
+                            <button onclick="changeView('grid')" class="btn btn-transparent p-1 order-thick border-thick profile-menu-icon-btn" title="Grid View">
+                                <img class="profile-menu-icon" src="{{ asset('img/IconeGrid.png') }}" alt="Grid View" width="24" height="24">
+                            </button>
+                            <button onclick="changeView('list')" class="btn btn-transparent p-1 ms-2 border-thick profile-menu-icon-btn" title="List View">
+                                <svg class="profile-menu-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0,0,256,256">
+                                    <g transform="scale(10.66667,10.66667)">
+                                        <path d="M20,2h-16c-1.10457,0 -2,0.89543 -2,2v8c0,1.10457 0.89543,2 2,2h16c1.10457,0 2,-0.89543 2,-2v-8c0,-1.10457 -0.89543,-2 -2,-2zM4,12v-8h16v8zM22,16v2h-20v-2zM22,20v2h-20v-2z"></path>
+                                    </g>
+                                </svg>
+                            </button>
+                        </div>
                     </div>
                 </div>
 

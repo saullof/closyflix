@@ -417,56 +417,54 @@ footer{
 
 .profile-menu-filters {
     display: flex;
+    flex-direction: column;
+    gap: 0.65rem;
+    flex-wrap: wrap;
+    align-items: flex-start;
+}
+
+.profile-menu-row {
+    display: flex;
     align-items: center;
-    gap: 0.75rem;
+    gap: 0.65rem;
     flex-wrap: wrap;
 }
 
-.profile-menu-dropdown-wrapper {
-    padding-left: 5px;
-}
-
-.profile-menu-pill {
-    border: 1px solid rgba(162, 89, 255, 0.6);
+.profile-menu-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.4rem 1rem;
     border-radius: 999px;
+    border: 1px solid rgba(162, 89, 255, 0.6);
     background: rgba(162, 89, 255, 0.08);
-    color: #b28bff !important;
-    font-weight: 600 !important;
-    font-size: 0.85rem !important;
+    color: #c5a6ff !important;
+    font-weight: 600;
+    font-size: 0.85rem;
     letter-spacing: 0.02em;
-    box-shadow: inset 0 0 0 1px rgba(162, 89, 255, 0.2);
+    text-decoration: none !important;
+    transition: background 0.15s ease-in, color 0.15s ease-in, border-color 0.15s ease-in;
 }
 
-.profile-menu-pill:hover,
-.profile-menu-pill:focus {
+.profile-menu-button:hover,
+.profile-menu-button:focus {
     background: rgba(162, 89, 255, 0.18);
-    color: #d2b7ff !important;
+    color: #ffffff !important;
+    border-color: rgba(162, 89, 255, 0.9);
 }
 
-.profile-menu-dropdown {
-    background: rgba(20, 10, 30, 0.95);
-    border: 1px solid rgba(162, 89, 255, 0.3);
-    border-radius: 0.75rem;
-    padding: 0.35rem 0;
-    min-width: 12rem;
-    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.45);
-}
-
-.profile-menu-item {
-    color: #d7c5ff;
-    font-weight: 500;
-}
-
-.profile-menu-item:hover,
-.profile-menu-item:focus {
-    background: rgba(162, 89, 255, 0.2);
-    color: #ffffff;
-}
-
-.profile-menu-item.active,
-.profile-menu-item.active:hover {
+.profile-menu-button.active {
     background: #7c3aed;
-    color: #ffffff;
+    color: #ffffff !important;
+    border-color: #7c3aed;
+    box-shadow: 0 10px 20px rgba(124, 58, 237, 0.25);
+}
+
+.profile-menu-icons {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-left: 0.25rem;
 }
 
 .profile-menu-icon-btn {
