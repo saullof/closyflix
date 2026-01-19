@@ -751,7 +751,8 @@ function observeRemovelinhaClass() {
 
                     <!-- Filtro inferior -->
                     <div class="menu-filters">
-                        <div class="filter-pill">
+                        <div class="filter-pill-container">
+                            <div class="filter-pill">
                             <a class="pill {{ $paidFilter === 'all' ? 'active' : '' }}"
                                href="{{ route('profile', ['username'=> $user->username], false) . '?' . http_build_query(array_merge($queryNoFilter, ['paidFilter' => 'all'])) }}">
                                 Ver tudo
@@ -764,6 +765,7 @@ function observeRemovelinhaClass() {
                                href="{{ route('profile', ['username'=> $user->username], false) . '?' . http_build_query(array_merge($queryNoFilter, ['paidFilter' => 'paid'])) }}">
                                 Pago
                             </a>
+                            </div>
                         </div>
 
                         <div class="view-buttons">

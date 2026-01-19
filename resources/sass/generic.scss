@@ -415,23 +415,6 @@ footer{
     padding-left: 0.5em!important;
 }
 
-/* ===== Paleta Closyflix ===== */
-:root {
-    --brand: #BE1523;
-    --bg: #1F1F1F;
-
-    /* variações seguras (mantém identidade) */
-    --bg-2: #171717;
-    --bg-3: #111111;
-    --stroke: #2a2a2a;
-
-    --text: #e9e9e9;
-    --muted: #b0b0b0;
-
-    --brand-2: #a3121e; /* mais escuro */
-    --brand-3: #d61a2a; /* mais vivo */
-}
-
 .content-menu {
     width: 100%;
     margin-bottom: 20px;
@@ -440,14 +423,15 @@ footer{
 /* ===== Tabs superiores ===== */
 .menu-tabs {
     display: flex;
-    gap: 24px;
-    border-bottom: 1px solid var(--stroke);
+    justify-content: space-between;
+    gap: 1.25rem;
+    border-bottom: 1px solid rgba($gray-200-alt, 0.2);
     padding-bottom: 10px;
 
     .tab {
         background: none;
         border: none;
-        color: var(--muted);
+        color: rgba($white-alt, 0.7);
         font-size: 14px;
         font-weight: 500;
         padding-bottom: 10px;
@@ -456,11 +440,11 @@ footer{
         text-decoration: none;
 
         &:hover {
-            color: #d0d0d0;
+            color: rgba($white-alt, 0.9);
         }
 
         &.active {
-            color: var(--brand);
+            color: $primary-alt;
 
             &::after {
                 content: "";
@@ -469,8 +453,8 @@ footer{
                 bottom: -11px;
                 width: 100%;
                 height: 2px;
-                background: var(--brand);
-                box-shadow: 0 0 10px rgba(190, 21, 35, 0.55);
+                background: $primary-alt;
+                box-shadow: 0 0 10px rgba($primary-alt, 0.55);
             }
         }
     }
@@ -484,34 +468,42 @@ footer{
     margin-top: 14px;
 }
 
-/* ===== Pill ===== */
+/* ===== Container inferior ===== */
+.filter-pill-container {
+    display: flex;
+    align-items: center;
+    background: rgba($gray-900-alt, 0.35);
+    border-radius: 999px;
+    padding: 6px;
+    box-shadow:
+        inset 0 0 0 1px rgba($gray-200-alt, 0.18),
+        0 6px 20px rgba(0,0,0,0.35);
+}
+
+/* ===== Pills ===== */
 .filter-pill {
     display: flex;
-    background: linear-gradient(180deg, var(--bg), var(--bg-3));
-    border-radius: 999px;
-    padding: 4px;
-    box-shadow:
-        inset 0 0 0 1px var(--stroke),
-        0 6px 20px rgba(0,0,0,0.35);
+    gap: 0.5rem;
+    align-items: center;
 
     .pill {
         background: none;
         border: none;
         padding: 6px 16px;
         border-radius: 999px;
-        color: var(--muted);
+        color: rgba($gray-200-alt, 0.85);
         font-size: 13px;
         cursor: pointer;
         text-decoration: none;
 
         &:hover {
-            color: #dcdcdc;
+            color: rgba($white-alt, 0.95);
         }
 
         &.active {
-            background: linear-gradient(180deg, var(--brand-3), var(--brand-2));
+            background: linear-gradient(180deg, lighten($primary-alt, 12%), darken($primary-alt, 12%));
             color: #fff;
-            box-shadow: 0 0 14px rgba(190, 21, 35, 0.55);
+            box-shadow: 0 0 14px rgba($primary-alt, 0.55);
         }
     }
 }
@@ -526,21 +518,14 @@ footer{
         height: 36px;
         border-radius: 50%;
         border: none;
-        background: linear-gradient(180deg, var(--bg), var(--bg-3));
+        background: rgba($gray-900-alt, 0.35);
         display: flex;
         align-items: center;
         justify-content: center;
         cursor: pointer;
         box-shadow:
-            inset 0 0 0 1px var(--stroke),
+            inset 0 0 0 1px rgba($gray-200-alt, 0.18),
             0 6px 20px rgba(0,0,0,0.35);
-
-        i {
-            width: 16px;
-            height: 16px;
-            display: block;
-            opacity: 0.95;
-        }
 
         &:hover {
             box-shadow:
@@ -549,19 +534,15 @@ footer{
         }
 
         &.active {
-            background: linear-gradient(180deg, var(--brand-3), var(--brand-2));
-            box-shadow: 0 0 14px rgba(190, 21, 35, 0.55);
+            background: linear-gradient(180deg, lighten($primary-alt, 12%), darken($primary-alt, 12%));
+            box-shadow: 0 0 14px rgba($primary-alt, 0.55);
         }
     }
 }
 
-/* ===== Ícones simples (caso não use lib) ===== */
-.icon-grid {
-    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='white'%3E%3Crect width='6' height='6'/%3E%3Crect x='10' width='6' height='6'/%3E%3Crect y='10' width='6' height='6'/%3E%3Crect x='10' y='10' width='6' height='6'/%3E%3C/svg%3E") no-repeat center;
-}
-
-.icon-list {
-    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='white'%3E%3Crect width='16' height='3'/%3E%3Crect y='6' width='16' height='3'/%3E%3Crect y='12' width='16' height='3'/%3E%3C/svg%3E") no-repeat center;
+.view-buttons img,
+.view-buttons svg {
+    filter: brightness(0) saturate(100%) invert(100%);
 }
 
 .p-pill:hover{
