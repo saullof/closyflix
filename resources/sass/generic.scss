@@ -415,81 +415,154 @@ footer{
     padding-left: 0.5em!important;
 }
 
-.profile-menu-filters {
-    display: flex;
-    flex-direction: column;
-    gap: 0.65rem;
-    flex-wrap: wrap;
-    align-items: flex-start;
+// =============================
+// Profile filterbar (2 rows) - matches the "Todos | Packs | Fotos | Videos" layout
+// =============================
+.profile-filterbar{
+    display:flex;
+    flex-direction:column;
+    gap: 0.6rem;
 }
 
-.profile-menu-row {
-    display: flex;
-    align-items: center;
-    gap: 0.65rem;
-    flex-wrap: wrap;
+.profile-filterbar .filter-row{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap: 0.75rem;
 }
 
-.profile-menu-button {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    padding: 0.4rem 1rem;
-    border-radius: 999px;
-    border: 1px solid rgba(162, 89, 255, 0.6);
-    background: rgba(162, 89, 255, 0.08);
-    color: #c5a6ff !important;
+.profile-filterbar .filter-row--tabs{
+    justify-content:flex-start;
+    gap: 1.25rem;
+    overflow-x:auto;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 0.2rem;
+}
+
+.profile-filterbar .filter-tab{
+    display:inline-flex;
+    align-items:center;
+    gap: 0.35rem;
+    text-decoration:none!important;
     font-weight: 600;
+    font-size: 0.95rem;
+    padding: 0.15rem 0;
+    white-space:nowrap;
+
+    @if $color-scheme-alt == dark {
+        color: rgba($white-alt,0.78);
+    } @else {
+        color: rgba($gray-900-alt,0.75);
+    }
+}
+
+.profile-filterbar .filter-tab .filter-count{
+    font-weight: 600;
+    opacity: 0.75;
+}
+
+.profile-filterbar .filter-tab.is-active{
+    @if $color-scheme-alt == dark {
+        color: $white-alt;
+    } @else {
+        color: $gray-900-alt;
+    }
+    position:relative;
+}
+
+.profile-filterbar .filter-tab.is-active::after{
+    content:"";
+    position:absolute;
+    left:0;
+    right:0;
+    bottom:-0.35rem;
+    height: 2px;
+    border-radius: 999px;
+    background: $primary-alt;
+}
+
+.profile-filterbar .filter-row--chips{
+    justify-content:space-between;
+}
+
+.profile-filterbar .filter-chips{
+    display:flex;
+    align-items:center;
+    gap: 0.6rem;
+    flex-wrap:wrap;
+}
+
+.profile-filterbar .filter-chip{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    padding: 0.45rem 0.9rem;
+    border-radius: 999px;
+    text-decoration:none!important;
+    font-weight: 700;
     font-size: 0.85rem;
-    letter-spacing: 0.02em;
-    text-decoration: none !important;
-    transition: background 0.15s ease-in, color 0.15s ease-in, border-color 0.15s ease-in;
+    white-space:nowrap;
+
+    @if $color-scheme-alt == dark {
+        color: rgba($white-alt,0.85);
+        background: rgba($white-alt,0.06);
+        border: 1px solid rgba($white-alt,0.10);
+    } @else {
+        color: rgba($gray-900-alt,0.8);
+        background: rgba($gray-900-alt,0.04);
+        border: 1px solid rgba($gray-900-alt,0.10);
+    }
 }
 
-.profile-menu-button:hover,
-.profile-menu-button:focus {
-    background: rgba(162, 89, 255, 0.18);
-    color: #ffffff !important;
-    border-color: rgba(162, 89, 255, 0.9);
+.profile-filterbar .filter-chip:hover{
+    @if $color-scheme-alt == dark {
+        background: rgba($white-alt,0.10);
+    } @else {
+        background: rgba($gray-900-alt,0.06);
+    }
 }
 
-.profile-menu-button.active {
-    background: #7c3aed;
-    color: #ffffff !important;
-    border-color: #7c3aed;
-    box-shadow: 0 10px 20px rgba(124, 58, 237, 0.25);
+.profile-filterbar .filter-chip.is-active{
+    background: rgba($primary-alt,0.18);
+    border-color: rgba($primary-alt,0.35);
+    color: lighten($primary-alt,15%);
 }
 
-.profile-menu-icons {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-    margin-left: 0.25rem;
+.profile-filterbar .filter-views{
+    display:flex;
+    align-items:center;
+    gap: 0.45rem;
+    margin-left:auto;
 }
 
-.profile-menu-icon-btn {
-    border-radius: 50%;
-    border: 1px solid rgba(162, 89, 255, 0.5);
-    background: rgba(162, 89, 255, 0.15);
-    box-shadow: inset 0 0 0 1px rgba(162, 89, 255, 0.2);
-    color: #b28bff;
+.profile-filterbar .filter-viewbtn{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    border: 0;
+    background: transparent;
+    cursor:pointer;
+
+    @if $color-scheme-alt == dark {
+        color: rgba($white-alt,0.85);
+    } @else {
+        color: rgba($gray-900-alt,0.85);
+    }
 }
 
-.profile-menu-icon-btn:hover,
-.profile-menu-icon-btn:focus {
-    background: rgba(162, 89, 255, 0.3);
-    color: #ffffff;
+.profile-filterbar .filter-viewbtn:hover{
+    @if $color-scheme-alt == dark {
+        background: rgba($white-alt,0.08);
+    } @else {
+        background: rgba($gray-900-alt,0.06);
+    }
 }
 
-.profile-menu-icon {
-    filter: brightness(0) saturate(100%) invert(72%) sepia(54%) saturate(2021%)
-        hue-rotate(217deg) brightness(94%) contrast(90%);
-}
-
-.profile-menu-icon-btn:hover .profile-menu-icon,
-.profile-menu-icon-btn:focus .profile-menu-icon {
-    filter: brightness(0) saturate(100%) invert(95%) sepia(4%) saturate(498%)
-        hue-rotate(198deg) brightness(104%) contrast(97%);
+.profile-filterbar .filter-viewbtn svg{
+    fill: $primary-alt;
 }
 
 .p-pill:hover{

@@ -719,40 +719,59 @@ function observeRemovelinhaClass() {
 
 
 
-                <div class="mt-3 inline-border-tabs profile-menu-filters">
-                    <div class="profile-menu-row">
-                        <a class="profile-menu-button {{ $activeFilter == false && $paidFilter == 'all' ? 'active' : '' }}" href="{{ route('profile', ['username'=> $user->username]) }}">
-                            Todos
+                <div class="mt-3 profile-filterbar">
+                    @php
+                        $baseQuery = collect(request()->query());
+                        $queryNoFilter = $baseQuery->except('filter')->all();
+                        $queryNoPaid = $baseQuery->except('paidFilter')->all();
+                    @endphp
+
+                    <!-- Linha 1: Todos | Packs | Fotos | Videos -->
+                    <div class="filter-row filter-row--tabs">
+                        <a class="filter-tab {{ $activeFilter == false ? 'is-active' : '' }}"
+                           href="{{ route('profile', ['username'=> $user->username], false) . (count($queryNoFilter) ? ('?' . http_build_query($queryNoFilter)) : '') }}">
+                            Todos <span class="filter-count">({{ $posts->total() }})</span>
                         </a>
-                        <a class="profile-menu-button {{ $paidFilter == 'paid' ? 'active' : '' }}" href="{{ route('profile', ['username'=> $user->username, 'paidFilter' => 'paid']) }}">
+
+                        <a class="filter-tab {{ $paidFilter === 'paid' ? 'is-active' : '' }}"
+                           href="{{ route('profile', ['username'=> $user->username], false) . '?' . http_build_query(array_merge($queryNoFilter, ['paidFilter' => 'paid'])) }}">
                             Packs
                         </a>
-                        <a class="profile-menu-button {{ $activeFilter == 'image' ? 'active' : '' }}" href="{{ route('profile', ['username'=> $user->username, 'filter' => 'image']) }}">
-                            Fotos
+
+                        <a class="filter-tab {{ $activeFilter === 'image' ? 'is-active' : '' }}"
+                           href="{{ route('profile', ['username'=> $user->username], false) . '?' . http_build_query(array_merge($queryNoPaid, ['filter' => 'image'])) }}">
+                            Fotos <span class="filter-count">({{ $filterTypeCounts['image'] ?? 0 }})</span>
                         </a>
-                        <a class="profile-menu-button {{ $activeFilter == 'video' ? 'active' : '' }}" href="{{ route('profile', ['username'=> $user->username, 'filter' => 'video']) }}">
-                            Videos
+
+                        <a class="filter-tab {{ $activeFilter === 'video' ? 'is-active' : '' }}"
+                           href="{{ route('profile', ['username'=> $user->username], false) . '?' . http_build_query(array_merge($queryNoPaid, ['filter' => 'video'])) }}">
+                            Vídeos <span class="filter-count">({{ $filterTypeCounts['video'] ?? 0 }})</span>
                         </a>
                     </div>
 
-                    <div class="profile-menu-row">
-                        <a class="profile-menu-button {{ $paidFilter == 'all' ? 'active' : '' }}" href="{{ route('profile', ['username'=> $user->username, 'paidFilter' => 'all']) }}">
-                            Ver tudo
-                        </a>
-                        <a class="profile-menu-button {{ $paidFilter == 'free' ? 'active' : '' }}" href="{{ route('profile', ['username'=> $user->username, 'paidFilter' => 'free']) }}">
-                            Gratuito
-                        </a>
-                        <a class="profile-menu-button {{ $paidFilter == 'paid' ? 'active' : '' }}" href="{{ route('profile', ['username'=> $user->username, 'paidFilter' => 'paid']) }}">
-                            Pago
-                        </a>
+                    <!-- Linha 2: Ver tudo | Gratuito | Pago + Grid/List -->
+                    <div class="filter-row filter-row--chips">
+                        <div class="filter-chips">
+                            <a class="filter-chip {{ $paidFilter === 'all' ? 'is-active' : '' }}"
+                               href="{{ route('profile', ['username'=> $user->username], false) . '?' . http_build_query(array_merge($queryNoFilter, ['paidFilter' => 'all'])) }}">
+                                Ver tudo
+                            </a>
+                            <a class="filter-chip {{ $paidFilter === 'free' ? 'is-active' : '' }}"
+                               href="{{ route('profile', ['username'=> $user->username], false) . '?' . http_build_query(array_merge($queryNoFilter, ['paidFilter' => 'free'])) }}">
+                                Gratuito
+                            </a>
+                            <a class="filter-chip {{ $paidFilter === 'paid' ? 'is-active' : '' }}"
+                               href="{{ route('profile', ['username'=> $user->username], false) . '?' . http_build_query(array_merge($queryNoFilter, ['paidFilter' => 'paid'])) }}">
+                                Pago
+                            </a>
+                        </div>
 
-                        <!-- Ícones de Grid e List -->
-                        <div class="profile-menu-icons">
-                            <button onclick="changeView('grid')" class="btn btn-transparent p-1 order-thick border-thick profile-menu-icon-btn" title="Grid View">
-                                <img class="profile-menu-icon" src="{{ asset('img/IconeGrid.png') }}" alt="Grid View" width="24" height="24">
+                        <div class="filter-views">
+                            <button onclick="changeView('grid')" class="filter-viewbtn" type="button" title="Grid View" aria-label="Grid View">
+                                <img src="{{ asset('img/IconeGrid.png') }}" alt="Grid View" width="22" height="22">
                             </button>
-                            <button onclick="changeView('list')" class="btn btn-transparent p-1 ms-2 border-thick profile-menu-icon-btn" title="List View">
-                                <svg class="profile-menu-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0,0,256,256">
+                            <button onclick="changeView('list')" class="filter-viewbtn" type="button" title="List View" aria-label="List View">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0,0,256,256" aria-hidden="true">
                                     <g transform="scale(10.66667,10.66667)">
                                         <path d="M20,2h-16c-1.10457,0 -2,0.89543 -2,2v8c0,1.10457 0.89543,2 2,2h16c1.10457,0 2,-0.89543 2,-2v-8c0,-1.10457 -0.89543,-2 -2,-2zM4,12v-8h16v8zM22,16v2h-20v-2zM22,20v2h-20v-2z"></path>
                                     </g>
