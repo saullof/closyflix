@@ -725,12 +725,22 @@ function observeRemovelinhaClass() {
                         margin-bottom: 20px;
                     }
 
+                    /* =========================
+                       Linha 1 (Tabs)
+                       ========================= */
                     .content-menu .menu-tabs {
                         display: flex;
                         justify-content: space-between;
                         gap: 1.25rem;
                         border-bottom: 1px solid rgba(200, 200, 200, 0.2);
                         padding-bottom: 10px;
+                    }
+
+                    @media (min-width: 992px) {
+                        .content-menu .menu-tabs {
+                            justify-content: flex-start;
+                            gap: 1.2rem;
+                        }
                     }
 
                     .content-menu .menu-tabs .tab {
@@ -743,6 +753,7 @@ function observeRemovelinhaClass() {
                         position: relative;
                         cursor: pointer;
                         text-decoration: none;
+                        white-space: nowrap;
                     }
 
                     .content-menu .menu-tabs .tab:hover {
@@ -750,7 +761,7 @@ function observeRemovelinhaClass() {
                     }
 
                     .content-menu .menu-tabs .tab.active {
-                        color: #b28bff;
+                        color: #e03131;
                     }
 
                     .content-menu .menu-tabs .tab.active::after {
@@ -760,15 +771,19 @@ function observeRemovelinhaClass() {
                         bottom: -11px;
                         width: 100%;
                         height: 2px;
-                        background: #b28bff;
-                        box-shadow: 0 0 10px rgba(178, 139, 255, 0.55);
+                        background: #e03131;
+                        box-shadow: 0 0 10px rgba(224, 49, 49, 0.55);
                     }
 
+                    /* =========================
+                       Linha 2 (Pills + Views)
+                       ========================= */
                     .content-menu .menu-filters {
                         display: flex;
                         justify-content: space-between;
                         align-items: center;
                         margin-top: 14px;
+                        gap: 12px;
                     }
 
                     .content-menu .filter-pill-container {
@@ -796,6 +811,7 @@ function observeRemovelinhaClass() {
                         font-size: 13px;
                         cursor: pointer;
                         text-decoration: none;
+                        white-space: nowrap;
                     }
 
                     .content-menu .filter-pill .pill:hover {
@@ -803,14 +819,15 @@ function observeRemovelinhaClass() {
                     }
 
                     .content-menu .filter-pill .pill.active {
-                        background: linear-gradient(180deg, #9b5bff, #6f36e8);
+                        background: linear-gradient(180deg, #ff3b3b, #b21f1f);
                         color: #fff;
-                        box-shadow: 0 0 14px rgba(178, 139, 255, 0.55);
+                        box-shadow: 0 0 14px rgba(224, 49, 49, 0.55);
                     }
 
                     .content-menu .view-buttons {
                         display: flex;
                         gap: 8px;
+                        flex-shrink: 0;
                     }
 
                     .content-menu .view-buttons .view-btn {
@@ -833,8 +850,8 @@ function observeRemovelinhaClass() {
                     }
 
                     .content-menu .view-buttons .view-btn.active {
-                        background: linear-gradient(180deg, #9b5bff, #6f36e8);
-                        box-shadow: 0 0 14px rgba(178, 139, 255, 0.55);
+                        background: linear-gradient(180deg, #ff3b3b, #b21f1f);
+                        box-shadow: 0 0 14px rgba(224, 49, 49, 0.55);
                     }
 
                     .content-menu .view-buttons img,
