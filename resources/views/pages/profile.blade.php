@@ -719,59 +719,59 @@ function observeRemovelinhaClass() {
 
 
 
-                <div class="mt-3 profile-filterbar">
+                <div class="mt-3 content-menu">
                     @php
                         $baseQuery = collect(request()->query());
                         $queryNoFilter = $baseQuery->except('filter')->all();
                         $queryNoPaid = $baseQuery->except('paidFilter')->all();
                     @endphp
 
-                    <!-- Linha 1: Todos | Packs | Fotos | Videos -->
-                    <div class="filter-row filter-row--tabs">
-                        <a class="filter-tab {{ $activeFilter == false ? 'is-active' : '' }}"
+                    <!-- Tabs superiores -->
+                    <div class="menu-tabs">
+                        <a class="tab {{ $activeFilter == false ? 'active' : '' }}"
                            href="{{ route('profile', ['username'=> $user->username], false) . (count($queryNoFilter) ? ('?' . http_build_query($queryNoFilter)) : '') }}">
-                            Todos <span class="filter-count">({{ $posts->total() }})</span>
+                            Todos ({{ $posts->total() }})
                         </a>
 
-                        <a class="filter-tab {{ $paidFilter === 'paid' ? 'is-active' : '' }}"
+                        <a class="tab {{ $paidFilter === 'paid' ? 'active' : '' }}"
                            href="{{ route('profile', ['username'=> $user->username], false) . '?' . http_build_query(array_merge($queryNoFilter, ['paidFilter' => 'paid'])) }}">
                             Packs
                         </a>
 
-                        <a class="filter-tab {{ $activeFilter === 'image' ? 'is-active' : '' }}"
+                        <a class="tab {{ $activeFilter === 'image' ? 'active' : '' }}"
                            href="{{ route('profile', ['username'=> $user->username], false) . '?' . http_build_query(array_merge($queryNoPaid, ['filter' => 'image'])) }}">
-                            Fotos <span class="filter-count">({{ $filterTypeCounts['image'] ?? 0 }})</span>
+                            Fotos ({{ $filterTypeCounts['image'] ?? 0 }})
                         </a>
 
-                        <a class="filter-tab {{ $activeFilter === 'video' ? 'is-active' : '' }}"
+                        <a class="tab {{ $activeFilter === 'video' ? 'active' : '' }}"
                            href="{{ route('profile', ['username'=> $user->username], false) . '?' . http_build_query(array_merge($queryNoPaid, ['filter' => 'video'])) }}">
-                            Vídeos <span class="filter-count">({{ $filterTypeCounts['video'] ?? 0 }})</span>
+                            Vídeos ({{ $filterTypeCounts['video'] ?? 0 }})
                         </a>
                     </div>
 
-                    <!-- Linha 2: Ver tudo | Gratuito | Pago + Grid/List -->
-                    <div class="filter-row filter-row--chips">
-                        <div class="filter-chips">
-                            <a class="filter-chip {{ $paidFilter === 'all' ? 'is-active' : '' }}"
+                    <!-- Filtro inferior -->
+                    <div class="menu-filters">
+                        <div class="filter-pill">
+                            <a class="pill {{ $paidFilter === 'all' ? 'active' : '' }}"
                                href="{{ route('profile', ['username'=> $user->username], false) . '?' . http_build_query(array_merge($queryNoFilter, ['paidFilter' => 'all'])) }}">
                                 Ver tudo
                             </a>
-                            <a class="filter-chip {{ $paidFilter === 'free' ? 'is-active' : '' }}"
+                            <a class="pill {{ $paidFilter === 'free' ? 'active' : '' }}"
                                href="{{ route('profile', ['username'=> $user->username], false) . '?' . http_build_query(array_merge($queryNoFilter, ['paidFilter' => 'free'])) }}">
                                 Gratuito
                             </a>
-                            <a class="filter-chip {{ $paidFilter === 'paid' ? 'is-active' : '' }}"
+                            <a class="pill {{ $paidFilter === 'paid' ? 'active' : '' }}"
                                href="{{ route('profile', ['username'=> $user->username], false) . '?' . http_build_query(array_merge($queryNoFilter, ['paidFilter' => 'paid'])) }}">
                                 Pago
                             </a>
                         </div>
 
-                        <div class="filter-views">
-                            <button onclick="changeView('grid')" class="filter-viewbtn" type="button" title="Grid View" aria-label="Grid View">
-                                <img src="{{ asset('img/IconeGrid.png') }}" alt="Grid View" width="22" height="22">
+                        <div class="view-buttons">
+                            <button onclick="changeView('grid')" class="view-btn" type="button" title="Grid View" aria-label="Grid View">
+                                <img src="{{ asset('img/IconeGrid.png') }}" alt="Grid View" width="16" height="16">
                             </button>
-                            <button onclick="changeView('list')" class="filter-viewbtn" type="button" title="List View" aria-label="List View">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0,0,256,256" aria-hidden="true">
+                            <button onclick="changeView('list')" class="view-btn" type="button" title="List View" aria-label="List View">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0,0,256,256" aria-hidden="true">
                                     <g transform="scale(10.66667,10.66667)">
                                         <path d="M20,2h-16c-1.10457,0 -2,0.89543 -2,2v8c0,1.10457 0.89543,2 2,2h16c1.10457,0 2,-0.89543 2,-2v-8c0,-1.10457 -0.89543,-2 -2,-2zM4,12v-8h16v8zM22,16v2h-20v-2zM22,20v2h-20v-2z"></path>
                                     </g>
