@@ -415,6 +415,85 @@ footer{
     padding-left: 0.5em!important;
 }
 
+.profile-menu-filters {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+
+.profile-menu-dropdown-wrapper {
+    padding-left: 5px;
+}
+
+.profile-menu-pill {
+    border: 1px solid rgba(162, 89, 255, 0.6);
+    border-radius: 999px;
+    background: rgba(162, 89, 255, 0.08);
+    color: #b28bff !important;
+    font-weight: 600 !important;
+    font-size: 0.85rem !important;
+    letter-spacing: 0.02em;
+    box-shadow: inset 0 0 0 1px rgba(162, 89, 255, 0.2);
+}
+
+.profile-menu-pill:hover,
+.profile-menu-pill:focus {
+    background: rgba(162, 89, 255, 0.18);
+    color: #d2b7ff !important;
+}
+
+.profile-menu-dropdown {
+    background: rgba(20, 10, 30, 0.95);
+    border: 1px solid rgba(162, 89, 255, 0.3);
+    border-radius: 0.75rem;
+    padding: 0.35rem 0;
+    min-width: 12rem;
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.45);
+}
+
+.profile-menu-item {
+    color: #d7c5ff;
+    font-weight: 500;
+}
+
+.profile-menu-item:hover,
+.profile-menu-item:focus {
+    background: rgba(162, 89, 255, 0.2);
+    color: #ffffff;
+}
+
+.profile-menu-item.active,
+.profile-menu-item.active:hover {
+    background: #7c3aed;
+    color: #ffffff;
+}
+
+.profile-menu-icon-btn {
+    border-radius: 50%;
+    border: 1px solid rgba(162, 89, 255, 0.5);
+    background: rgba(162, 89, 255, 0.15);
+    box-shadow: inset 0 0 0 1px rgba(162, 89, 255, 0.2);
+    color: #b28bff;
+}
+
+.profile-menu-icon-btn:hover,
+.profile-menu-icon-btn:focus {
+    background: rgba(162, 89, 255, 0.3);
+    color: #ffffff;
+}
+
+.profile-menu-icon {
+    filter: brightness(0) saturate(100%) invert(72%) sepia(54%) saturate(2021%)
+        hue-rotate(217deg) brightness(94%) contrast(90%);
+}
+
+.profile-menu-icon-btn:hover .profile-menu-icon,
+.profile-menu-icon-btn:focus .profile-menu-icon {
+    filter: brightness(0) saturate(100%) invert(95%) sepia(4%) saturate(498%)
+        hue-rotate(198deg) brightness(104%) contrast(97%);
+}
+
 .p-pill:hover{
     border:1px solid lighten($primary-alt,15%);
     background-color: rgba($primary-alt,11%)!important;

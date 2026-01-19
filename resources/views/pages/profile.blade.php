@@ -719,29 +719,29 @@ function observeRemovelinhaClass() {
 
 
 
-                <div class="mt-3 inline-border-tabs">
+                <div class="mt-3 inline-border-tabs profile-menu-filters">
 
                     <!-- Novo dropdown para tipo de postagem (paga ou gratuita) -->
-                    <div class="dropdown d-inline-block ms-2" style="padding-left: 5px; !important">
-                        <button class="p-pill p-pill-text ml-2 pointer-cursor dropdown-toggle" type="button" id="paidFilterDropdown" data-bs-toggle="dropdown" aria-expanded="false" style="border: 1px solid red; border-radius: 10px; background: transparent; color: red; font-weight: bold; font-size: 14px;">
+                    <div class="dropdown d-inline-block ms-2 profile-menu-dropdown-wrapper">
+                        <button class="p-pill p-pill-text ml-2 pointer-cursor dropdown-toggle profile-menu-pill" type="button" id="paidFilterDropdown" data-bs-toggle="dropdown" aria-expanded="false">
                             {{ $paidFilter == 'all' ? 'Pagos / Packs' : ($paidFilter == 'paid' ? 'Packs' : 'Pagos') }}
                         </button>
-                        <ul class="dropdown-menu" aria-labelledby="paidFilterDropdown">
+                        <ul class="dropdown-menu profile-menu-dropdown" aria-labelledby="paidFilterDropdown">
                             <!-- Opção Todos -->
                             <li>
-                                <a class="dropdown-item {{ $paidFilter == 'all' ? 'active' : '' }}" href="{{ route('profile', ['username' => $user->username]) . '?paidFilter=all' }}" style="{{ $paidFilter == 'all' ? 'background-color: red; color: white;' : 'color: red;' }}">
+                                <a class="dropdown-item profile-menu-item {{ $paidFilter == 'all' ? 'active' : '' }}" href="{{ route('profile', ['username' => $user->username]) . '?paidFilter=all' }}">
                                     Pagos / Packs
                                 </a>
                             </li>
                             <!-- Opção Pagos -->
                             <li>
-                                <a class="dropdown-item {{ $paidFilter == 'paid' ? 'active' : '' }}" href="{{ route('profile', ['username' => $user->username]) . '?paidFilter=paid' }}" style="{{ $paidFilter == 'paid' ? 'background-color: red; color: white;' : 'color: red;' }}">
+                                <a class="dropdown-item profile-menu-item {{ $paidFilter == 'paid' ? 'active' : '' }}" href="{{ route('profile', ['username' => $user->username]) . '?paidFilter=paid' }}">
                                     Packs
                                 </a>
                             </li>
                             <!-- Opção Gratuitos -->
                             <li>
-                                <a class="dropdown-item {{ $paidFilter == 'free' ? 'active' : '' }}" href="{{ route('profile', ['username' => $user->username]) . '?paidFilter=free' }}" style="{{ $paidFilter == 'free' ? 'background-color: red; color: white;' : 'color: red;' }}">
+                                <a class="dropdown-item profile-menu-item {{ $paidFilter == 'free' ? 'active' : '' }}" href="{{ route('profile', ['username' => $user->username]) . '?paidFilter=free' }}">
                                     Pagos
                                 </a>
                             </li>
@@ -750,13 +750,13 @@ function observeRemovelinhaClass() {
 
                     <!-- Dropdown para filtro -->
                     <div class="dropdown d-inline-block">
-                        <button class="p-pill p-pill-text ml-2 pointer-cursor dropdown-toggle" type="button" id="filterDropdown" data-bs-toggle="dropdown" aria-expanded="false" style="border: 1px solid red; border-radius: 10px; background: transparent; color: red; font-weight: bold; font-size: 14px;">
+                        <button class="p-pill p-pill-text ml-2 pointer-cursor dropdown-toggle profile-menu-pill" type="button" id="filterDropdown" data-bs-toggle="dropdown" aria-expanded="false">
                             {{ $activeFilter == false ? 'Todos' : ucfirst(trans_choice($activeFilter, 2)) }} ({{ $filterTypeCounts[$activeFilter] ?? $posts->total() }})
                         </button>
-                        <ul class="dropdown-menu" aria-labelledby="filterDropdown">
+                        <ul class="dropdown-menu profile-menu-dropdown" aria-labelledby="filterDropdown">
                             <!-- Todos -->
                             <li>
-                                <a class="dropdown-item {{ $activeFilter == false ? 'active' : '' }}" href="{{ route('profile', ['username'=> $user->username]) }}" style="{{ $activeFilter == false ? 'background-color: red; color: white;' : 'color: red;' }}">
+                                <a class="dropdown-item profile-menu-item {{ $activeFilter == false ? 'active' : '' }}" href="{{ route('profile', ['username'=> $user->username]) }}">
                                     Todos ({{ $posts->total() }})
                                 </a>
                             </li>
@@ -764,7 +764,7 @@ function observeRemovelinhaClass() {
                             <!-- Imagens -->
                             @if($filterTypeCounts['image'] > 0)
                                 <li>
-                                    <a class="dropdown-item {{ $activeFilter == 'image' ? 'active' : '' }}" href="{{ route('profile', ['username' => $user->username]) . '?filter=image' }}" style="{{ $activeFilter == 'image' ? 'background-color: red; color: white;' : 'color: red;' }}">
+                                    <a class="dropdown-item profile-menu-item {{ $activeFilter == 'image' ? 'active' : '' }}" href="{{ route('profile', ['username' => $user->username]) . '?filter=image' }}">
                                         Imagens ({{ $filterTypeCounts['image'] }})
                                     </a>
                                 </li>
@@ -773,7 +773,7 @@ function observeRemovelinhaClass() {
                             <!-- Vídeos -->
                             @if($filterTypeCounts['video'] > 0)
                                 <li>
-                                    <a class="dropdown-item {{ $activeFilter == 'video' ? 'active' : '' }}" href="{{ route('profile', ['username' => $user->username]) . '?filter=video' }}" style="{{ $activeFilter == 'video' ? 'background-color: red; color: white;' : 'color: red;' }}">
+                                    <a class="dropdown-item profile-menu-item {{ $activeFilter == 'video' ? 'active' : '' }}" href="{{ route('profile', ['username' => $user->username]) . '?filter=video' }}">
                                         Vídeos ({{ $filterTypeCounts['video'] }})
                                     </a>
                                 </li>
@@ -782,7 +782,7 @@ function observeRemovelinhaClass() {
                             <!-- Áudio -->
                             @if($filterTypeCounts['audio'] > 0)
                                 <li>
-                                    <a class="dropdown-item {{ $activeFilter == 'audio' ? 'active' : '' }}" href="{{ route('profile', ['username' => $user->username]) . '?filter=audio' }}" style="{{ $activeFilter == 'audio' ? 'background-color: red; color: white;' : 'color: red;' }}">
+                                    <a class="dropdown-item profile-menu-item {{ $activeFilter == 'audio' ? 'active' : '' }}" href="{{ route('profile', ['username' => $user->username]) . '?filter=audio' }}">
                                         Áudio ({{ $filterTypeCounts['audio'] }})
                                     </a>
                                 </li>
@@ -791,7 +791,7 @@ function observeRemovelinhaClass() {
                             <!-- Streams -->
                             @if(getSetting('streams.allow_streams') && isset($filterTypeCounts['streams']) && $filterTypeCounts['streams'] > 0)
                                 <li>
-                                    <a class="dropdown-item {{ $activeFilter == 'streams' ? 'active' : '' }}" href="{{ route('profile', ['username' => $user->username]) . '?filter=streams' }}" style="{{ $activeFilter == 'streams' ? 'background-color: red; color: white;' : 'color: red;' }}">
+                                    <a class="dropdown-item profile-menu-item {{ $activeFilter == 'streams' ? 'active' : '' }}" href="{{ route('profile', ['username' => $user->username]) . '?filter=streams' }}">
                                         Streams ({{ $filterTypeCounts['streams'] }})
                                     </a>
                                 </li>
@@ -801,11 +801,11 @@ function observeRemovelinhaClass() {
 
                     <!-- Ícones de Grid e List -->
                     <div class="d-inline-block ms-3">
-                        <button onclick="changeView('grid')" class="btn btn-transparent p-1 order-thick border-thick" title="Grid View">
-                            <img src="{{ asset('img/IconeGrid.png') }}" alt="Grid View" width="24" height="24">
+                        <button onclick="changeView('grid')" class="btn btn-transparent p-1 order-thick border-thick profile-menu-icon-btn" title="Grid View">
+                            <img class="profile-menu-icon" src="{{ asset('img/IconeGrid.png') }}" alt="Grid View" width="24" height="24">
                         </button>
-                        <button onclick="changeView('list')" class="btn btn-transparent p-1 ms-2 border-thick" title="List View">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="#E93745" viewBox="0,0,256,256">
+                        <button onclick="changeView('list')" class="btn btn-transparent p-1 ms-2 border-thick profile-menu-icon-btn" title="List View">
+                            <svg class="profile-menu-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0,0,256,256">
                                 <g transform="scale(10.66667,10.66667)">
                                     <path d="M20,2h-16c-1.10457,0 -2,0.89543 -2,2v8c0,1.10457 0.89543,2 2,2h16c1.10457,0 2,-0.89543 2,-2v-8c0,-1.10457 -0.89543,-2 -2,-2zM4,12v-8h16v8zM22,16v2h-20v-2zM22,20v2h-20v-2z"></path>
                                 </g>
