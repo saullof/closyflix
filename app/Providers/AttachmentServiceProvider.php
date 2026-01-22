@@ -606,6 +606,11 @@ public static function getFilePathByAttachment($attachment)
         }
 
         $thumbnailFilename = self::getImageThumbnailFilename($attachment, $width);
+        $storage = Storage::disk(self::getStorageProviderName($attachment->driver));
+        if (!$storage->exists($thumbnailFilename)) {
+            return null;
+        }
+
         return self::getFileUrlByPath($attachment, $thumbnailFilename);
     }
 

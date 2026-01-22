@@ -4,6 +4,7 @@ namespace App\Model;
 
 use App\Providers\AttachmentServiceProvider;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Storage;
 
 class Attachment extends Model
 {
@@ -65,12 +66,25 @@ class Attachment extends Model
             return null;
         }
 
-        if (AttachmentServiceProvider::getAttachmentType($this->type) === 'video') {
+        $type = AttachmentServiceProvider::getAttachmentType($this->type);
+
+        if ($type === 'video') {
             return AttachmentServiceProvider::getThumbnailPathForAttachmentByResolution($this, 150, 150);
         }
 
-        if (AttachmentServiceProvider::getAttachmentType($this->type) === 'image') {
-            return AttachmentServiceProvider::getImageThumbnailUrl($this);
+        if ($type === 'image') {
+            $w480Url = AttachmentServiceProvider::getImageThumbnailUrl($this);
+            if ($w480Url) {
+                return $w480Url;
+            }
+
+            $thumbnailFilename = AttachmentServiceProvider::getThumbnailFilenameByAttachmentAndResolution($this, 150, 150);
+            $storage = Storage::disk(AttachmentServiceProvider::getStorageProviderName($this->driver));
+            if ($thumbnailFilename && $storage->exists($thumbnailFilename)) {
+                return AttachmentServiceProvider::getThumbnailPathForAttachmentByResolution($this, 150, 150);
+            }
+
+            return AttachmentServiceProvider::getFilePathByAttachment($this);
         }
 
         return null;
