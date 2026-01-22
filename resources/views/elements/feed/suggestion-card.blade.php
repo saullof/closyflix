@@ -9,7 +9,7 @@
         <div class="card-text w-100 h-100 d-flex">
 
             <div class="d-flex align-items-center justify-content-center px-3 z-index-3">
-                <img src="{{$profile->avatar}}" class="avatar rounded-circle"  />
+                <img src="{{$profile->avatar}}" class="avatar rounded-circle" loading="lazy" decoding="async" alt="{{$profile->name}}" />
             </div>
 
             <div class="w-100 z-index-3 text-truncate">
