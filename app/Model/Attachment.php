@@ -61,14 +61,19 @@ class Attachment extends Model
 
     public function getThumbnailAttribute()
     {
-        $path = '/posts/images/';
-        if ($this->message_id) {
-            $path = '/messenger/images/';
+        if (!($this->has_thumbnail ?? false)) {
+            return null;
         }
-        if($this->type == 'video'){
-            $path = 'posts/videos'.'/thumbnails/'.$this->id.'.jpg';
+
+        if (AttachmentServiceProvider::getAttachmentType($this->type) === 'video') {
+            return AttachmentServiceProvider::getThumbnailPathForAttachmentByResolution($this, 150, 150);
         }
-        return AttachmentServiceProvider::getThumbnailPathForAttachmentByResolution($this, 150, 150, $path);
+
+        if (AttachmentServiceProvider::getAttachmentType($this->type) === 'image') {
+            return AttachmentServiceProvider::getImageThumbnailUrl($this);
+        }
+
+        return null;
     }
 
     /*

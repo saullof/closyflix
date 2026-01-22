@@ -8,6 +8,7 @@ use Aws\Exception\AwsException;
 use FFMpeg\Filters\Video\CustomFilter;
 use FFMpeg\Format\Video\X264;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\ServiceProvider;
 use Intervention\Image\Facades\Image;
@@ -247,19 +248,38 @@ public static function createAttachment($file, $directory, $generateThumbnail)
 
     // generate thumbnail
     if ($generateThumbnail && self::getAttachmentType($fileExtension) === 'image') {
-        $width = 150;
-        $height = 150;
-        $img = Image::make($fileContent);
-        $img->fit(150, 150, function ($constraint) {
-            $constraint->aspectRatio();
-        });
-        $img->encode('jpg', 60);
+        try {
+            $thumbWidth = 480;
+            $thumbQuality = 75;
+            $thumbnailFilePath = self::buildImageThumbnailPath($directory, $fileId, $thumbWidth);
 
-        $thumbnailDir = $directory . '/' . $width . 'X' . $height;
-        $thumbnailFilePath = $thumbnailDir . '/' . $fileId . '.jpg';
-        // Uploading to storage
-        $storage->put($thumbnailFilePath, $img->getEncoded(), 'public');
-        $hasThumbnail = true;
+            $img = Image::make($fileContent);
+            $img->resize($thumbWidth, null, function ($constraint) {
+                $constraint->aspectRatio();
+                $constraint->upsize();
+            });
+            $img->encode('jpg', $thumbQuality);
+            $storage->put($thumbnailFilePath, $img->getEncoded(), 'public');
+            $hasThumbnail = true;
+
+            $legacyWidth = 150;
+            $legacyHeight = 150;
+            $legacyImage = Image::make($fileContent);
+            $legacyImage->fit($legacyWidth, $legacyHeight, function ($constraint) {
+                $constraint->aspectRatio();
+            });
+            $legacyImage->encode('jpg', 60);
+
+            $legacyThumbnailDir = $directory . '/' . $legacyWidth . 'X' . $legacyHeight;
+            $legacyThumbnailFilePath = $legacyThumbnailDir . '/' . $fileId . '.jpg';
+            $storage->put($legacyThumbnailFilePath, $legacyImage->getEncoded(), 'public');
+        } catch (\Throwable $exception) {
+            Log::warning('Image thumbnail generation failed.', [
+                'file_id' => $fileId,
+                'directory' => $directory,
+                'message' => $exception->getMessage(),
+            ]);
+        }
     }
 
         // Convert videos to mp4s
@@ -527,20 +547,8 @@ public static function createAttachment($file, $directory, $generateThumbnail)
      
     public static function getThumbnailPathForAttachmentByResolution($attachment, $width, $height, $basePath = '/posts/images/')
     {
-        if ($attachment->driver == Attachment::S3_DRIVER && getSetting('storage.aws_cdn_enabled') && getSetting('storage.aws_cdn_presigned_urls_enabled')) {
-            return self::signAPrivateDistributionPolicy(
-                'https://' . getSetting('storage.cdn_domain_name') . '/' . self::getThumbnailFilenameByAttachmentAndResolution($attachment, $width, $height, $basePath)
-            );
-        } else {
-            if(self::getAttachmentType($attachment->type) == 'video'){
-                // Videos
-                return  str_replace($attachment->id .'.'. $attachment->type, 'thumbnails/'.$attachment->id.'.jpg', $attachment->path) ;
-            }
-            else{
-                // Regular posts + messages
-                return str_replace($basePath, $basePath.$width.'X'.$height.'/', $attachment->path);
-            }
-        }
+        $thumbnailFilename = self::getThumbnailFilenameByAttachmentAndResolution($attachment, $width, $height, $basePath);
+        return self::getFileUrlByPath($attachment, $thumbnailFilename);
     }
 
     /**
@@ -574,7 +582,8 @@ public static function createAttachment($file, $directory, $generateThumbnail)
             return 'posts/videos/thumbnails/'.$attachment->id.'.jpg';
         }
         else{
-            return str_replace($basePath, $basePath.$width.'X'.$height.'/', $attachment->filename);
+            $normalizedBasePath = ltrim($basePath, '/');
+            return str_replace($normalizedBasePath, $normalizedBasePath.$width.'X'.$height.'/', $attachment->filename);
         }
 
     }
@@ -587,50 +596,77 @@ public static function createAttachment($file, $directory, $generateThumbnail)
      */
 public static function getFilePathByAttachment($attachment)
 {
-    // Save current storage driver
-    $currentDriver = config('filesystems.default');
-
-    // Set the storage driver to the one specified in the attachment if different
-    if ($attachment->driver !== self::getStorageProviderID(getSetting('storage.driver'))) {
-        SettingsServiceProvider::setDefaultStorageDriver(self::getStorageProviderName($attachment->driver));
-    }
-
-    // Generate the file URL based on the attachment driver
-    $fileUrl = '';
-    switch ($attachment->driver) {
-        case Attachment::S3_DRIVER:
-            if (getSetting('storage.aws_cdn_enabled') && getSetting('storage.aws_cdn_presigned_urls_enabled')) {
-                $fileUrl = self::signAPrivateDistributionPolicy(
-                    'https://' . getSetting('storage.cdn_domain_name') . '/' . $attachment->filename
-                );
-            } elseif (getSetting('storage.aws_cdn_enabled')) {
-                $fileUrl = 'https://' . getSetting('storage.cdn_domain_name') . '/' . $attachment->filename;
-            } else {
-                $fileUrl = 'https://' . getSetting('storage.aws_bucket_name') . '.s3.' . getSetting('storage.aws_region') . '.amazonaws.com/' . $attachment->filename;
-            }
-            break;
-        case Attachment::WAS_DRIVER:
-        case Attachment::DO_DRIVER:
-            $fileUrl = Storage::disk('do_spaces')->url($attachment->filename);
-            break;
-        case Attachment::MINIO_DRIVER:
-            $fileUrl = rtrim(getSetting('storage.minio_endpoint'), '/') . '/' . getSetting('storage.minio_bucket_name') . '/' . $attachment->filename;
-            break;
-        case Attachment::PUSHR_DRIVER:
-            $fileUrl = rtrim(getSetting('storage.pushr_cdn_hostname'), '/') . '/' . $attachment->filename;
-            break;
-        case Attachment::PUBLIC_DRIVER:
-            $fileUrl = Storage::disk('public')->url($attachment->filename);
-            break;
-    }
-
-    // Revert the storage driver back to the original if it was changed
-    if ($attachment->driver !== self::getStorageProviderID(getSetting('storage.driver'))) {
-        SettingsServiceProvider::setDefaultStorageDriver($currentDriver);
-    }
-
-    return $fileUrl;
+    return self::getFileUrlByPath($attachment, $attachment->filename);
 }
+
+    public static function getImageThumbnailUrl($attachment, $width = 480)
+    {
+        if (!($attachment->has_thumbnail ?? false) || self::getAttachmentType($attachment->type) !== 'image') {
+            return null;
+        }
+
+        $thumbnailFilename = self::getImageThumbnailFilename($attachment, $width);
+        return self::getFileUrlByPath($attachment, $thumbnailFilename);
+    }
+
+    public static function getImageThumbnailFilename($attachment, $width = 480)
+    {
+        $directory = dirname($attachment->filename);
+        if ($directory === '.') {
+            $directory = '';
+        }
+        $basename = pathinfo($attachment->filename, PATHINFO_FILENAME);
+        $directory = $directory ? $directory . '/thumbnails' : 'thumbnails';
+
+        return $directory . '/' . $basename . '_w' . $width . '.jpg';
+    }
+
+    private static function buildImageThumbnailPath($directory, $fileId, $width = 480)
+    {
+        return $directory . '/thumbnails/' . $fileId . '_w' . $width . '.jpg';
+    }
+
+    public static function getFileUrlByPath($attachment, $path)
+    {
+        $currentDriver = config('filesystems.default');
+        if ($attachment->driver !== self::getStorageProviderID(getSetting('storage.driver'))) {
+            SettingsServiceProvider::setDefaultStorageDriver(self::getStorageProviderName($attachment->driver));
+        }
+
+        $fileUrl = '';
+        switch ($attachment->driver) {
+            case Attachment::S3_DRIVER:
+                if (getSetting('storage.aws_cdn_enabled') && getSetting('storage.aws_cdn_presigned_urls_enabled')) {
+                    $fileUrl = self::signAPrivateDistributionPolicy(
+                        'https://' . getSetting('storage.cdn_domain_name') . '/' . $path
+                    );
+                } elseif (getSetting('storage.aws_cdn_enabled')) {
+                    $fileUrl = 'https://' . getSetting('storage.cdn_domain_name') . '/' . $path;
+                } else {
+                    $fileUrl = 'https://' . getSetting('storage.aws_bucket_name') . '.s3.' . getSetting('storage.aws_region') . '.amazonaws.com/' . $path;
+                }
+                break;
+            case Attachment::WAS_DRIVER:
+            case Attachment::DO_DRIVER:
+                $fileUrl = Storage::disk('do_spaces')->url($path);
+                break;
+            case Attachment::MINIO_DRIVER:
+                $fileUrl = rtrim(getSetting('storage.minio_endpoint'), '/') . '/' . getSetting('storage.minio_bucket_name') . '/' . $path;
+                break;
+            case Attachment::PUSHR_DRIVER:
+                $fileUrl = rtrim(getSetting('storage.pushr_cdn_hostname'), '/') . '/' . $path;
+                break;
+            case Attachment::PUBLIC_DRIVER:
+                $fileUrl = Storage::disk('public')->url($path);
+                break;
+        }
+
+        if ($attachment->driver !== self::getStorageProviderID(getSetting('storage.driver'))) {
+            SettingsServiceProvider::setDefaultStorageDriver($currentDriver);
+        }
+
+        return $fileUrl;
+    }
 
 
     /**
@@ -838,4 +874,3 @@ POLICY;
     }
 
 }
-
