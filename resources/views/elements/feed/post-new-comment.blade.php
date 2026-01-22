@@ -1,6 +1,6 @@
 <div class="px-3 new-post-comment-area">
     <div class="d-flex justify-content-center align-items-center">
-        <img class="rounded-circle" src="{{Auth::user()->avatar}}">
+        <img class="rounded-circle" src="{{Auth::user()->avatar}}" loading="lazy" decoding="async" alt="{{Auth::user()->name}}">
         <div class="input-group">
             <textarea name="message" class="form-control comment-textarea mx-3 comment-text" placeholder="{{__('Write a message..')}}"  onkeyup="textAreaAdjust(this)"></textarea>
             <div class="input-group-append z-index-3 d-flex align-items-center justify-content-center">
