@@ -1,6 +1,6 @@
 <div class="post-comment d-flex flex-row mb-3" data-commentID="{{$comment->id}}">
     <div class="">
-        <img class="rounded-circle" src="{{$comment->author->avatar}}">
+        <img class="rounded-circle" src="{{$comment->author->avatar}}" loading="lazy" decoding="async" alt="{{$comment->author->name}}">
     </div>
     <div class="pl-3 w-100">
         <div class="d-flex flex-row justify-content-between">
