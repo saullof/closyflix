@@ -1,6 +1,8 @@
-<link href="https://vjs.zencdn.net/7.14.3/video-js.css" rel="stylesheet" />
-<script src="https://vjs.zencdn.net/7.14.3/video.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+@once
+    <link href="https://vjs.zencdn.net/7.14.3/video-js.css" rel="stylesheet" />
+    <script src="https://vjs.zencdn.net/7.14.3/video.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+@endonce
 
 @php
     // Define o domínio do CDN e do link direto
@@ -25,7 +27,7 @@
         <div class="card post-image-container position-relative w-100 h-100 d-flex justify-content-center align-items-center">
             <div class="image-background-{{$attachment->id}}" style="background-size: cover; background-position: center; filter: blur(10px) brightness(0.6);"></div>
             <div style="overflow: hidden" class="image-container overflow-hidden w-100 h-100 rounded-0">
-                <img src="{{$videoPath}}" draggable="false" alt="">
+                <img src="{{$videoPath}}" draggable="false" alt="" loading="lazy" decoding="async">
             </div>
         </div>
 
@@ -37,7 +39,7 @@
             @if($isHls)
                 <!-- Thumbnail e Vídeo HLS -->
                 <div id="thumbnail-wrapper-{{$attachment->id}}" class="image-container position-relative overflow-hidden w-100 h-100 image-containerCss">
-                    <img id="thumbnail-{{$attachment->id}}" src="{{ Storage::url('posts/videos/thumbnails/' . $thumbnailPath . '.jpg') }}" alt="thumbnail" loading="lazy">
+                    <img id="thumbnail-{{$attachment->id}}" src="{{ Storage::url('posts/videos/thumbnails/' . $thumbnailPath . '.jpg') }}" alt="thumbnail" loading="lazy" decoding="async">
                     <div class="play-button position-absolute top-50 left-50 translate-middle">
                         <img src="{{ asset('img/IconeRep.png') }}" alt="Play" style="width: 50px; height: 50px;">
                     </div>
@@ -74,7 +76,7 @@
             @else
                 {{-- Fallback para MP4 --}}
                 <div id="thumbnail-wrapper-{{$attachment->id}}" class="image-container position-relative overflow-hidden w-100 h-100 image-containerCss">
-                    <img id="thumbnail-{{$attachment->id}}" src="{{ Storage::url('posts/videos/thumbnails/' . $thumbnailPath . '.jpg') }}" alt="thumbnail" loading="lazy">
+                    <img id="thumbnail-{{$attachment->id}}" src="{{ Storage::url('posts/videos/thumbnails/' . $thumbnailPath . '.jpg') }}" alt="thumbnail" loading="lazy" decoding="async">
                     <div class="play-button position-absolute top-50 left-50 translate-middle">
                         <img src="{{ asset('img/IconeRep.png') }}" alt="Play" style="width: 50px; height: 50px;">
                     </div>
@@ -110,7 +112,7 @@
         <div class="position-relative w-100 d-flex justify-content-center align-items-center">
             <div style="aspect-ratio: 1/1" class="image-container post-image-horizontal position-relative overflow-hidden w-100 h-100 rounded-0 teste2">
                 <div class="image-background-{{$attachment->id}}" style="background-size: cover; background-position: center; filter: blur(10px) brightness(0.6);"></div>
-                <img src="{{$videoPath}}" draggable="false" alt="">
+                <img src="{{$videoPath}}" draggable="false" alt="" loading="lazy" decoding="async">
             </div>
         </div>
         {{--  <img src="{{$videoPath}}" draggable="false" alt="" class="img-fluid rounded-0 w-100">  --}}
@@ -123,7 +125,7 @@
                 @if($isHls)
                     {{-- Prioriza HLS --}}
                     <div id="thumbnail-wrapper-{{$attachment->id}}" class="image-container position-relative overflow-hidden w-100 h-100 image-containerCss">
-                        <img id="thumbnail-{{$attachment->id}}" src="{{ Storage::url('posts/videos/thumbnails/' . $thumbnailPath . '.jpg') }}" class="img-fluid h-100 w-100 object-cover" alt="thumbnail" loading="lazy">
+                        <img id="thumbnail-{{$attachment->id}}" src="{{ Storage::url('posts/videos/thumbnails/' . $thumbnailPath . '.jpg') }}" class="img-fluid h-100 w-100 object-cover" alt="thumbnail" loading="lazy" decoding="async">
                         <div class="play-button position-absolute top-50 left-50 translate-middle">
                             <img src="{{ asset('img/IconeRep.png') }}" alt="Play" style="width: 50px; height: 50px;">
                         </div>
@@ -152,7 +154,7 @@
                 @else
                     {{-- Fallback para MP4 --}}
                     <div id="thumbnail-wrapper-{{$attachment->id}}" class="image-container position-relative overflow-hidden w-100 h-100 image-containerCss" style="z-index: 1;">
-                        <img id="thumbnail-{{$attachment->id}}" src="{{ Storage::url('posts/videos/thumbnails/' . $thumbnailPath . '.jpg') }}" class="img-fluid h-100 w-100 object-cover" alt="thumbnail" loading="lazy">
+                        <img id="thumbnail-{{$attachment->id}}" src="{{ Storage::url('posts/videos/thumbnails/' . $thumbnailPath . '.jpg') }}" class="img-fluid h-100 w-100 object-cover" alt="thumbnail" loading="lazy" decoding="async">
                         <div class="play-button position-absolute top-50 left-50 translate-middle">
                             <img src="{{ asset('img/IconeRep.png') }}" alt="Play" style="width: 50px; height: 50px;">
                         </div>
@@ -352,5 +354,4 @@
     
 
 </style>
-
 
