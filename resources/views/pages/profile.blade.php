@@ -719,98 +719,208 @@ function observeRemovelinhaClass() {
 
 
 
-                <div class="mt-3 inline-border-tabs">
+                <style>
+                    .content-menu {
+                        width: 100%;
+                        margin-bottom: 20px;
+                    }
 
-                    <!-- Novo dropdown para tipo de postagem (paga ou gratuita) -->
-                    <div class="dropdown d-inline-block ms-2" style="padding-left: 5px; !important">
-                        <button class="p-pill p-pill-text ml-2 pointer-cursor dropdown-toggle" type="button" id="paidFilterDropdown" data-bs-toggle="dropdown" aria-expanded="false" style="border: 1px solid red; border-radius: 10px; background: transparent; color: red; font-weight: bold; font-size: 14px;">
-                            {{ $paidFilter == 'all' ? 'Pagos / Packs' : ($paidFilter == 'paid' ? 'Packs' : 'Pagos') }}
-                        </button>
-                        <ul class="dropdown-menu" aria-labelledby="paidFilterDropdown">
-                            <!-- Opção Todos -->
-                            <li>
-                                <a class="dropdown-item {{ $paidFilter == 'all' ? 'active' : '' }}" href="{{ route('profile', ['username' => $user->username]) . '?paidFilter=all' }}" style="{{ $paidFilter == 'all' ? 'background-color: red; color: white;' : 'color: red;' }}">
-                                    Pagos / Packs
-                                </a>
-                            </li>
-                            <!-- Opção Pagos -->
-                            <li>
-                                <a class="dropdown-item {{ $paidFilter == 'paid' ? 'active' : '' }}" href="{{ route('profile', ['username' => $user->username]) . '?paidFilter=paid' }}" style="{{ $paidFilter == 'paid' ? 'background-color: red; color: white;' : 'color: red;' }}">
-                                    Packs
-                                </a>
-                            </li>
-                            <!-- Opção Gratuitos -->
-                            <li>
-                                <a class="dropdown-item {{ $paidFilter == 'free' ? 'active' : '' }}" href="{{ route('profile', ['username' => $user->username]) . '?paidFilter=free' }}" style="{{ $paidFilter == 'free' ? 'background-color: red; color: white;' : 'color: red;' }}">
-                                    Pagos
-                                </a>
-                            </li>
-                        </ul>
+                    /* =========================
+                       Linha 1 (Tabs)
+                       ========================= */
+                    .content-menu .menu-tabs {
+                        display: flex;
+                        justify-content: space-between;
+                        gap: 1.25rem;
+                        border-bottom: 1px solid rgba(200, 200, 200, 0.2);
+                        padding-bottom: 10px;
+                    }
+
+                    @media (min-width: 992px) {
+                        .content-menu .menu-tabs {
+                            justify-content: flex-start;
+                            gap: 1.2rem;
+                        }
+                    }
+
+                    .content-menu .menu-tabs .tab {
+                        background: none;
+                        border: none;
+                        color: rgba(240, 240, 240, 0.7);
+                        font-size: 14px;
+                        font-weight: 500;
+                        padding-bottom: 10px;
+                        position: relative;
+                        cursor: pointer;
+                        text-decoration: none;
+                        white-space: nowrap;
+                    }
+
+                    .content-menu .menu-tabs .tab:hover {
+                        color: rgba(240, 240, 240, 0.9);
+                    }
+
+                    .content-menu .menu-tabs .tab.active {
+                        color: #e03131;
+                    }
+
+                    .content-menu .menu-tabs .tab.active::after {
+                        content: "";
+                        position: absolute;
+                        left: 0;
+                        bottom: -11px;
+                        width: 100%;
+                        height: 2px;
+                        background: #e03131;
+                        box-shadow: 0 0 10px rgba(224, 49, 49, 0.55);
+                    }
+
+                    /* =========================
+                       Linha 2 (Pills + Views)
+                       ========================= */
+                    .content-menu .menu-filters {
+                        display: flex;
+                        justify-content: space-between;
+                        align-items: center;
+                        margin-top: 14px;
+                        gap: 12px;
+                    }
+
+                    .content-menu .filter-pill-container {
+                        display: flex;
+                        align-items: center;
+                        background: rgba(60, 60, 60, 0.55);
+                        border-radius: 999px;
+                        padding: 6px;
+                        box-shadow: inset 0 0 0 1px rgba(220, 220, 220, 0.15),
+                            0 6px 20px rgba(0, 0, 0, 0.35);
+                    }
+
+                    .content-menu .filter-pill {
+                        display: flex;
+                        gap: 0.5rem;
+                        align-items: center;
+                    }
+
+                    .content-menu .filter-pill .pill {
+                        background: none;
+                        border: none;
+                        padding: 6px 16px;
+                        border-radius: 999px;
+                        color: rgba(220, 220, 220, 0.85);
+                        font-size: 13px;
+                        cursor: pointer;
+                        text-decoration: none;
+                        white-space: nowrap;
+                    }
+
+                    .content-menu .filter-pill .pill:hover {
+                        color: rgba(255, 255, 255, 0.95);
+                    }
+
+                    .content-menu .filter-pill .pill.active {
+                        background: linear-gradient(180deg, #ff3b3b, #b21f1f);
+                        color: #fff;
+                        box-shadow: 0 0 14px rgba(224, 49, 49, 0.55);
+                    }
+
+                    .content-menu .view-buttons {
+                        display: flex;
+                        gap: 8px;
+                        flex-shrink: 0;
+                    }
+
+                    .content-menu .view-buttons .view-btn {
+                        width: 36px;
+                        height: 36px;
+                        border-radius: 50%;
+                        border: none;
+                        background: rgba(60, 60, 60, 0.55);
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        cursor: pointer;
+                        box-shadow: inset 0 0 0 1px rgba(220, 220, 220, 0.15),
+                            0 6px 20px rgba(0, 0, 0, 0.35);
+                    }
+
+                    .content-menu .view-buttons .view-btn:hover {
+                        box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.25),
+                            0 6px 20px rgba(0, 0, 0, 0.45);
+                    }
+
+                    .content-menu .view-buttons .view-btn.active {
+                        background: linear-gradient(180deg, #ff3b3b, #b21f1f);
+                        box-shadow: 0 0 14px rgba(224, 49, 49, 0.55);
+                    }
+
+                    .content-menu .view-buttons img,
+                    .content-menu .view-buttons svg {
+                        filter: brightness(0) saturate(100%) invert(100%);
+                    }
+                </style>
+
+                <div class="mt-3 content-menu">
+                    @php
+                        $baseQuery = collect(request()->query());
+                        $queryNoFilter = $baseQuery->except('filter')->all();
+                        $queryNoPaid = $baseQuery->except('paidFilter')->all();
+                    @endphp
+
+                    <!-- Tabs superiores -->
+                    <div class="menu-tabs">
+                        <a class="tab {{ $activeFilter == false ? 'active' : '' }}"
+                           href="{{ route('profile', ['username'=> $user->username], false) . (count($queryNoFilter) ? ('?' . http_build_query($queryNoFilter)) : '') }}">
+                            Todos ({{ $posts->total() }})
+                        </a>
+
+                        <a class="tab {{ $paidFilter === 'paid' ? 'active' : '' }}"
+                           href="{{ route('profile', ['username'=> $user->username], false) . '?' . http_build_query(array_merge($queryNoFilter, ['paidFilter' => 'paid'])) }}">
+                            Packs
+                        </a>
+
+                        <a class="tab {{ $activeFilter === 'image' ? 'active' : '' }}"
+                           href="{{ route('profile', ['username'=> $user->username], false) . '?' . http_build_query(array_merge($queryNoPaid, ['filter' => 'image'])) }}">
+                            Fotos ({{ $filterTypeCounts['image'] ?? 0 }})
+                        </a>
+
+                        <a class="tab {{ $activeFilter === 'video' ? 'active' : '' }}"
+                           href="{{ route('profile', ['username'=> $user->username], false) . '?' . http_build_query(array_merge($queryNoPaid, ['filter' => 'video'])) }}">
+                            Vídeos ({{ $filterTypeCounts['video'] ?? 0 }})
+                        </a>
                     </div>
 
-                    <!-- Dropdown para filtro -->
-                    <div class="dropdown d-inline-block">
-                        <button class="p-pill p-pill-text ml-2 pointer-cursor dropdown-toggle" type="button" id="filterDropdown" data-bs-toggle="dropdown" aria-expanded="false" style="border: 1px solid red; border-radius: 10px; background: transparent; color: red; font-weight: bold; font-size: 14px;">
-                            {{ $activeFilter == false ? 'Todos' : ucfirst(trans_choice($activeFilter, 2)) }} ({{ $filterTypeCounts[$activeFilter] ?? $posts->total() }})
-                        </button>
-                        <ul class="dropdown-menu" aria-labelledby="filterDropdown">
-                            <!-- Todos -->
-                            <li>
-                                <a class="dropdown-item {{ $activeFilter == false ? 'active' : '' }}" href="{{ route('profile', ['username'=> $user->username]) }}" style="{{ $activeFilter == false ? 'background-color: red; color: white;' : 'color: red;' }}">
-                                    Todos ({{ $posts->total() }})
-                                </a>
-                            </li>
+                    <!-- Filtro inferior -->
+                    <div class="menu-filters">
+                        <div class="filter-pill-container">
+                            <div class="filter-pill">
+                            <a class="pill {{ $paidFilter === 'all' ? 'active' : '' }}"
+                               href="{{ route('profile', ['username'=> $user->username], false) . '?' . http_build_query(array_merge($queryNoFilter, ['paidFilter' => 'all'])) }}">
+                                Ver tudo
+                            </a>
+                            <a class="pill {{ $paidFilter === 'free' ? 'active' : '' }}"
+                               href="{{ route('profile', ['username'=> $user->username], false) . '?' . http_build_query(array_merge($queryNoFilter, ['paidFilter' => 'free'])) }}">
+                                Gratuito
+                            </a>
+                            <a class="pill {{ $paidFilter === 'paid' ? 'active' : '' }}"
+                               href="{{ route('profile', ['username'=> $user->username], false) . '?' . http_build_query(array_merge($queryNoFilter, ['paidFilter' => 'paid'])) }}">
+                                Pago
+                            </a>
+                            </div>
+                        </div>
 
-                            <!-- Imagens -->
-                            @if($filterTypeCounts['image'] > 0)
-                                <li>
-                                    <a class="dropdown-item {{ $activeFilter == 'image' ? 'active' : '' }}" href="{{ route('profile', ['username' => $user->username]) . '?filter=image' }}" style="{{ $activeFilter == 'image' ? 'background-color: red; color: white;' : 'color: red;' }}">
-                                        Imagens ({{ $filterTypeCounts['image'] }})
-                                    </a>
-                                </li>
-                            @endif
-
-                            <!-- Vídeos -->
-                            @if($filterTypeCounts['video'] > 0)
-                                <li>
-                                    <a class="dropdown-item {{ $activeFilter == 'video' ? 'active' : '' }}" href="{{ route('profile', ['username' => $user->username]) . '?filter=video' }}" style="{{ $activeFilter == 'video' ? 'background-color: red; color: white;' : 'color: red;' }}">
-                                        Vídeos ({{ $filterTypeCounts['video'] }})
-                                    </a>
-                                </li>
-                            @endif
-
-                            <!-- Áudio -->
-                            @if($filterTypeCounts['audio'] > 0)
-                                <li>
-                                    <a class="dropdown-item {{ $activeFilter == 'audio' ? 'active' : '' }}" href="{{ route('profile', ['username' => $user->username]) . '?filter=audio' }}" style="{{ $activeFilter == 'audio' ? 'background-color: red; color: white;' : 'color: red;' }}">
-                                        Áudio ({{ $filterTypeCounts['audio'] }})
-                                    </a>
-                                </li>
-                            @endif
-
-                            <!-- Streams -->
-                            @if(getSetting('streams.allow_streams') && isset($filterTypeCounts['streams']) && $filterTypeCounts['streams'] > 0)
-                                <li>
-                                    <a class="dropdown-item {{ $activeFilter == 'streams' ? 'active' : '' }}" href="{{ route('profile', ['username' => $user->username]) . '?filter=streams' }}" style="{{ $activeFilter == 'streams' ? 'background-color: red; color: white;' : 'color: red;' }}">
-                                        Streams ({{ $filterTypeCounts['streams'] }})
-                                    </a>
-                                </li>
-                            @endif
-                        </ul>
-                    </div>
-
-                    <!-- Ícones de Grid e List -->
-                    <div class="d-inline-block ms-3">
-                        <button onclick="changeView('grid')" class="btn btn-transparent p-1 order-thick border-thick" title="Grid View">
-                            <img src="{{ asset('img/IconeGrid.png') }}" alt="Grid View" width="24" height="24">
-                        </button>
-                        <button onclick="changeView('list')" class="btn btn-transparent p-1 ms-2 border-thick" title="List View">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="#E93745" viewBox="0,0,256,256">
-                                <g transform="scale(10.66667,10.66667)">
-                                    <path d="M20,2h-16c-1.10457,0 -2,0.89543 -2,2v8c0,1.10457 0.89543,2 2,2h16c1.10457,0 2,-0.89543 2,-2v-8c0,-1.10457 -0.89543,-2 -2,-2zM4,12v-8h16v8zM22,16v2h-20v-2zM22,20v2h-20v-2z"></path>
-                                </g>
-                            </svg>
-                        </button>
+                        <div class="view-buttons">
+                            <button onclick="changeView('grid')" class="view-btn" type="button" title="Grid View" aria-label="Grid View">
+                                <img src="{{ asset('img/IconeGrid.png') }}" alt="Grid View" width="16" height="16">
+                            </button>
+                            <button onclick="changeView('list')" class="view-btn" type="button" title="List View" aria-label="List View">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0,0,256,256" aria-hidden="true">
+                                    <g transform="scale(10.66667,10.66667)">
+                                        <path d="M20,2h-16c-1.10457,0 -2,0.89543 -2,2v8c0,1.10457 0.89543,2 2,2h16c1.10457,0 2,-0.89543 2,-2v-8c0,-1.10457 -0.89543,-2 -2,-2zM4,12v-8h16v8zM22,16v2h-20v-2zM22,20v2h-20v-2z"></path>
+                                    </g>
+                                </svg>
+                            </button>
+                        </div>
                     </div>
                 </div>
 
