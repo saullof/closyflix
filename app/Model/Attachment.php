@@ -4,6 +4,7 @@ namespace App\Model;
 
 use App\Providers\AttachmentServiceProvider;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Storage;
 
 class Attachment extends Model
 {
@@ -61,14 +62,32 @@ class Attachment extends Model
 
     public function getThumbnailAttribute()
     {
-        $path = '/posts/images/';
-        if ($this->message_id) {
-            $path = '/messenger/images/';
+        if (!($this->has_thumbnail ?? false)) {
+            return null;
         }
-        if($this->type == 'video'){
-            $path = 'posts/videos'.'/thumbnails/'.$this->id.'.jpg';
+
+        $type = AttachmentServiceProvider::getAttachmentType($this->type);
+
+        if ($type === 'video') {
+            return AttachmentServiceProvider::getThumbnailPathForAttachmentByResolution($this, 150, 150);
         }
-        return AttachmentServiceProvider::getThumbnailPathForAttachmentByResolution($this, 150, 150, $path);
+
+        if ($type === 'image') {
+            $w480Url = AttachmentServiceProvider::getImageThumbnailUrl($this);
+            if ($w480Url) {
+                return $w480Url;
+            }
+
+            $thumbnailFilename = AttachmentServiceProvider::getThumbnailFilenameByAttachmentAndResolution($this, 150, 150);
+            $storage = Storage::disk(AttachmentServiceProvider::getStorageProviderName($this->driver));
+            if ($thumbnailFilename && $storage->exists($thumbnailFilename)) {
+                return AttachmentServiceProvider::getThumbnailPathForAttachmentByResolution($this, 150, 150);
+            }
+
+            return AttachmentServiceProvider::getFilePathByAttachment($this);
+        }
+
+        return null;
     }
 
     /*

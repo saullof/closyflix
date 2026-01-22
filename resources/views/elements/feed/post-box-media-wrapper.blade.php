@@ -20,6 +20,12 @@
 
     // Caminho para a thumbnail
     $thumbnailPath = pathinfo($attachment->path, PATHINFO_FILENAME);
+
+    $isLocked = $isLocked ?? false;
+    $hasThumbnail = (bool) ($attachment->has_thumbnail ?? false);
+    $thumbnailUrl = $hasThumbnail ? $attachment->thumbnail : null;
+    $blurBackgroundUrl = $thumbnailUrl ?? $videoPath;
+    $displayImageUrl = $isLocked && $thumbnailUrl ? $thumbnailUrl : $videoPath;
 @endphp
  
  @if($isGallery)
@@ -27,25 +33,25 @@
         <div class="card post-image-container position-relative w-100 h-100 d-flex justify-content-center align-items-center">
             <div class="image-background-{{$attachment->id}}" style="background-size: cover; background-position: center; filter: blur(10px) brightness(0.6);"></div>
             <div style="overflow: hidden" class="image-container overflow-hidden w-100 h-100 rounded-0">
-                <img src="{{$videoPath}}" draggable="false" alt="" loading="lazy" decoding="async">
+                <img src="{{$displayImageUrl}}" draggable="false" alt="" loading="lazy" decoding="async">
             </div>
         </div>
 
     @elseif(AttachmentHelper::getAttachmentType($attachment->type) == 'video')
         <div class="video-container position-relative w-100 h-100 d-flex justify-content-center align-items-center">
             <!-- Fundo desfocado -->
-            <div class="video-background-{{$attachment->id}} teste1" style="background-image: url('{{ Storage::url('posts/videos/thumbnails/' . $thumbnailPath . '.jpg') }}'); background-size: cover; background-position: center; filter: blur(10px) brightness(0.6);"></div>
+            <div class="video-background-{{$attachment->id}} teste1" style="background-image: url('{{ $thumbnailUrl ?? Storage::url('posts/videos/thumbnails/' . $thumbnailPath . '.jpg') }}'); background-size: cover; background-position: center; filter: blur(10px) brightness(0.6);"></div>
 
             @if($isHls)
                 <!-- Thumbnail e Vídeo HLS -->
                 <div id="thumbnail-wrapper-{{$attachment->id}}" class="image-container position-relative overflow-hidden w-100 h-100 image-containerCss">
-                    <img id="thumbnail-{{$attachment->id}}" src="{{ Storage::url('posts/videos/thumbnails/' . $thumbnailPath . '.jpg') }}" alt="thumbnail" loading="lazy" decoding="async">
+                    <img id="thumbnail-{{$attachment->id}}" src="{{ $thumbnailUrl ?? Storage::url('posts/videos/thumbnails/' . $thumbnailPath . '.jpg') }}" alt="thumbnail" loading="lazy" decoding="async">
                     <div class="play-button position-absolute top-50 left-50 translate-middle">
                         <img src="{{ asset('img/IconeRep.png') }}" alt="Play" style="width: 50px; height: 50px;">
                     </div>
                 </div>
 
-                <video id="hls-player-{{$attachment->id}}" class="video-js vjs-default-skin w-100" controls style="display: none;" poster="{{ Storage::url('posts/videos/thumbnails/' . $thumbnailPath . '.jpg') }}">
+                <video id="hls-player-{{$attachment->id}}" class="video-js vjs-default-skin w-100" controls style="display: none;" poster="{{ $thumbnailUrl ?? Storage::url('posts/videos/thumbnails/' . $thumbnailPath . '.jpg') }}">
                     <!-- Nenhuma fonte é definida inicialmente para o vídeo -->
                 </video>
 
@@ -76,14 +82,14 @@
             @else
                 {{-- Fallback para MP4 --}}
                 <div id="thumbnail-wrapper-{{$attachment->id}}" class="image-container position-relative overflow-hidden w-100 h-100 image-containerCss">
-                    <img id="thumbnail-{{$attachment->id}}" src="{{ Storage::url('posts/videos/thumbnails/' . $thumbnailPath . '.jpg') }}" alt="thumbnail" loading="lazy" decoding="async">
+                    <img id="thumbnail-{{$attachment->id}}" src="{{ $thumbnailUrl ?? Storage::url('posts/videos/thumbnails/' . $thumbnailPath . '.jpg') }}" alt="thumbnail" loading="lazy" decoding="async">
                     <div class="play-button position-absolute top-50 left-50 translate-middle">
                         <img src="{{ asset('img/IconeRep.png') }}" alt="Play" style="width: 50px; height: 50px;">
                     </div>
                 </div>
 
                 <!-- O vídeo inicialmente fica escondido -->
-                <video id="mp4-player-{{$attachment->id}}" class="video-preview w-100" controls controlsList="nodownload" style="display: none;" poster="{{ Storage::url('posts/videos/thumbnails/' . $thumbnailPath . '.jpg') }}">
+                <video id="mp4-player-{{$attachment->id}}" class="video-preview w-100" controls controlsList="nodownload" style="display: none;" poster="{{ $thumbnailUrl ?? Storage::url('posts/videos/thumbnails/' . $thumbnailPath . '.jpg') }}">
                     <source src="{{$videoPath}}#t=0.001" type="video/mp4">
                 </video>
 
@@ -112,7 +118,7 @@
         <div class="position-relative w-100 d-flex justify-content-center align-items-center">
             <div style="aspect-ratio: 1/1" class="image-container post-image-horizontal position-relative overflow-hidden w-100 h-100 rounded-0 teste2">
                 <div class="image-background-{{$attachment->id}}" style="background-size: cover; background-position: center; filter: blur(10px) brightness(0.6);"></div>
-                <img src="{{$videoPath}}" draggable="false" alt="" loading="lazy" decoding="async">
+                <img src="{{$displayImageUrl}}" draggable="false" alt="" loading="lazy" decoding="async">
             </div>
         </div>
         {{--  <img src="{{$videoPath}}" draggable="false" alt="" class="img-fluid rounded-0 w-100">  --}}
@@ -120,12 +126,12 @@
     
         <div class="video-wrapper h-100 w-100 d-flex justify-content-center align-items-center">
         <div class="video-container position-relative w-100 h-100 d-flex justify-content-center align-items-center">  
-            <div class="image-background removebackgroundimg2 backgroundimg2" style="background-image: url('{{ Storage::url('posts/videos/thumbnails/' . $thumbnailPath . '.jpg') }}'); background-size: cover; background-position: center; filter: blur(10px) brightness(0.6);"></div>
+            <div class="image-background removebackgroundimg2 backgroundimg2" style="background-image: url('{{ $thumbnailUrl ?? Storage::url('posts/videos/thumbnails/' . $thumbnailPath . '.jpg') }}'); background-size: cover; background-position: center; filter: blur(10px) brightness(0.6);"></div>
         
                 @if($isHls)
                     {{-- Prioriza HLS --}}
                     <div id="thumbnail-wrapper-{{$attachment->id}}" class="image-container position-relative overflow-hidden w-100 h-100 image-containerCss">
-                        <img id="thumbnail-{{$attachment->id}}" src="{{ Storage::url('posts/videos/thumbnails/' . $thumbnailPath . '.jpg') }}" class="img-fluid h-100 w-100 object-cover" alt="thumbnail" loading="lazy" decoding="async">
+                        <img id="thumbnail-{{$attachment->id}}" src="{{ $thumbnailUrl ?? Storage::url('posts/videos/thumbnails/' . $thumbnailPath . '.jpg') }}" class="img-fluid h-100 w-100 object-cover" alt="thumbnail" loading="lazy" decoding="async">
                         <div class="play-button position-absolute top-50 left-50 translate-middle">
                             <img src="{{ asset('img/IconeRep.png') }}" alt="Play" style="width: 50px; height: 50px;">
                         </div>
@@ -154,7 +160,7 @@
                 @else
                     {{-- Fallback para MP4 --}}
                     <div id="thumbnail-wrapper-{{$attachment->id}}" class="image-container position-relative overflow-hidden w-100 h-100 image-containerCss" style="z-index: 1;">
-                        <img id="thumbnail-{{$attachment->id}}" src="{{ Storage::url('posts/videos/thumbnails/' . $thumbnailPath . '.jpg') }}" class="img-fluid h-100 w-100 object-cover" alt="thumbnail" loading="lazy" decoding="async">
+                        <img id="thumbnail-{{$attachment->id}}" src="{{ $thumbnailUrl ?? Storage::url('posts/videos/thumbnails/' . $thumbnailPath . '.jpg') }}" class="img-fluid h-100 w-100 object-cover" alt="thumbnail" loading="lazy" decoding="async">
                         <div class="play-button position-absolute top-50 left-50 translate-middle">
                             <img src="{{ asset('img/IconeRep.png') }}" alt="Play" style="width: 50px; height: 50px;">
                         </div>
@@ -163,7 +169,7 @@
 
 
                     
-                    <video id="mp4-player-{{$attachment->id}}" class="video-preview w-100" controls controlsList="nodownload" style="display: none; z-index: 2;" poster="{{ Storage::url('posts/videos/thumbnails/' . $thumbnailPath . '.jpg') }}">
+                    <video id="mp4-player-{{$attachment->id}}" class="video-preview w-100" controls controlsList="nodownload" style="display: none; z-index: 2;" poster="{{ $thumbnailUrl ?? Storage::url('posts/videos/thumbnails/' . $thumbnailPath . '.jpg') }}">
                         <source src="{{$videoPath}}#t=0.001" type="video/mp4">
                     </video>
 
@@ -211,7 +217,7 @@
     }
 
     .image-background-{{$attachment->id}} {
-        background-image: url('{{$videoPath}}');
+        background-image: url('{{$blurBackgroundUrl}}');
         background-size: cover;
         background-position: center;
         filter: blur(10px) brightness(0.6);
@@ -224,7 +230,7 @@
     }
 
     .image-background {
-        background-image: url('{{$videoPath}}');
+        background-image: url('{{$blurBackgroundUrl}}');
         background-size: cover;
         background-position: center;
         filter: blur(10px) brightness(0.6);
