@@ -32,6 +32,11 @@ self.addEventListener('activate', event => {
 
 // Serve from Cache
 self.addEventListener("fetch", event => {
+    var requestUrl = new URL(event.request.url);
+    if (requestUrl.origin !== self.location.origin) {
+        return;
+    }
+
     event.respondWith(
         caches.match(event.request)
             .then(response => {
