@@ -17,8 +17,10 @@ var PostCreate = {
     postPrice : 0,
     isSavingRedirect: false,
     postNotifications: false,
+    isBulkMode: false,
     postReleaseDate: null,
     postExpireDate: null,
+    attachmentSchedules: {},
 
     /**
      * Toggles post notification state
@@ -111,6 +113,8 @@ var PostCreate = {
         });
         // Clearing Fileupload class attachments
         FileUpload.attachaments = [];
+        PostCreate.attachmentSchedules = {};
+        PostCreate.renderBulkScheduleTable();
         // Clearing up the local storage object
         PostCreate.clearDraftData();
         // Clearing up the text area value
@@ -168,7 +172,13 @@ var PostCreate = {
             return false;
         }
         updateButtonState('loading',$('.post-create-button'));
-        PostCreate.savePostScheduleSettings();
+        if(!PostCreate.isBulkMode){
+            PostCreate.savePostScheduleSettings();
+        }
+        else if(!PostCreate.validateBulkSchedules()){
+            updateButtonState('loaded',$('.post-create-button'), trans('Save'));
+            return false;
+        }
         let route = app.baseUrl + '/posts/save';
         let data = {
             'attachments': FileUpload.attachaments,
@@ -180,6 +190,10 @@ var PostCreate = {
         };
         if(type === 'create'){
             data.type = 'create';
+            data.bulkMode = PostCreate.isBulkMode;
+            if(PostCreate.isBulkMode){
+                data.attachmentSchedules = PostCreate.attachmentSchedules;
+            }
         }
         else{
             data.type = 'update';
@@ -192,6 +206,7 @@ var PostCreate = {
             success: function () {
                 if(type === 'create'){
                     PostCreate.isSavingRedirect = true;
+                    PostCreate.attachmentSchedules = {};
                     PostCreate.clearDraftData(redirect(app.baseUrl+'/'+user.username));
                 }
                 else{
@@ -265,6 +280,189 @@ var PostCreate = {
         $('#post_release_date').val('');
         $('#post_expire_date').val('');
         $('#post_expire_date').removeClass('is-invalid');
+    },
+
+    /**
+     * Initializes bulk posting mode UI
+     */
+    initBulkPostMode: function () {
+        if($('#bulk-post-toggle').length === 0){
+            return;
+        }
+
+        $('#bulk-post-toggle').on('change', function () {
+            PostCreate.isBulkMode = $(this).is(':checked');
+            PostCreate.updateBulkModeUI();
+        });
+
+        $('#bulk-schedule-table-body').on('change', '.bulk-release-date', function () {
+            const attachmentID = $(this).data('attachment-id');
+            PostCreate.ensureScheduleItem(attachmentID);
+            PostCreate.attachmentSchedules[attachmentID].release_date = $(this).val();
+        });
+
+        $('#bulk-schedule-table-body').on('change', '.bulk-expire-date', function () {
+            const attachmentID = $(this).data('attachment-id');
+            PostCreate.ensureScheduleItem(attachmentID);
+            PostCreate.attachmentSchedules[attachmentID].expire_date = $(this).val();
+        });
+    },
+
+    /**
+     * Register listeners after dropzone initialization
+     */
+    registerDropzoneBulkEvents: function () {
+        if(!FileUpload.myDropzone){
+            return;
+        }
+
+        FileUpload.myDropzone.on("success", function () {
+            PostCreate.syncAttachmentSchedules();
+        });
+
+        FileUpload.myDropzone.on("removedfile", function () {
+            PostCreate.syncAttachmentSchedules();
+        });
+    },
+
+    /**
+     * Updates bulk mode specific UI states
+     */
+    updateBulkModeUI: function () {
+        if(PostCreate.isBulkMode){
+            $('#bulk-schedule-container').removeClass('d-none');
+            $('#post-scheduling-action').addClass('disabled').attr('title', trans('Scheduling is configured per media in bulk mode.'));
+            PostCreate.clearPostScheduleSettings();
+            PostCreate.syncAttachmentSchedules();
+        }
+        else{
+            $('#bulk-schedule-container').addClass('d-none');
+            $('#post-scheduling-action').removeClass('disabled').attr('title', trans('Schedule your post release or deletion date.'));
+        }
+    },
+
+    /**
+     * Keeps schedules in sync with current uploaded attachments
+     */
+    syncAttachmentSchedules: function () {
+        if(!PostCreate.isBulkMode){
+            return;
+        }
+
+        const validIDs = [];
+        FileUpload.attachaments.forEach(function (attachment) {
+            const attachmentID = PostCreate.getAttachmentID(attachment);
+            if(!attachmentID){
+                return;
+            }
+            validIDs.push(String(attachmentID));
+            PostCreate.ensureScheduleItem(attachmentID);
+        });
+
+        Object.keys(PostCreate.attachmentSchedules).forEach(function (attachmentID) {
+            if(validIDs.indexOf(String(attachmentID)) < 0){
+                delete PostCreate.attachmentSchedules[attachmentID];
+            }
+        });
+
+        PostCreate.renderBulkScheduleTable();
+    },
+
+    /**
+     * Adds schedule object for an attachment if missing
+     * @param attachmentID
+     */
+    ensureScheduleItem: function (attachmentID) {
+        if(!attachmentID){
+            return;
+        }
+        if(typeof PostCreate.attachmentSchedules[attachmentID] === 'undefined'){
+            PostCreate.attachmentSchedules[attachmentID] = {
+                release_date: '',
+                expire_date: ''
+            };
+        }
+    },
+
+    /**
+     * Renders bulk schedule table
+     */
+    renderBulkScheduleTable: function () {
+        const tableBody = $('#bulk-schedule-table-body');
+        if(tableBody.length === 0){
+            return;
+        }
+
+        tableBody.empty();
+
+        FileUpload.attachaments.forEach(function (attachment, index) {
+            const attachmentID = PostCreate.getAttachmentID(attachment);
+            if(!attachmentID){
+                return;
+            }
+            PostCreate.ensureScheduleItem(attachmentID);
+            const schedule = PostCreate.attachmentSchedules[attachmentID];
+            const thumbnail = attachment.thumbnail ? `<img src="${attachment.thumbnail}" class="rounded mr-2" width="42" height="42" alt="media-thumbnail" />` : '';
+
+            tableBody.append(`
+                <tr>
+                    <td class="align-middle">
+                        <div class="d-flex align-items-center">
+                            ${thumbnail}
+                            <span>#${index + 1}</span>
+                        </div>
+                    </td>
+                    <td>
+                        <input type="datetime-local" class="form-control bulk-release-date" data-attachment-id="${attachmentID}" value="${schedule.release_date || ''}">
+                    </td>
+                    <td>
+                        <input type="datetime-local" class="form-control bulk-expire-date" data-attachment-id="${attachmentID}" value="${schedule.expire_date || ''}">
+                    </td>
+                </tr>
+            `);
+        });
+    },
+
+    /**
+     * Validates bulk schedule constraints before submit
+     * @returns {boolean}
+     */
+    validateBulkSchedules: function () {
+        if(PostCreate.postPrice === 0){
+            return true;
+        }
+        let hasError = false;
+        Object.keys(PostCreate.attachmentSchedules).forEach(function (attachmentID) {
+            const schedule = PostCreate.attachmentSchedules[attachmentID];
+            if(schedule.expire_date && schedule.expire_date.length > 0){
+                hasError = true;
+            }
+        });
+
+        if(hasError){
+            launchToast('danger',trans('Error'), trans('Paid posts can not have expiration date.'));
+            return false;
+        }
+
+        return true;
+    },
+
+    /**
+     * Gets attachment identifier from upload payload
+     * @param attachment
+     * @returns {*|boolean}
+     */
+    getAttachmentID: function (attachment) {
+        if(typeof attachment === 'undefined' || attachment === null){
+            return false;
+        }
+        if(typeof attachment.attachmentID !== 'undefined'){
+            return attachment.attachmentID;
+        }
+        if(typeof attachment.id !== 'undefined'){
+            return attachment.id;
+        }
+        return false;
     },
 
 };

@@ -5,6 +5,8 @@
 /* global PostCreate, FileUpload, mediaSettings, isAllowedToPost, AiSuggestions, app */
 
 $(function () {
+    PostCreate.initBulkPostMode();
+
     // Initing button save
     $('.post-create-button').on('click',function () {
         PostCreate.save('create');
@@ -19,6 +21,7 @@ $(function () {
     if(isAllowedToPost){
         // Initiating file manager
         FileUpload.initDropZone('.dropzone','/attachment/upload/post', mediaSettings.use_chunked_uploads);
+        PostCreate.registerDropzoneBulkEvents();
     }
     if(app.open_ai_enabled) {
         AiSuggestions.initAISuggestions('#dropzone-uploader', 'post');

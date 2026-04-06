@@ -173,6 +173,7 @@ class PostsController extends Controller
             }
 
             $type = $request->get('type');
+            $isBulkMode = filter_var($request->get('bulkMode', false), FILTER_VALIDATE_BOOLEAN);
             $postStatus = PostsHelperServiceProvider::getDefaultPostStatus(Auth::user()->id);
             $postSchedulingData = [
                 'release_date' => $request->get('postReleaseDate') ? Carbon::parse($request->get('postReleaseDate'))->toDateTimeString() : null,
@@ -180,12 +181,55 @@ class PostsController extends Controller
             ];
 
             if ($type == 'create') {
-                $postID = Post::create(array_merge([
-                    'user_id' => $request->user()->id,
-                    'text' => $request->get('text'),
-                    'price' => $request->get('price'),
-                    'status' => $postStatus,
-                ], $postSchedulingData))->id;
+                if($isBulkMode){
+                    $attachments = collect($request->get('attachments'))->map(function ($v, $k) {
+                        if (isset($v['attachmentID'])) {
+                            return $v['attachmentID'];
+                        }
+                        if (isset($v['id'])) {
+                            return $v['id'];
+                        }
+                    })->filter()->values()->toArray();
+
+                    if(!count($attachments)){
+                        return response()->json(['success' => false, 'errors' => ['attachments' => __('Your post must contain at least one attachment.')]], 422);
+                    }
+
+                    $attachmentSchedules = $request->get('attachmentSchedules', []);
+                    $createdPosts = 0;
+                    $postID = false;
+
+                    foreach ($attachments as $attachmentID){
+                        $scheduleData = [
+                            'release_date' => null,
+                            'expire_date' => null,
+                        ];
+
+                        if(isset($attachmentSchedules[$attachmentID])){
+                            $scheduleData['release_date'] = !empty($attachmentSchedules[$attachmentID]['release_date']) ? Carbon::parse($attachmentSchedules[$attachmentID]['release_date'])->toDateTimeString() : null;
+                            $scheduleData['expire_date'] = !empty($attachmentSchedules[$attachmentID]['expire_date']) ? Carbon::parse($attachmentSchedules[$attachmentID]['expire_date'])->toDateTimeString() : null;
+                        }
+
+                        $post = Post::create(array_merge([
+                            'user_id' => $request->user()->id,
+                            'text' => $request->get('text'),
+                            'price' => $request->get('price'),
+                            'status' => $postStatus,
+                        ], $scheduleData));
+
+                        Attachment::where('id', $attachmentID)->update(['post_id' => $post->id]);
+                        $postID = $post->id;
+                        $createdPosts++;
+                    }
+                }
+                else{
+                    $postID = Post::create(array_merge([
+                        'user_id' => $request->user()->id,
+                        'text' => $request->get('text'),
+                        'price' => $request->get('price'),
+                        'status' => $postStatus,
+                    ], $postSchedulingData))->id;
+                }
             } elseif ($type == 'update') {
                 $postID = $request->get('id');
                 $post = Post::where('id', $postID)->where('user_id', Auth::user()->id)->first();
@@ -200,7 +244,7 @@ class PostsController extends Controller
                 }
             }
 
-            if ($postID) {
+            if ($postID && !$isBulkMode) {
                 $attachments = collect($request->get('attachments'))->map(function ($v, $k) {
                     if (isset($v['attachmentID'])) {
                         return $v['attachmentID'];
@@ -218,6 +262,9 @@ class PostsController extends Controller
             $message = __('Post created.');
             if ($type == 'update') {
                 $message = __('Post updated successfully.');
+            }
+            elseif($isBulkMode){
+                $message = trans_choice(':count posts created successfully.', (int) $createdPosts, ['count' => (int) $createdPosts]);
             }
             else{
                 $postNotifications = $request->get('postNotifications');
@@ -247,6 +294,33 @@ class PostsController extends Controller
                     }
                 }
 
+            }
+
+            if($type == 'create' && $isBulkMode){
+                $postNotifications = $request->get('postNotifications');
+                if(getSetting('profiles.enable_new_post_notification_setting') && $postNotifications == 'true'){
+                    $followers = ListsHelperServiceProvider::getUserFollowers(Auth::user()->id);
+
+                    foreach($followers as $follower){
+                        $serializedSettings = json_decode($follower['settings']);
+                        if(isset($serializedSettings->notification_email_new_post_created) && $serializedSettings->notification_email_new_post_created == 'true'){
+                            App::setLocale($serializedSettings->locale);
+                            EmailsServiceProvider::sendGenericEmail(
+                                [
+                                    'email' => $follower['email'],
+                                    'subject' => __('New content from @:username', ['username' => Auth::user()->username]),
+                                    'title' => __('Hello, :name,', ['name'=>$follower['name']]),
+                                    'content' => __('New content from people you follow is available', ['siteName'=>getSetting('site.name')]),
+                                    'button' => [
+                                        'text' => __('View your feed'),
+                                        'url' => route('feed'),
+                                    ],
+                                ]
+                            );
+                            App::setLocale(Auth::user()->settings['locale']);
+                        }
+                    }
+                }
             }
 
             return response()->json([

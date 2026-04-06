@@ -49,6 +49,15 @@
                         </button>
                     </div>
                 @endif
+                @if(Route::currentRouteName() == 'posts.create')
+                    <div class="custom-control custom-switch mt-3 mb-2">
+                        <input type="checkbox" class="custom-control-input" id="bulk-post-toggle">
+                        <label class="custom-control-label {{(Cookie::get('app_theme') == null ? (getSetting('site.default_user_theme') == 'dark' ? '' : 'text-dark-r') : (Cookie::get('app_theme') == 'dark' ? '' : 'text-dark-r'))}}" for="bulk-post-toggle">
+                            {{__('Bulk posting mode (1 media = 1 post)')}}
+                        </label>
+                    </div>
+                    <small class="text-muted d-block mb-3">{{__('Text, price and notifications are replicated. Scheduling must be configured per media item.')}}</small>
+                @endif
                 <div class="d-flex flex-column-reverse">
                     <div class="w-100">
                         <textarea  id="dropzone-uploader" name="input-text" class="form-control border dropzone w-100" rows="3" spellcheck="false" placeholder="{{__('Write a new post, drag and drop files to add attachments.')}}" value="{{isset($post) ? $post->text : ''}}"></textarea>
@@ -75,6 +84,26 @@
 
                     </div>
                     <div class="dropzone-previews dropzone w-100 ppl-0 pr-0 pt-1 pb-1"></div>
+                </div>
+                <div id="bulk-schedule-container" class="mt-3 d-none">
+                    <div class="card">
+                        <div class="card-header text-bold">{{__('Bulk post scheduling')}}</div>
+                        <div class="card-body p-2 p-md-3">
+                            <small class="text-muted d-block mb-2">{{__('Set release/expiration per media item. Empty dates mean immediate publishing with no expiration.')}}</small>
+                            <div class="table-responsive">
+                                <table class="table table-sm mb-0">
+                                    <thead>
+                                    <tr>
+                                        <th>{{__('Media')}}</th>
+                                        <th>{{__('Release date')}}</th>
+                                        <th>{{__('Expire date')}}</th>
+                                    </tr>
+                                    </thead>
+                                    <tbody id="bulk-schedule-table-body"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
 

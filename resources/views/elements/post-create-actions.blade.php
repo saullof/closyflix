@@ -63,6 +63,7 @@
     @if(getSetting('feed.allow_post_scheduling'))
         <div class="mt-1 ml-0 ml-md-2">
             <span
+                id="post-scheduling-action"
                 class="h-pill h-pill-primary {{!GenericHelper::isUserVerified() && getSetting('site.enforce_user_identity_checks') ? 'disabled' : ''}}"
                 data-toggle="tooltip"
                 data-placement="bottom"
@@ -75,4 +76,3 @@
         </div>
     @endif
 </div>
-
