@@ -231,26 +231,8 @@
                         $('#total-amount').text(`$${total.toFixed(2)}`);
 
 
-                        // 3) **FILTRAR OS MÉTODOS DE PAGAMENTO** conforme o cupom
-                        let pm = response.payment_method; // “all”, “pix” ou “credit_card”
-
-                        // Remover qualquer marcação de “selecionado” para métodos antigos
-                        $('.payment-method').removeClass('selected-payment');
-
-                        if (pm === 'all') {
-                            // mostra tudo
-                            $('.payment-method').removeClass('d-none');
-                        }
-                        else if (pm === 'pix') {
-                            // esconde todos, mostra apenas PIX-related (credit e suitpay)
-                            $('.payment-method').addClass('d-none');
-                            $('.credit-payment-method, .suitpay-payment-method').removeClass('d-none');
-                        }
-                        else if (pm === 'credit_card') {
-                            // esconde todos, mostra apenas credit e stripe
-                            $('.payment-method').addClass('d-none');
-                            $('.credit-payment-method, .stripe-payment-method').removeClass('d-none');
-                        }
+                        // Mantém os mesmos métodos de pagamento exibidos por padrão na página.
+                        // Ao aplicar cupom, apenas recalculamos valores e não alteramos visibilidade de botões.
 
                         toastr.success('{{ __("Cupom aplicado com sucesso!") }}');
                     } else {
