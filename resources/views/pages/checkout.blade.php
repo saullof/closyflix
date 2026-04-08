@@ -169,6 +169,23 @@
         }
 
 
+        function applyCouponPaymentMethodRestriction(paymentMethod) {
+            const pixMethods = $('.suitpay-payment-method, .stripe-pix-payment-method');
+            const creditCardMethods = $('.stripe-payment-method, .paypal-payment-method, .credit-payment-method, .ccbill-payment-method, .paystack-payment-method, .mercado-payment-method, .oxxo-payment-method');
+
+            // Remove previous coupon restrictions first
+            pixMethods.removeClass('coupon-method-hidden');
+            creditCardMethods.removeClass('coupon-method-hidden');
+
+            if (paymentMethod === 'pix') {
+                creditCardMethods.addClass('coupon-method-hidden');
+                creditCardMethods.find('.radio').removeClass('selected');
+            } else if (paymentMethod === 'credit_card') {
+                pixMethods.addClass('coupon-method-hidden');
+                pixMethods.find('.radio').removeClass('selected');
+            }
+        }
+
         function applyCoupon() {
             let CouponField = $('input.form-control[name="coupon"]'); // Campo visível
             let HiddenCouponField = $('#coupon'); // Campo oculto do cupom
@@ -201,6 +218,8 @@
                         HiddenCouponField.val(response.coupon_code);
                         $('#coupon_discount').val(checkout.paymentData.couponDiscount);
                         $('#coupon_discount_type').val(checkout.paymentData.couponDiscountType);
+                        applyCouponPaymentMethodRestriction(response.payment_method || 'all');
+
 
                         // Obtém o subtotal diretamente do plano selecionado via atributo data-amount
                         let subtotal = parseFloat($('input[name="subscription_plan"]:checked').data('amount')) || 0;
@@ -236,7 +255,8 @@
                     }
                 },
                 error: function() {
-                    toastr.error('{{ __("Erro ao validar o cupom. Tente novamente mais tarde.") }}');
+                        applyCouponPaymentMethodRestriction('all');
+                        toastr.error(response.message || '{{ __("Cupom inválido ou não aplicável.") }}');
                 }
             });
         }
@@ -1035,6 +1055,10 @@
                                                 flex: 1 1 auto; /* Permite ajuste responsivo */
                                                 max-width: 150px; /* Define um tamanho máximo para manter o layout */
                                                 text-align: center;
+                                            }
+                                            
+                                            .coupon-method-hidden {
+                                                display: none !important;
                                             }
 
                                             .payment-method:hover {
