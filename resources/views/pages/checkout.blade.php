@@ -168,14 +168,57 @@
             $('#login-dialog').modal('show');
         }
 
+        let defaultPaymentMethodsVisibility = null;
 
-        function applyCoupon() {
+        function snapshotDefaultPaymentMethods() {
+            if (defaultPaymentMethodsVisibility !== null) {
+                return;
+            }
+
+            defaultPaymentMethodsVisibility = [];
+            $('.payment-method').each(function() {
+                defaultPaymentMethodsVisibility.push({
+                    element: this,
+                    isHidden: $(this).hasClass('d-none')
+                });
+            });
+        }
+
+        function restoreDefaultPaymentMethods() {
+            if (!defaultPaymentMethodsVisibility) {
+                return;
+            }
+
+            defaultPaymentMethodsVisibility.forEach(function(item) {
+                $(item.element).toggleClass('d-none', item.isHidden);
+            });
+        }
+
+        function applyCouponPaymentMethodFilter(paymentMethod) {
+            snapshotDefaultPaymentMethods();
+            restoreDefaultPaymentMethods();
+
+            $('.payment-method').removeClass('selected-payment');
+
+            if (paymentMethod === 'credit_card') {
+                $('.suitpay-payment-method, .stripe-pix-payment-method').addClass('d-none');
+            } else if (paymentMethod === 'pix') {
+                $('.stripe-payment-method').addClass('d-none');
+            }
+        }
+
+
+        function applyCoupon(options = {}) {
+            const silent = Boolean(options.silent);
             let CouponField = $('input.form-control[name="coupon"]'); // Campo visível
             let HiddenCouponField = $('#coupon'); // Campo oculto do cupom
             let couponCode = CouponField.val().trim(); // Obtém o valor digitado
 
             if (couponCode === '') {
-                toastr.error('{{ __("Informe um código de cupom") }}');
+                restoreDefaultPaymentMethods();
+                if (!silent) {
+                    toastr.error('{{ __("Informe um código de cupom") }}');
+                }
                 return;
             }
 
@@ -230,38 +273,33 @@
                         let total = totalBeforeDiscount - discount;
                         $('#total-amount').text(`$${total.toFixed(2)}`);
 
+                        applyCouponPaymentMethodFilter(response.payment_method);
 
-                        // 3) **FILTRAR OS MÉTODOS DE PAGAMENTO** conforme o cupom
-                        let pm = response.payment_method; // “all”, “pix” ou “credit_card”
-
-                        // Remover qualquer marcação de “selecionado” para métodos antigos
-                        $('.payment-method').removeClass('selected-payment');
-
-                        if (pm === 'all') {
-                            // mostra tudo
-                            $('.payment-method').removeClass('d-none');
+                        if (!silent) {
+                            toastr.success('{{ __("Cupom aplicado com sucesso!") }}');
                         }
-                        else if (pm === 'pix') {
-                            // esconde todos, mostra apenas PIX-related (credit e suitpay)
-                            $('.payment-method').addClass('d-none');
-                            $('.credit-payment-method, .suitpay-payment-method').removeClass('d-none');
-                        }
-                        else if (pm === 'credit_card') {
-                            // esconde todos, mostra apenas credit e stripe
-                            $('.payment-method').addClass('d-none');
-                            $('.credit-payment-method, .stripe-payment-method').removeClass('d-none');
-                        }
-
-                        toastr.success('{{ __("Cupom aplicado com sucesso!") }}');
                     } else {
-                        toastr.error(response.message || '{{ __("Cupom inválido ou não aplicável.") }}');
+                        restoreDefaultPaymentMethods();
+                        if (!silent) {
+                            toastr.error(response.message || '{{ __("Cupom inválido ou não aplicável.") }}');
+                        }
                     }
                 },
                 error: function() {
-                    toastr.error('{{ __("Erro ao validar o cupom. Tente novamente mais tarde.") }}');
+                    restoreDefaultPaymentMethods();
+                    if (!silent) {
+                        toastr.error('{{ __("Erro ao validar o cupom. Tente novamente mais tarde.") }}');
+                    }
                 }
             });
         }
+
+        $(document).ready(function() {
+            const couponInput = $('#coupon-input');
+            if (couponInput.length && couponInput.val().trim() !== '') {
+                applyCoupon({ silent: true });
+            }
+        });
 
         function validateCouponField() {
             let CouponField = $('input.form-control[name="coupon"]'); // Campo visível
