@@ -169,13 +169,16 @@
         }
 
 
-        function applyCoupon() {
+        function applyCoupon(options = {}) {
+            const silent = Boolean(options.silent);
             let CouponField = $('input.form-control[name="coupon"]'); // Campo visível
             let HiddenCouponField = $('#coupon'); // Campo oculto do cupom
             let couponCode = CouponField.val().trim(); // Obtém o valor digitado
 
             if (couponCode === '') {
-                toastr.error('{{ __("Informe um código de cupom") }}');
+                if (!silent) {
+                    toastr.error('{{ __("Informe um código de cupom") }}');
+                }
                 return;
             }
 
@@ -234,16 +237,29 @@
                         // Mantém os mesmos métodos de pagamento exibidos por padrão na página.
                         // Ao aplicar cupom, apenas recalculamos valores e não alteramos visibilidade de botões.
 
-                        toastr.success('{{ __("Cupom aplicado com sucesso!") }}');
+                        if (!silent) {
+                            toastr.success('{{ __("Cupom aplicado com sucesso!") }}');
+                        }
                     } else {
-                        toastr.error(response.message || '{{ __("Cupom inválido ou não aplicável.") }}');
+                        if (!silent) {
+                            toastr.error(response.message || '{{ __("Cupom inválido ou não aplicável.") }}');
+                        }
                     }
                 },
                 error: function() {
-                    toastr.error('{{ __("Erro ao validar o cupom. Tente novamente mais tarde.") }}');
+                    if (!silent) {
+                        toastr.error('{{ __("Erro ao validar o cupom. Tente novamente mais tarde.") }}');
+                    }
                 }
             });
         }
+
+        $(document).ready(function() {
+            const couponInput = $('#coupon-input');
+            if (couponInput.length && couponInput.val().trim() !== '') {
+                applyCoupon({ silent: true });
+            }
+        });
 
         function validateCouponField() {
             let CouponField = $('input.form-control[name="coupon"]'); // Campo visível
