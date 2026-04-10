@@ -26,10 +26,13 @@ class SavePostRequest extends FormRequest
     {
 
         $rules = [];
+        if ($this->get('bulkMode') == 'true' || $this->get('bulkMode') === true) {
+            $rules['attachments'] = 'required|array|min:1';
+        }
         if((int)getSetting('feed.min_post_description') > 0){
             $rules['text'] = 'required|min:'.getSetting('feed.min_post_description');
         }
-        else{
+        elseif (!isset($rules['attachments'])){
             $rules['attachments'] = 'required';
         }
 
