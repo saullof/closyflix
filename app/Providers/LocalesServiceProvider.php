@@ -3,13 +3,49 @@
 namespace App\Providers;
 
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\ServiceProvider;
 use Cookie;
 
 class LocalesServiceProvider extends ServiceProvider
 {
+    public static $countryToLocaleMap = [
+        'BR' => 'pt',
+        'PT' => 'pt',
+        'US' => 'en', 'GB' => 'en', 'IE' => 'en', 'CA' => 'en', 'AU' => 'en', 'NZ' => 'en',
+        'ES' => 'es', 'MX' => 'es', 'AR' => 'es', 'CO' => 'es', 'CL' => 'es', 'PE' => 'es', 'UY' => 'es', 'VE' => 'es',
+        'FR' => 'fr', 'BE' => 'fr', 'CH' => 'fr', 'LU' => 'fr',
+        'DE' => 'de', 'AT' => 'de',
+        'IT' => 'it',
+        'NL' => 'nl',
+        'TR' => 'tr',
+        'RU' => 'ru', 'UA' => 'uk',
+        'PL' => 'pl',
+        'RO' => 'ro',
+        'CZ' => 'cs',
+        'SE' => 'sv',
+        'DK' => 'da',
+        'FI' => 'fi',
+        'NO' => 'no',
+        'GR' => 'el',
+        'IL' => 'he',
+        'SA' => 'ar', 'AE' => 'ar', 'EG' => 'ar', 'MA' => 'ar', 'DZ' => 'ar',
+        'IR' => 'fa',
+        'IN' => 'hi',
+        'BD' => 'bn',
+        'TH' => 'th',
+        'VN' => 'vi',
+        'ID' => 'id',
+        'MY' => 'ms',
+        'PH' => 'tl',
+        'JP' => 'ja',
+        'KR' => 'ko',
+        'CN' => 'zh', 'TW' => 'zh', 'HK' => 'zh', 'SG' => 'zh',
+    ];
+
     public static $languageCodes = array(
         "aa" => "Afar",
         "ab" => "Abkhazian",
@@ -251,39 +287,139 @@ class LocalesServiceProvider extends ServiceProvider
 
     public static function getUserPreferredLocale($request)
     {
+        $availableLocales = self::getAvailableLanguages();
+        $defaultLocale = self::resolveSupportedLocale('en', $availableLocales, 'en');
+        $geoLocale = self::getGeoLocatedLocale($request, $availableLocales, $defaultLocale);
+        $browserLocale = self::getBrowserPreferredLocale($request, $availableLocales, $defaultLocale);
+
         if (! Session::has('locale')) {
             if (InstallerServiceProvider::checkIfInstalled()) {
                 if (Cookie::get('app_locale')) {
-                    return Cookie::get('app_locale');
+                    return self::resolveSupportedLocale(Cookie::get('app_locale'), $availableLocales, $defaultLocale);
                 }
-                if (getSetting('site.use_browser_language_if_available')) {
-                    $preferredLang = explode('-', $request->server('HTTP_ACCEPT_LANGUAGE'))[0] ?? null;
-                    if ($preferredLang) {
-                        return $preferredLang; // If user has missing locale setting - default on site setting
-                    }
+                if ($geoLocale) {
+                    return $geoLocale;
+                }
+                if ($browserLocale) {
+                    return $browserLocale;
                 }
 
-                return getSetting('site.default_site_language');
+                return $defaultLocale;
             } else {
-                return Config::get('app.locale');
+                return $defaultLocale;
             }
         }
 
         if (isset(Auth::user()->settings['locale'])) {
-            return Auth::user()->settings['locale'];
+            return self::resolveSupportedLocale(Auth::user()->settings['locale'], $availableLocales, $defaultLocale);
         } else {
             if (Cookie::get('app_locale')) {
-                return Cookie::get('app_locale');
+                return self::resolveSupportedLocale(Cookie::get('app_locale'), $availableLocales, $defaultLocale);
             } else {
-                if (getSetting('site.use_browser_language_if_available')) {
-                    $preferredLang = explode('-', $request->server('HTTP_ACCEPT_LANGUAGE'))[0] ?? null;
-                    if ($preferredLang) {
-                        return $preferredLang; // If user has missing locale setting - default on site setting
-                    } else {
-                        return getSetting('site.default_site_language');
-                    }
+                if ($geoLocale) {
+                    return $geoLocale;
+                } elseif ($browserLocale) {
+                    return $browserLocale;
+                } else {
+                    return $defaultLocale;
                 }
             }
+        }
+
+        return $defaultLocale;
+    }
+
+    public static function resolveSupportedLocale($locale, $availableLocales = null, $fallbackLocale = null)
+    {
+        $availableLocales = $availableLocales ?: self::getAvailableLanguages();
+        $locale = strtolower((string)$locale);
+
+        if (! $locale) {
+            return $fallbackLocale ?: Config::get('app.fallback_locale');
+        }
+
+        if (in_array($locale, $availableLocales)) {
+            return $locale;
+        }
+
+        if (strpos($locale, '-') !== false) {
+            $normalizedLocale = explode('-', $locale)[0];
+            if (in_array($normalizedLocale, $availableLocales)) {
+                return $normalizedLocale;
+            }
+        }
+
+        if (strpos($locale, '_') !== false) {
+            $normalizedLocale = explode('_', $locale)[0];
+            if (in_array($normalizedLocale, $availableLocales)) {
+                return $normalizedLocale;
+            }
+        }
+
+        return $fallbackLocale ?: Config::get('app.fallback_locale');
+    }
+
+    public static function getGeoLocatedLocale($request, $availableLocales = null, $fallbackLocale = 'en')
+    {
+        $availableLocales = $availableLocales ?: self::getAvailableLanguages();
+        $countryCode = self::getCountryCodeFromRequest($request);
+        if (! $countryCode) {
+            return $fallbackLocale;
+        }
+
+        $countryCode = strtoupper($countryCode);
+        $locale = self::$countryToLocaleMap[$countryCode] ?? null;
+        return self::resolveSupportedLocale($locale, $availableLocales, $fallbackLocale);
+    }
+
+    public static function getBrowserPreferredLocale($request, $availableLocales = null, $fallbackLocale = 'en')
+    {
+        $availableLocales = $availableLocales ?: self::getAvailableLanguages();
+        $preferredLang = explode(',', (string)$request->server('HTTP_ACCEPT_LANGUAGE'))[0] ?? null;
+
+        if (! $preferredLang) {
+            return $fallbackLocale;
+        }
+
+        return self::resolveSupportedLocale($preferredLang, $availableLocales, $fallbackLocale);
+    }
+
+    public static function getCountryCodeFromRequest($request)
+    {
+        $headerCountry = $request->server('HTTP_CF_IPCOUNTRY')
+            ?: $request->server('CF-IPCountry')
+            ?: $request->header('CF-IPCountry');
+
+        if ($headerCountry && strtoupper($headerCountry) !== 'XX') {
+            return strtoupper($headerCountry);
+        }
+
+        if (! InstallerServiceProvider::checkIfInstalled()) {
+            return null;
+        }
+
+        $abstractApiKey = getSetting('security.abstract_api_key');
+        if (! $abstractApiKey) {
+            return null;
+        }
+
+        try {
+            $ip = $request->ip();
+            $cacheKey = 'geo_country_'.md5((string)$ip);
+            return Cache::remember($cacheKey, now()->addHours(12), function () use ($abstractApiKey, $ip) {
+                $client = new \GuzzleHttp\Client(['timeout' => 2]);
+                $response = $client->get('https://ipgeolocation.abstractapi.com/v1/', [
+                    'query' => [
+                        'api_key' => $abstractApiKey,
+                        'ip_address' => $ip,
+                    ],
+                ]);
+                $apiData = json_decode($response->getBody()->getContents());
+                return isset($apiData->country_code) ? strtoupper($apiData->country_code) : null;
+            });
+        } catch (\Exception $exception) {
+            Log::warning('Could not determine country for locale detection', ['error' => $exception->getMessage()]);
+            return null;
         }
     }
 

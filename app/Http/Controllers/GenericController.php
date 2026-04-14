@@ -8,6 +8,7 @@ use App\Model\Country;
 use App\Model\Tax;
 use App\Providers\EmailsServiceProvider;
 use App\Providers\InstallerServiceProvider;
+use App\Providers\LocalesServiceProvider;
 use App\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\App;
@@ -56,17 +57,20 @@ class GenericController extends Controller
      */
     public function setLanguage(Request $request)
     {
-
-        $locale = getSetting('site.default_site_language');
+        $defaultLocale = 'en';
+        $locale = LocalesServiceProvider::resolveSupportedLocale(
+            $request->route('locale'),
+            LocalesServiceProvider::getAvailableLanguages(),
+            $defaultLocale
+        );
 
         if(Auth::check()){
             $user = Auth::user();
-            $user->settings = collect(array_merge($user->settings->toArray(), ['locale'=>$request->route('locale')]));
+            $user->settings = collect(array_merge($user->settings->toArray(), ['locale'=>$locale]));
             $user->save();
             $locale = $user->settings['locale'];
         }
         else{
-            $locale = $request->route('locale');
             Cookie::queue('app_locale', $locale, 356, null, null, null, false, false, null);
         }
 
