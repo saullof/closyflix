@@ -35,14 +35,14 @@ class LocaleSetter
 
         // Prepping the translation files for frontend usage
         $langPath = app()->langPath().'/'.App::getLocale();
+        if (! file_exists($langPath.'.json')) {
+            $langPath = app()->langPath().'/'.config('app.fallback_locale', 'en');
+        }
         if (env('APP_ENV') == 'production') {
             Cache::rememberForever('translations', function () use ($langPath) {
                 return file_get_contents($langPath.'.json');
             });
         } else {
-            if (! file_exists($langPath.'.json')) {
-                $langPath = app()->langPath().'en';
-            }
             Cache::remember('translations', 5, function () use ($langPath) {
                 return file_get_contents($langPath.'.json');
             });
