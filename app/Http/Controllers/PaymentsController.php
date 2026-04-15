@@ -48,13 +48,15 @@ class PaymentsController extends Controller
     public function initiatePayment(CreateTransactionRequest $request)
     {
 
-            // validações, etc...
-        $phone = preg_replace('/\D/', '', $request->input('user_phone'));
-
-        // atualiza no banco
-        $user = Auth::user();
-        $user->phone = $phone;
-        $user->save();
+        $phoneInput = $request->input('user_phone');
+        if (!empty($phoneInput)) {
+            $phone = preg_replace('/\D/', '', $phoneInput);
+            $user = Auth::user();
+            if ($user && $phone !== '') {
+                $user->phone = $phone;
+                $user->save();
+            }
+        }
         // dd($request->all());
         $transactionType = $request->get('transaction_type');
         $redirectLink = null;
@@ -1190,4 +1192,3 @@ class PaymentsController extends Controller
         }
     }
 }
-

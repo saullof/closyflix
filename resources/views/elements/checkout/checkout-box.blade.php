@@ -1,58 +1,3 @@
-<!-- 1) jQuery (antes de tudo) -->
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-
-<!-- 2) Inputmask -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/inputmask/5.0.8/jquery.inputmask.min.js"></script>
-
-<script>
-$(function(){
-  var $phone     = $('#paymentPhone');
-  var $submitBtn = $('.checkout-continue-btn');
-
-  // Função que formata em (00) 00000-0000
-  function formatPhone(value) {
-    var d = value.replace(/\D/g, '').slice(0, 11);
-    var res = '';
-    if (d.length > 0)       res += '(' + d.substring(0, Math.min(2, d.length));
-    if (d.length >= 2)      res += ') ';
-    if (d.length > 2)       res += d.substring(2, Math.min(7, d.length));
-    if (d.length >= 7)      res += '-' + d.substring(7, d.length);
-    return res;
-  }
-
-  // 1) Formata enquanto digita
-  $phone.on('input', function(){
-    this.value = formatPhone(this.value);
-  });
-
-  // 2) Checagem a cada segundo: aplica classes e botão disable/enable
-  setInterval(function(){
-    var digits = $phone.val().replace(/\D/g, '');
-
-    if (digits.length === 11) {
-      $phone.removeClass('is-invalid').addClass('is-valid');
-      $submitBtn.prop('disabled', false);
-    } else {
-      $phone.removeClass('is-valid').addClass('is-invalid');
-      $submitBtn.prop('disabled', true);
-    }
-  }, 1000);
-
-  // 3) No submit: bloqueia se inválido e popula hidden
-  $('#pp-buyItem').on('submit', function(e){
-    var digits = $phone.val().replace(/\D/g, '');
-    if (digits.length !== 11) {
-      e.preventDefault();
-      $phone.addClass('is-invalid').focus();
-      return false;
-    }
-    // preenche o hidden e envia
-    $('#payment-user-phone').val(digits);
-  });
-});
-</script>
-
-
 <div class="row checkout-dialog">
     <div class="col-lg-6 mx-auto">
         {{-- Paypal and stripe actual buttons --}}
@@ -74,7 +19,6 @@ $(function(){
                 <input type="hidden" name="country" id="paymentCountry" value="">
                 <input type="hidden" name="taxes" id="paymentTaxes" value="">
                 <input type="hidden" name="stream" id="stream" value="">
-                <input type="hidden" name="user_phone" id="payment-user-phone" value="">
                 <button class="payment-button" type="submit"></button>
             </form>
         </div>
@@ -161,31 +105,6 @@ $(function(){
                                                         </label>
                                                         <select class="country-select form-control input-sm uifield-country" id="countrySelect" required onchange="checkout.validateCountryField()"></select>
                                                     </div>
-                                                    <div class="row form-group">
-                                                        <div class="col-sm-6 col-6">
-                                                            <div class="form-group">
-                                                                <label for="phone">
-                                                                    <span>{{__('Phone')}}</span>
-                                                                </label>
-                                                                <input
-                                                                    type="tel"
-                                                                    id="paymentPhone"
-                                                                    name="phone"
-                                                                    class="form-control uifield-phone"
-                                                                    placeholder="(00) 00000-0000"
-                                                                    required
-                                                                    onchange="checkout.validatePhoneField();"
-                                                                >
-                                                                <div class="valid-feedback">
-                                                                    Número Válido!
-                                                                </div>
-                                                                <div class="invalid-feedback">
-                                                                    Número Inválido!
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-
                                                 </div>
                                                 <div class="billing-agreement-error error text-danger d-none">{{__('Please complete all billing details')}}</div>
                                             </div>
@@ -351,6 +270,5 @@ $(function(){
         </div>
     </div>
 </div>
-
 
 

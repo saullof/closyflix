@@ -563,10 +563,6 @@ var checkout = {
         $('#coupon').val(checkout.paymentData.coupon);
         $('#coupon_Discount').val(checkout.paymentData.couponDiscount);
         $('#coupon_Discount_Type').val(checkout.paymentData.couponDiscountType);
-        const phoneRaw = $('.uifield-phone').val() || '';
-        $('#payment-user-phone').val(phoneRaw.replace(/\D/g, ''));
-      
-        console.log('[updatePaymentForm] phone sent:', $('#payment-user-phone').val());
     },
 
     stripe: null,
@@ -772,26 +768,6 @@ var checkout = {
  
     
     /**
-     * Validates the phone field
-     */
-    validatePhoneField: function () {
-        let phoneField = $('input[name="phone"]');
-        let rawPhoneVal = phoneField.val();
-        let phoneVal = rawPhoneVal.replace(/\D/g, ''); // remove tudo que não for número
-    
-        // Verifica se está vazio ou com quantidade inválida de dígitos
-        if (rawPhoneVal.trim() === '' || phoneVal.length !== 11) {
-            phoneField.addClass('is-invalid');
-            $('#phone-error').text('Por favor, insira um número de celular válido com DDD.');
-            checkout.paymentData.phone = '';
-        } else {
-            phoneField.removeClass('is-invalid');
-            $('#phone-error').text('');
-            checkout.paymentData.phone = rawPhoneVal; // mantém o valor formatado
-        }
-    },
-    
-    /**
      * Validates LN field
      */
     validateLastNameField: function () {
@@ -857,7 +833,6 @@ var checkout = {
         $('input[name="billingState"]').val(checkout.paymentData.state);
         $('input[name="billingPostcode"]').val(checkout.paymentData.postcode);
         $('textarea[name="billingAddress"]').val(checkout.paymentData.billingAddress);
-        $('input[name="phone"]').val(checkout.paymentData.phone);
     },
 
     /**
