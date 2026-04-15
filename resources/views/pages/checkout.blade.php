@@ -283,51 +283,6 @@
             }
         }
 
-        $(function(){
-            var $phone     = $('#paymentPhone');
-            var $submitBtn = $('.checkout-continue-btn');
-
-            // Função que formata em (00) 00000-0000
-            function formatPhone(value) {
-                var d = value.replace(/\D/g, '').slice(0, 11);
-                var res = '';
-                if (d.length > 0)       res += '(' + d.substring(0, Math.min(2, d.length));
-                if (d.length >= 2)      res += ') ';
-                if (d.length > 2)       res += d.substring(2, Math.min(7, d.length));
-                if (d.length >= 7)      res += '-' + d.substring(7, d.length);
-                return res;
-            }
-
-            // 1) Formata enquanto digita
-            $phone.on('input', function(){
-                this.value = formatPhone(this.value);
-            });
-
-            // 2) Checagem a cada segundo: aplica classes e botão disable/enable
-            setInterval(function(){
-                var digits = $phone.val().replace(/\D/g, '');
-
-                if (digits.length === 11) {
-                $phone.removeClass('is-invalid').addClass('is-valid');
-                $submitBtn.prop('disabled', false);
-                } else {
-                $phone.removeClass('is-valid').addClass('is-invalid');
-                $submitBtn.prop('disabled', true);
-                }
-            }, 1000);
-
-            // 3) No submit: bloqueia se inválido e popula hidden
-            $('#pp-buyItem').on('submit', function(e){
-                var digits = $phone.val().replace(/\D/g, '');
-                if (digits.length !== 11) {
-                e.preventDefault();
-                $phone.addClass('is-invalid').focus();
-                return false;
-                }
-                // preenche o hidden e envia
-                $('#payment-user-phone').val(digits);
-            });
-            });
     </script>
     
     <script src="https://www.google.com/recaptcha/api.js" async defer></script>
@@ -854,33 +809,6 @@
                                                             <select class="country-select form-control input-sm uifield-country" id="countrySelect" required onchange="checkout.validateCountryField()"></select>
                                                         </div>
 
-                                                        <div class="row form-group">
-                                                            <div class="col-sm-6 col-6">
-                                                                <div class="form-group">
-                                                                    <label for="paymentPhone">
-                                                                        <span>{{ __('Phone') }}</span>
-                                                                    </label>
-                                                                    <input
-                                                                        type="tel"
-                                                                        id="paymentPhone"
-                                                                        name="phone"
-                                                                        class="form-control uifield-phone"
-                                                                        placeholder="(00) 00000-0000"
-                                                                        required
-                                                                        oninput="validatePhoneField();"
-                                                                    >
-                                                                    <div class="valid-feedback">
-                                                                        Número Válido!
-                                                                    </div>
-                                                                    <div class="invalid-feedback" id="phone-error">
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-
-
-
-
                                                     </div>
                                                     <div class="billing-agreement-error error text-danger d-none">{{ __('Please complete all billing details') }}</div>
                                                 </div>
@@ -1090,40 +1018,6 @@
                                                     });
                                                 });
                                             });
-
-                                            function validatePhoneField() {
-                                                const phoneField = document.querySelector('input[name="phone"]');
-                                                const rawPhoneVal = phoneField.value;
-                                                const onlyDigits = rawPhoneVal.replace(/\D/g, '');
-
-                                                // Se o campo estiver vazio, removemos qualquer feedback e saímos
-                                                if (rawPhoneVal.trim() === '') {
-                                                    phoneField.classList.remove('is-invalid', 'is-valid');
-                                                    document.getElementById('phone-error').textContent = '';
-                                                    // Também zera o dado no objeto checkout, caso exista
-                                                    if (window.checkout && checkout.paymentData) {
-                                                        checkout.paymentData.phone = '';
-                                                    }
-                                                    return;
-                                                }
-
-                                                // Se não estiver vazio, validamos a quantidade de dígitos
-                                                if (onlyDigits.length !== 11) {
-                                                    phoneField.classList.add('is-invalid');
-                                                    phoneField.classList.remove('is-valid');
-                                                    document.getElementById('phone-error').textContent = 'Por favor, insira um número de celular válido com DDD.';
-                                                    if (window.checkout && checkout.paymentData) {
-                                                        checkout.paymentData.phone = '';
-                                                    }
-                                                } else {
-                                                    phoneField.classList.remove('is-invalid');
-                                                    phoneField.classList.add('is-valid');
-                                                    document.getElementById('phone-error').textContent = '';
-                                                    if (window.checkout && checkout.paymentData) {
-                                                        checkout.paymentData.phone = rawPhoneVal;
-                                                    }
-                                                }
-                                            }
 
                                         </script>
 
