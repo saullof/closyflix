@@ -158,6 +158,7 @@
                                                     @include('elements.feed.post-box-media-wrapper', [
                                                 'attachment' => $attachment,
                                                 'isGallery' => true,
+                                                'isLocked' => true,
                                             ])
                                                 </div>
                                         @endforeach
@@ -174,6 +175,7 @@
                                 @include('elements.feed.post-box-media-wrapper', [
                                     'attachment' => $post->attachments[0],
                                     'isGallery' => false,
+                                    'isLocked' => true,
                                 ])
                             @endif
                         </div>
@@ -207,6 +209,7 @@
                                             @include('elements.feed.post-box-media-wrapper', [
                                             'attachment' => $attachment,
                                             'isGallery' => true,
+                                            'isLocked' => false,
                                         ])
                                         </div>
                                     @endforeach
@@ -223,6 +226,7 @@
                             @include('elements.feed.post-box-media-wrapper', [
                                     'attachment' => $post->attachments[0],
                                     'isGallery' => false,
+                                    'isLocked' => false,
                                 ])
                         @endif
                     @endif
@@ -230,7 +234,8 @@
                         <div class="post-media-blurred" style="overflow: hidden;">
                             @include('elements.feed.post-box-media-wrapper', [
                         'attachment' => $post->attachments[0],
-                        'isGallery' => count($post->attachments) > 1
+                        'isGallery' => count($post->attachments) > 1,
+                        'isLocked' => true,
                     ])
                         </div>
                 @endif

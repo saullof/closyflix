@@ -8,7 +8,7 @@
             @if($recentMedia && count($recentMedia) && Auth::check())
                 @foreach($recentMedia as $media)
                     <a href="{{$media->path}}" rel="mswp" title="">
-                        <img src="{{AttachmentHelper::getThumbnailPathForAttachmentByResolution($media, 150, 150)}}" class="rounded mb-2 mb-md-2 mb-lg-2 mb-xl-0 img-fluid">
+                        <img src="{{ $media->thumbnail ?? $media->path }}" class="rounded mb-2 mb-md-2 mb-lg-2 mb-xl-0 img-fluid">
                     </a>
                 @endforeach
             @else

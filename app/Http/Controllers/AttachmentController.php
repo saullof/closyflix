@@ -89,12 +89,16 @@ class AttachmentController extends Controller
             return response()->json(['success' => false, 'errors' => [$exception->getMessage(), $exception->getTrace()], 'message' => $exception->getMessage()], 500);
         }
 
+        $thumbnailUrl = AttachmentServiceProvider::getAttachmentType($attachment->type) === 'image'
+            ? AttachmentServiceProvider::getImageThumbnailUrl($attachment)
+            : AttachmentServiceProvider::getThumbnailPathForAttachmentByResolution($attachment, 150, 150);
+
         return response()->json([
             'success' => true,
             'attachmentID' => $attachment->id,
             'path' => Storage::url($attachment->filename),
             'type' => AttachmentServiceProvider::getAttachmentType($attachment->type),
-            'thumbnail' => AttachmentServiceProvider::getThumbnailPathForAttachmentByResolution($attachment, 150, 150),
+            'thumbnail' => $thumbnailUrl,
             'coconut_id' => $attachment->coconut_id,
             'has_thumbnail' => $attachment->has_thumbnail
         ]);
@@ -202,4 +206,3 @@ class AttachmentController extends Controller
 
     }
 }
-
