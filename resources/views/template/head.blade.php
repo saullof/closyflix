@@ -151,19 +151,10 @@
 
 @if(isset($pixel_user))
     <script>
-        var loadTime = parseInt(localStorage.getItem("PageViewDone"));
-        var currentTime = (new Date().getTime()) / 1000;
-                var doPageView = false;
-                if(loadTime == NaN){
-                loadTime = currentTime;
-                localStorage.setItem("PageViewDone", currentTime);
-                }
-                
-                if ((currentTime - loadTime >= 300) || currentTime == loadTime) {
-                    localStorage.setItem("PageViewDone", currentTime);
-                    doPageView = true;
-                }
-            </script>
+        var currentTime = Math.floor(Date.now() / 1000);
+        var doPageView = true;
+        localStorage.setItem("PageViewDone", currentTime);
+    </script>
         @if( !empty($pixel_user['meta-head']) )
             <!-- Meta Pixel Code -->
             <script>
@@ -286,5 +277,3 @@
         {!! getSetting('custom-code-ads.custom_css') !!}
     </style>
 @endif
-
-
