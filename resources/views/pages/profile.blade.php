@@ -259,12 +259,8 @@ var currentView = 'list'; // Valor inicial é 'list', então ele inicia sem a cl
 function changeView(view) {
     currentView = view; // Atualiza o estado global
 
-    var container = document.getElementById('posts-container');
-    if (!container) {
-        return;
-    }
-
     applyViewToNewElements();
+    var container = document.getElementById('posts-container');
     var imageContainer = document.querySelectorAll('.post-image-container');
     var horizontalImages = document.querySelectorAll('.post-image-horizontal');
     var removeLines = document.querySelectorAll('.removelinha'); // Seleciona todos os <hr> com a classe "removelinha"
@@ -275,8 +271,10 @@ function changeView(view) {
     var removebackgroundimg2 = document.querySelectorAll('.removebackgroundimg2'); 
     
     if (view === 'grid') {
-        container.classList.add('grid-view');
-        container.classList.remove('list-view');
+        if (container) {
+            container.classList.add('grid-view');
+            container.classList.remove('list-view');
+        }
 
         // Adiciona 'd-none' a todos os <hr>
         removeLines.forEach(function(line) {
@@ -318,8 +316,10 @@ function changeView(view) {
         });
 
     } else {
-        container.classList.add('list-view');
-        container.classList.remove('grid-view');
+        if (container) {
+            container.classList.add('list-view');
+            container.classList.remove('grid-view');
+        }
 
         // Remove 'd-none' de todos os <hr>
         removeLines.forEach(function(line) {
@@ -352,6 +352,7 @@ function changeView(view) {
 
 // Função para aplicar a visualização inicial e para novos elementos com a classe "h-100-target"
 function applyViewToNewElements() {
+    var container = document.getElementById('posts-container');
     var removeLines = document.querySelectorAll('.removelinha');
     var horizontalImages = document.querySelectorAll('.post-image-horizontal');
     var removeswiperbutton = document.querySelectorAll('.swiper-button');
@@ -362,6 +363,10 @@ function applyViewToNewElements() {
     var removebackgroundimg2 = document.querySelectorAll('.removebackgroundimg2');
 
     if (currentView === 'grid') {
+        if (container) {
+            container.classList.add('grid-view');
+            container.classList.remove('list-view');
+        }
         removeLines.forEach(function(line) {
             line.classList.add('d-none');
         });
@@ -400,6 +405,10 @@ function applyViewToNewElements() {
         });
 
     } else {
+        if (container) {
+            container.classList.add('list-view');
+            container.classList.remove('grid-view');
+        }
         removeLines.forEach(function(line) {
             line.classList.remove('d-none');
         });
