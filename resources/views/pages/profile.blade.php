@@ -258,9 +258,13 @@ var currentView = 'list'; // Valor inicial é 'list', então ele inicia sem a cl
 // Função para alternar a visualização entre 'grid' e 'list'
 function changeView(view) {
     currentView = view; // Atualiza o estado global
-    applyViewToNewElements();
 
     var container = document.getElementById('posts-container');
+    if (!container) {
+        return;
+    }
+
+    applyViewToNewElements();
     var imageContainer = document.querySelectorAll('.post-image-container');
     var horizontalImages = document.querySelectorAll('.post-image-horizontal');
     var removeLines = document.querySelectorAll('.removelinha'); // Seleciona todos os <hr> com a classe "removelinha"
@@ -327,7 +331,7 @@ function changeView(view) {
         });
 
         removebackgroundimg2.forEach(function(line) {
-            line.classList.remove('backgroundimg2');
+            line.classList.add('backgroundimg2');
         });
 
         removeswiperbutton.forEach(function(line) {
@@ -354,6 +358,8 @@ function applyViewToNewElements() {
     var imageContainer = document.querySelectorAll('.post-image-container');
     var h100Elements = document.querySelectorAll('.h-100-target');
     var linkPosts = document.querySelectorAll('.linkpost');
+    var imgcontainer = document.querySelectorAll('.image-containerCss');
+    var removebackgroundimg2 = document.querySelectorAll('.removebackgroundimg2');
 
     if (currentView === 'grid') {
         removeLines.forEach(function(line) {
@@ -370,6 +376,14 @@ function applyViewToNewElements() {
 
         horizontalImages.forEach(function(element) {
             element.classList.remove('aspect-ratio');
+        });
+
+        imgcontainer.forEach(function(line) {
+            line.classList.remove('image-container');
+        });
+
+        removebackgroundimg2.forEach(function(line) {
+            line.classList.remove('backgroundimg2');
         });
 
         // Garante que a classe 'h-100' seja removida no modo grid
@@ -396,6 +410,14 @@ function applyViewToNewElements() {
 
         h100Elements.forEach(function(element) {
             element.classList.remove('h-100');
+        });
+
+        imgcontainer.forEach(function(line) {
+            line.classList.add('image-container');
+        });
+
+        removebackgroundimg2.forEach(function(line) {
+            line.classList.add('backgroundimg2');
         });
 
         // Torna os hrefs nulos no modo list
@@ -435,6 +457,21 @@ document.addEventListener('DOMContentLoaded', function() {
 
     applyViewToNewElements(); // Aplica a visualização inicial em modo 'list'
     observeRemovelinhaClass(); // Observa periodicamente a classe "removelinha"
+
+    var gridButton = document.getElementById('grid-view-button');
+    var listButton = document.getElementById('list-view-button');
+
+    if (gridButton) {
+        gridButton.addEventListener('click', function() {
+            changeView('grid');
+        });
+    }
+
+    if (listButton) {
+        listButton.addEventListener('click', function() {
+            changeView('list');
+        });
+    }
 });
 
 // Função que verifica periodicamente a existência de elementos com a classe "removelinha"
@@ -801,10 +838,10 @@ function observeRemovelinhaClass() {
 
                     <!-- Ícones de Grid e List -->
                     <div class="d-inline-block ms-3">
-                        <button onclick="changeView('grid')" class="btn btn-transparent p-1 order-thick border-thick" title="Grid View">
+                        <button type="button" id="grid-view-button" class="btn btn-transparent p-1 order-thick border-thick" title="Grid View">
                             <img src="{{ asset('img/IconeGrid.png') }}" alt="Grid View" width="24" height="24">
                         </button>
-                        <button onclick="changeView('list')" class="btn btn-transparent p-1 ms-2 border-thick" title="List View">
+                        <button type="button" id="list-view-button" class="btn btn-transparent p-1 ms-2 border-thick" title="List View">
                             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="#E93745" viewBox="0,0,256,256">
                                 <g transform="scale(10.66667,10.66667)">
                                     <path d="M20,2h-16c-1.10457,0 -2,0.89543 -2,2v8c0,1.10457 0.89543,2 2,2h16c1.10457,0 2,-0.89543 2,-2v-8c0,-1.10457 -0.89543,-2 -2,-2zM4,12v-8h16v8zM22,16v2h-20v-2zM22,20v2h-20v-2z"></path>
