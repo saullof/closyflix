@@ -19,10 +19,8 @@ class TwoFAController extends Controller
      */
     public function index()
     {
-        if(getSetting('security.enable_2fa')){
-            if(Auth::user()->enable_2fa && !in_array(AuthServiceProvider::generate2FaDeviceSignature(), AuthServiceProvider::getUserDevices(Auth::user()->id))  ) {
-                return view('pages.2fa-verify');
-            }
+        if(AuthServiceProvider::shouldRequireEmail2FA(Auth::user()) && !in_array(AuthServiceProvider::generate2FaDeviceSignature(), AuthServiceProvider::getUserDevices(Auth::user()->id))  ) {
+            return view('pages.2fa-verify');
         }
         return redirect()->route('home');
     }
@@ -38,9 +36,16 @@ class TwoFAController extends Controller
             ->where('updated_at', '>=', now()->subMinutes(30))
             ->first();
         if (!is_null($code)) {
-            $device = UserDevice::where('signature',AuthServiceProvider::generate2FaDeviceSignature())->first();
+            $signature = AuthServiceProvider::generate2FaDeviceSignature();
+            $device = UserDevice::firstOrNew([
+                'user_id' => Auth::user()->id,
+                'signature' => $signature,
+            ]);
+            $device->address = $device->address ?: $request->ip();
+            $device->agent = $device->agent ?: $request->header('User-Agent');
             $device->verified_at = Carbon::now();
             $device->save();
+            $code->delete();
             Session::put('force2fa', false);
             return redirect()->route('home');
         }
@@ -60,7 +65,10 @@ class TwoFAController extends Controller
         if($code){
             return back()->with('error', __('Please wait a minute before generating another 2FA code.'));
         }
-        AuthServiceProvider::generate2FACode();
+        if (!AuthServiceProvider::generate2FACode()) {
+            return back()->with('error', __('We could not send your 2FA code. Please check your SMTP settings and try resending the code.'));
+        }
+
         return back()->with('success', __('We sent you a new code over your email address.'));
     }
 

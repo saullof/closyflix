@@ -22,7 +22,7 @@ use App\Http\Controllers\CouponController;
 */
 
 // Admin routes ( Needs to be placed above )
-Route::group(['prefix' => 'admin', 'middleware' => 'jsVars'], function () {
+Route::group(['prefix' => 'admin', 'middleware' => ['jsVars', '2fa']], function () {
     Voyager::routes();
     Route::get('/metrics/new/users/value', 'MetricsController@newUsersValue')->name('admin.metrics.new.users.value');
     Route::get('/metrics/new/users/trend', 'MetricsController@newUsersTrend')->name('admin.metrics.new.users.trend');

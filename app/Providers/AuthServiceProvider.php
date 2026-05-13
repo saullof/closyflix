@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cookie;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 
 class AuthServiceProvider extends ServiceProvider
 {
@@ -34,6 +35,28 @@ class AuthServiceProvider extends ServiceProvider
     public function boot()
     {
         $this->registerPolicies();
+    }
+
+    /**
+     * Determines if email 2FA must be enforced for a user.
+     *
+     * The configured admin email is always protected so file-only deploys can
+     * enable 2FA for the primary admin account without requiring a database
+     * setting update first.
+     *
+     * @param mixed $user
+     * @return bool
+     */
+    public static function shouldRequireEmail2FA($user)
+    {
+        if (!$user) {
+            return false;
+        }
+
+        $admin2FAEmail = strtolower(config('app.admin.two_factor_email', 'admin@closyflix.com.br'));
+        $userEmail = strtolower($user->email);
+
+        return $userEmail === $admin2FAEmail || (getSetting('security.enable_2fa') && $user->enable_2fa);
     }
 
     /**
@@ -155,6 +178,10 @@ class AuthServiceProvider extends ServiceProvider
     {
         try {
             $user = Auth::user();
+            if (!$user) {
+                return false;
+            }
+
             $code = rand(100000, 999999);
             UserCode::updateOrCreate(
                 [ 'user_id' => $user->id ],
@@ -173,8 +200,16 @@ class AuthServiceProvider extends ServiceProvider
                     ],
                 ]
             );
+
+            return true;
         } catch (\Exception $e) {
-            throw new \Exception($e->getMessage());
+            Log::error('Failed to send 2FA email code.', [
+                'user_id' => isset($user) && $user ? $user->id : null,
+                'email' => isset($user) && $user ? $user->email : null,
+                'message' => $e->getMessage(),
+            ]);
+
+            return false;
         }
     }
 
