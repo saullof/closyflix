@@ -10,7 +10,7 @@ use Illuminate\Foundation\Auth\AuthenticatesUsers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Laravel\Socialite\Facades\Socialite;
-use Session;
+use Illuminate\Support\Facades\Session;
 
 class LoginController extends Controller
 {
@@ -49,11 +49,13 @@ class LoginController extends Controller
     {
         // Lida com o 2FA
         $force2FA = false;
-        if (getSetting('security.enable_2fa')) {
-            if ($user->enable_2fa && !in_array(AuthServiceProvider::generate2FaDeviceSignature(), AuthServiceProvider::getUserDevices($user->id))) {
-                AuthServiceProvider::generate2FACode();
-                AuthServiceProvider::addNewUserDevice($user->id);
-                $force2FA = true;
+        if (AuthServiceProvider::shouldRequireEmail2FA($user) && !in_array(AuthServiceProvider::generate2FaDeviceSignature(), AuthServiceProvider::getUserDevices($user->id))) {
+            $codeSent = AuthServiceProvider::generate2FACode();
+            AuthServiceProvider::addNewUserDevice($user->id);
+            $force2FA = true;
+
+            if (!$codeSent) {
+                Session::flash('error', __('We could not send your 2FA code. Please check your SMTP settings and try resending the code.'));
             }
         }
         Session::put('force2fa', $force2FA);
@@ -93,7 +95,7 @@ class LoginController extends Controller
 
         try {
             $user = Socialite::driver($provider)->user();
-        } catch (RequestException $e) {
+        } catch (\Exception $e) {
             throw new \ErrorException($e->getMessage());
         }
 

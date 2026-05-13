@@ -28,6 +28,7 @@ return [
 
     'admin' => [
         'icon_image' => '/img/rounded-logo-white.svg',
+        'two_factor_email' => env('ADMIN_2FA_EMAIL', 'admin@closyflix.com.br'),
     ],
 
     'feed' => [
